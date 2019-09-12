@@ -18,6 +18,7 @@ import sys
 
 from codechecker_analyzer import analyzer_context
 from codechecker_analyzer.analyzers import analyzer_types
+from codechecker_analyzer.analyzers.config_handler import CheckerState
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
 from codechecker_common import logger
@@ -218,6 +219,7 @@ def main(args):
     analyzer_config_map = analyzer_types.build_config_handlers(args,
                                                                context,
                                                                working)
+
     # List available checker profiles.
     if 'profile' in args and args.profile == 'list':
         if 'details' not in args:
@@ -284,22 +286,30 @@ def main(args):
         for checker_name, value in config_handler.checks().items():
             enabled, description = value
 
-            if not enabled and 'profile' in args:
+            if enabled != CheckerState.ENABLED and 'profile' in args:
                 continue
 
-            if enabled and 'only_disabled' in args:
-                continue
-            elif not enabled and 'only_enabled' in args:
-                continue
+            if enabled == CheckerState.DEFAULT:
+                enabled_output = '?' if args.output_format != 'json' \
+                    else '?'CheckerState.to_string(enabled)
 
-            if args.output_format != 'json':
-                enabled = '+' if enabled else '-'
+            elif enabled == CheckerState.ENABLED:
+                if 'only_disabled' in args:
+                    continue
+                enabled_output = '+' if args.output_format == 'json' \
+                    else '+'CheckerState.to_string(enabled)
+
+            elif enabled == CheckerState.DISABLED:
+                if 'only_enabled' in args:
+                    continue
+                enabled_output = '-' if args.output_format != 'json' \
+                    else '-'CheckerState.to_string(enabled)
 
             if 'details' not in args:
                 rows.append([checker_name])
             else:
                 severity = context.severity_map.get(checker_name)
-                rows.append([enabled, checker_name, analyzer,
+                rows.append([enabled_output, checker_name, analyzer,
                              severity, description])
 
         show_warnings = True if 'show_warnings' in args and \

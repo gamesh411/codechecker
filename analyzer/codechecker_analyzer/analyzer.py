@@ -22,6 +22,7 @@ from codechecker_common.logger import get_logger
 
 from . import analysis_manager, pre_analysis_manager, env, checkers
 from .analyzers import analyzer_types
+from .analyzers.config_handler import CheckerState
 from .analyzers.clangsa.analyzer import ClangSA
 from .analyzers.clangsa.statistics_collector import \
     SpecialReturnValueCollector
@@ -196,11 +197,11 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
     # Statistics collector checkers must be explicitly disabled
     # as they trash the output.
     if "clangsa" in analyzers:
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            SpecialReturnValueCollector.checker_collect, False)
+        config_map[ClangSA.ANALYZER_NAME].set_checker_disabled(
+            SpecialReturnValueCollector.checker_collect)
 
-        config_map[ClangSA.ANALYZER_NAME].set_checker_enabled(
-            ReturnValueCollector.checker_collect, False)
+        config_map[ClangSA.ANALYZER_NAME].set_checker_disabled(
+            ReturnValueCollector.checker_collect)
 
     # Save some metadata information.
     versions = __get_analyzer_version(context, config_map)
@@ -212,7 +213,8 @@ def perform_analysis(args, skip_handler, context, actions, metadata):
 
         for check, data in config_map[analyzer].checks().items():
             enabled, _ = data
-            metadata['checkers'][analyzer].update({check: enabled})
+            metadata['checkers'][analyzer].update(
+                {check: CheckerState.to_string(enabled)})
 
     if ctu_collect:
         shutil.rmtree(ctu_dir, ignore_errors=True)

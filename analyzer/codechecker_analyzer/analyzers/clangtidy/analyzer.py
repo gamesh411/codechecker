@@ -24,6 +24,7 @@ from ..flag import has_flag
 from ..clangsa.analyzer import ClangSA
 
 from . import config_handler
+from ..config_handler import CheckerState
 from . import result_handler
 
 LOG = get_logger('analyzer')
@@ -110,9 +111,9 @@ class ClangTidy(analyzer_base.SourceAnalyzer):
 
                     continue
 
-                if enabled:
+                if enabled == CheckerState.ENABLED:
                     checkers_cmdline += ',' + checker_name
-                else:
+                elif enabled == CheckerState.DISABLED:
                     checkers_cmdline += ',-' + checker_name
 
             analyzer_cmd.append("-checks='%s'" % checkers_cmdline.lstrip(','))

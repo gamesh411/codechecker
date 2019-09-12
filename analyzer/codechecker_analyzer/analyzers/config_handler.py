@@ -22,6 +22,14 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
+class CheckerState(object):
+    DEFAULT, ENABLED, DISABLED = range(0, 3)
+
+    @staticmethod
+    def to_string(value):
+        return ['DEFAULT', 'ENABLED', 'DISABLED'][value]
+
+
 class AnalyzerConfigHandler(object):
     """
     Handle the checker configurations and enabled disabled checkers lists.
@@ -58,26 +66,41 @@ class AnalyzerConfigHandler(object):
                             and f.endswith(".so")]
         return analyzer_plugins
 
-    def add_checker(self, checker_name, enabled, description):
+    def register_checker(self, checker_name, description):
         """
-        Add additional checker.
-        Tuple of (checker_name, True or False).
+        Add another checker to the the list of available checkers.
         """
-        self.__available_checkers[checker_name] = (enabled, description)
+        self.__available_checkers[checker_name] = (CheckerState.DEFAULT,
+                                                   description)
 
-    def set_checker_enabled(self, checker_name, enabled=True):
-        """
-        Enable checker, keep description if already set.
-        """
+    def __set_checker_state(self, checker_name, state):
         for ch_name, values in self.__available_checkers.items():
             if ch_name.startswith(checker_name) or \
                ch_name.endswith(checker_name):
                 _, description = values
-                self.__available_checkers[ch_name] = (enabled, description)
+                self.__available_checkers[ch_name] = (state, description)
+
+    def set_checker_default(self, checker_name):
+        """
+        Make the checker implicitly handled by the analysis framework.
+        """
+        self.__set_checker_state(checker_name, CheckerState.DEFAULT)
+
+    def set_checker_enabled(self, checker_name):
+        """
+        Make the checker explicitly enabled.
+        """
+        self.__set_checker_state(checker_name, CheckerState.ENABLED)
+
+    def set_checker_disabled(self, checker_name):
+        """
+        Make the checker explicitly disabled.
+        """
+        self.__set_checker_state(checker_name, CheckerState.DISABLED)
 
     def checks(self):
         """
-        Return the checkers.
+        Return all available checkers.
         """
         return self.__available_checkers
 
@@ -114,9 +137,10 @@ class AnalyzerConfigHandler(object):
         analyzer-retrieved checker list.
         """
 
-        # By default disable all checkers.
+        # By default all checkers are in the DEFAULT state. This means that
+        # the framework should decide to whether use the checker or not.
         for checker_name, description in checkers:
-            self.add_checker(checker_name, False, description)
+            self.register_checker(checker_name, description)
 
         # Set default enabled or disabled checkers, based on the config file.
         if checker_config:
@@ -134,7 +158,7 @@ class AnalyzerConfigHandler(object):
 
         # If enable_all is given, almost all checkers should be enabled.
         if enable_all:
-            for checker_name, enabled in checkers:
+            for checker_name, _ in checkers:
                 if not checker_name.startswith("alpha.") and \
                         not checker_name.startswith("debug.") and \
                         not checker_name.startswith("osx."):
@@ -154,7 +178,7 @@ class AnalyzerConfigHandler(object):
             # (It is used to check if a profile name is valid.)
             reserved_names = self.__gen_name_variations()
 
-            for identifier, enabled in cmdline_checkers:
+            for identifier, _ in cmdline_checkers:
 
                 # The identifier is a profile name.
                 if identifier in available_profiles:
@@ -175,9 +199,9 @@ class AnalyzerConfigHandler(object):
                                         in checker_config.items()
                                         if profile_name in profile_list)
                     for checker_name in profile_checkers:
-                        self.set_checker_enabled(checker_name, enabled)
+                        self.set_checker_enabled(checker_name)
 
                 # The identifier is a checker(-group) name.
                 else:
                     checker_name = identifier
-                    self.set_checker_enabled(checker_name, enabled)
+                    self.set_checker_enabled(checker_name)
