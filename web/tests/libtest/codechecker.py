@@ -684,16 +684,16 @@ def wait_for_server_start(stdoutfile):
 # This server uses multiple custom servers, which are brought up here
 # and torn down by the package itself --- it does not connect to the
 # test run's "master" server.
-def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
+def start_server(codechecker_cfg, server_args=None, pg_config=None):
     """Start the CodeChecker server."""
-    def start_server_proc(event, server_cmd, checking_env):
+    def start_server_proc(stop_event, server_cmd, checking_env):
         """Target function for starting the CodeChecker server."""
         # Redirecting stdout to a file
         server_stdout = os.path.join(codechecker_cfg['workspace'],
-                                     str(os.getpid()) + ".out")
+                                   str(os.getpid()) + ".out")
         print("Redirecting server output to " + server_stdout)
         with open(server_stdout, "w",
-                  encoding="utf-8", errors="ignore") as server_out:
+                 encoding="utf-8", errors="ignore") as server_out:
             proc = subprocess.Popen(
                 server_cmd,
                 env=checking_env,
@@ -703,31 +703,34 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
                 errors="ignore")
 
             # Blocking termination until event is set.
-            event.wait()
+            stop_event.wait()
 
             # If proc is still running, stop it.
             if proc.poll() is None:
                 proc.terminate()
 
     server_cmd = serv_cmd(codechecker_cfg['workspace'],
-                          str(codechecker_cfg['viewer_port']),
-                          pg_config,
-                          server_args or [])
+                         str(codechecker_cfg['viewer_port']),
+                         pg_config,
+                         server_args or [])
 
+    stop_event = multiprocess.Event()
     server_proc = multiprocess.Process(
         name='server',
         target=start_server_proc,
-        args=(event, server_cmd, codechecker_cfg['check_env']))
+        args=(stop_event, server_cmd, codechecker_cfg['check_env']))
 
     server_proc.start()
     server_output_file = os.path.join(codechecker_cfg['workspace'],
-                                      str(server_proc.pid) + ".out")
+                                    str(server_proc.pid) + ".out")
     wait_for_server_start(server_output_file)
 
     return {
         'viewer_host': 'localhost',
         'viewer_port': codechecker_cfg['viewer_port'],
-        'server_output_file': server_output_file
+        'server_output_file': server_output_file,
+        'stop_event': stop_event,
+        'server_process': server_proc
     }
 
 
@@ -757,7 +760,6 @@ def add_test_package_product(server_data, test_folder, check_env=None,
     url = create_product_url(protocol, server_data['viewer_host'],
                              str(server_data['viewer_port']),
                              '')
-
     add_command = ['CodeChecker', 'cmd', 'products', 'add',
                    server_data['viewer_product'],
                    '--url', url,
