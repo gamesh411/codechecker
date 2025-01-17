@@ -73,9 +73,8 @@ jobs:
       - name: "Install run-time dependencies (Linux)"
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run:
+          # https://github.com/facebook/infer/blob/main/docker/1.1.0/Dockerfile
           sudo apt-get update && sudo apt-get install g++-13 clang clang-tidy cppcheck
-        # https://github.com/facebook/infer/blob/main/docker/1.1.0/Dockerfile
-        run:
           INFER_VERSION=v1.2.0; \
           cd /opt && \
           curl -sL \
