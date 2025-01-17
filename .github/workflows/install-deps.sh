@@ -7,7 +7,7 @@ sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
 sudo apt-get update -q
 
-sudo apt-get install \
+sudo apt-get --assume-yes install \
   g++-13 \
   gcc-multilib \
   libc6-dev-i386 \
@@ -17,7 +17,7 @@ sudo apt-get install \
   libssl-dev \
   clang-14 \
   clang-tidy-14 \
-  cppcheck 
+  cppcheck
 
 # Source: https://fbinfer.com/docs/getting-started
 VERSION=1.1.0; \
