@@ -1,0 +1,75 @@
+name: codechecker-tests-local
+
+on: [push, pull_request]
+
+permissions: read-all
+
+jobs:
+  web:
+    name: Web
+    runs-on: ubuntu-20.04
+
+    services:
+      postgres-1:  # Separate service for psql_pg8000
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres-2:  # Separate service for psql_psycopg2
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        include:
+          - database: sqlite
+          - database: psql_pg8000
+            db_port: 5432
+          - database: psql_psycopg2
+            db_port: 5433
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: sh .github/workflows/install-deps.sh
+
+      - name: Init .pgpass
+        if: matrix.database != 'sqlite'
+        run: |
+          echo '*:*:*:*:postgres' > $HOME/.pgpass
+          chmod 0600 $HOME/.pgpass
+
+      - name: Run tests
+        env:
+          PGPASSWORD: postgres
+          PGPORT: ${{ matrix.db_port }}
+        run: |
+          if [[ "${{ matrix.database != 'sqlite' }}" == "true" ]]
+          then
+            export PGPASSFILE=$HOME/.pgpass
+          fi
+
+          make pip_dev_deps
+          pip3 install -r web/requirements_py/auth/requirements.txt
+          BUILD_UI_DIST=NO make package
+
+          make -C web test_matrix_${{ matrix.database }}
