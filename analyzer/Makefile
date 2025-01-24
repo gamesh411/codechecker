@@ -27,17 +27,17 @@ BUILD_LOGGER_64_BIT_ONLY ?= NO
 include tests/Makefile
 
 pip_dev_deps:
-	pip3 install -r $(VENV_DEV_REQ_FILE)
+	pip3 install --ignore-installed -r $(VENV_DEV_REQ_FILE)
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker analyze venv" && \
-		$(ACTIVATE_RUNTIME_VENV) && pip3 install -r $(VENV_REQ_FILE)
+		$(ACTIVATE_RUNTIME_VENV) && pip3 install --ignore-installed -r $(VENV_REQ_FILE)
 
 venv_dev:
 	# Create a virtual environment for development.
 	python3 -m venv venv_dev --prompt="CodeChecker analyze venv-dev" && \
-		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+		$(ACTIVATE_DEV_VENV) && pip3 install --ignore-installed -r $(VENV_DEV_REQ_FILE)
 
 clean_venv:
 	rm -rf venv

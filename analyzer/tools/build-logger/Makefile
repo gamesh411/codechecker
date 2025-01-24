@@ -19,7 +19,7 @@ VENV_DEV_REQ_FILE ?= requirements_py/dev/requirements.txt
 venv_dev:
 	# Create a virtual environment for development.
 	$(PYTHON_BIN) -m venv venv_dev && \
-		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+		$(ACTIVATE_DEV_VENV) && pip3 install --ignore-installed -r $(VENV_DEV_REQ_FILE)
 
 # import the test targets
 include tests/Makefile

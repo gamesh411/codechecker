@@ -31,7 +31,7 @@ pip_dev_deps:
 venv_dev:
 	# Create a virtual environment for development.
 	python3 -m venv venv_dev && \
-		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
+		$(ACTIVATE_DEV_VENV) && pip3 install --ignore-installed -r $(VENV_DEV_REQ_FILE)
 
 clean_venv_dev:
 	rm -rf venv_dev
