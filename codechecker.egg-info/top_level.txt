@@ -1,0 +1,8 @@
+bazel_compile_commands
+codechecker_analyzer
+codechecker_client
+codechecker_common
+codechecker_report_converter
+codechecker_server
+codechecker_web
+tu_collector
