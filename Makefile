@@ -113,22 +113,22 @@ venv:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker venv" && \
 		$(ACTIVATE_RUNTIME_VENV) && \
-		cd $(CC_ANALYZER) && pip3 install -r requirements.txt && \
-		cd $(CC_WEB) && pip3 install -r $(CC_WEB)/requirements.txt
+		cd $(CC_ANALYZER) && pip3 install -r requirements.txt --prefer-binary && \
+		cd $(CC_WEB) && pip3 install -r $(CC_WEB)/requirements.txt --prefer-binary
 
 venv_osx:
 	# Create a virtual environment which can be used to run the build package.
 	python3 -m venv venv --prompt="CodeChecker venv" && \
 		$(ACTIVATE_RUNTIME_VENV) && \
-		cd $(CC_ANALYZER) && pip3 install -r requirements_py/osx/requirements.txt && \
-		cd $(CC_WEB) && pip3 install -r requirements_py/osx/requirements.txt
+		cd $(CC_ANALYZER) && pip3 install -r requirements_py/osx/requirements.txt --prefer-binary && \
+		cd $(CC_WEB) && pip3 install -r requirements_py/osx/requirements.txt --prefer-binary
 
 clean_venv:
 	rm -rf venv
 
 PIP_DEV_DEPS_CMD = $(MAKE) -C $(CC_ANALYZER) pip_dev_deps && \
   $(MAKE) -C $(CC_WEB) pip_dev_deps && \
-  cd $(CC_COMMON) && pip3 install -r requirements_py/dev/requirements.txt
+  cd $(CC_COMMON) && pip3 install -r requirements_py/dev/requirements.txt --prefer-binary
 
 pip_dev_deps:
 	# Install the depencies for analyze, web and the tools.
