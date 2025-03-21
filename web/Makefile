@@ -52,12 +52,12 @@ pip_dev_deps:
 
 venv:
 	# Create a virtual environment which can be used to run the build package.
-	python3 -m venv venv --prompt="CodeChecker web venv" && \
+	python3 -m venv venv --prompt="CodeChecker web venv" --system-site-packages && \
 		$(ACTIVATE_RUNTIME_VENV) && pip3 install -r $(VENV_REQ_FILE)
 
 venv_dev:
 	# Create a virtual environment for development.
-	python3 -m venv venv_dev --prompt="CodeChecker web venv-dev" && \
+	python3 -m venv venv_dev --prompt="CodeChecker web venv-dev" --system-site-packages && \
 		$(ACTIVATE_DEV_VENV) && pip3 install -r $(VENV_DEV_REQ_FILE)
 
 clean_venv:
