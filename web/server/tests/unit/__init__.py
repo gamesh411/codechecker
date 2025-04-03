@@ -23,4 +23,4 @@ sys.path.append(os.path.join(REPO_ROOT, 'web'))
 sys.path.append(os.path.join(REPO_ROOT, 'web', 'client'))
 sys.path.append(os.path.join(REPO_ROOT, 'web', 'server'))
 
-sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report-converter'))
+sys.path.append(os.path.join(REPO_ROOT, 'tools', 'report_converter'))

@@ -28,7 +28,7 @@ jobs:
         run: make pylint pycodestyle
 
   tools:
-    name: Tools (report-converter, etc.)
+    name: Tools (report_converter, etc.)
     runs-on: ubuntu-20.04
 
     steps:
@@ -64,8 +64,8 @@ jobs:
           pip install -r requirements_py/dev/requirements.txt
           make test
 
-      - name: Run report-converter tests
-        working-directory: tools/report-converter
+      - name: Run report_converter tests
+        working-directory: tools/report_converter
         run: |
           pip install -r requirements_py/dev/requirements.txt
           make package

@@ -40,8 +40,8 @@ def upgrade():
         # with several values all meaning the same, gathered over the years.
         # Notably, the DEFAULT value for 'analyzer_name' is "unknown" prior
         # to the upgrade. While 'checker_id' can be NULL, it could be an empty
-        # string, or a "NOT FOUND" created by the report-converter, for reports
-        # newer than the existence of the report-converter.
+        # string, or a "NOT FOUND" created by the report_converter, for reports
+        # newer than the existence of the report_converter.
         # These values are normalised such that in the following, when the
         # foreign key-based look-up is added to the schema, their new
         # 'checker_id' will all point to the single "UNKNOWN/NOT FOUND" case.

@@ -959,7 +959,7 @@ class MassStoreRun:
         available in the 'metadata.json'. This usually happens if the report
         directory that is being stored is not from an 'analyze' or 'check'
         invocation (that would create an appropriate 'metadata.json') but from
-        other tools (e.g., report-converter, or Cppcheck's native PLISTs).
+        other tools (e.g., report_converter, or Cppcheck's native PLISTs).
 
         This function assumes that for each report in the
         __reports_with_fake_checkers, their actual checkers' IDs are now added

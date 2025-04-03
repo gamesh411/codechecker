@@ -191,7 +191,7 @@ setuptools.setup(
             'CodeChecker = codechecker_common.cli:main',
             'merge-clang-extdef-mappings = codechecker_merge_clang_extdef_mappings.cli:main',
             'post-process-stats = codechecker_statistics_collector.cli:main',
-            'report-converter = codechecker_report_converter.cli:main',
+            'report_converter = codechecker_report_converter.cli:main',
             'tu_collector = tu_collector.tu_collector:main'
         ]
     },

@@ -47,7 +47,7 @@ PYLINT_TEST_CMD = PYLINTRC=$(ROOT)/.pylintrc \
     ./client/codechecker_client \
     ./server/codechecker_server ./server/tests/unit \
     ./tests/functional ./tests/libtest ./tests/tools \
-    $(ROOT)/tools/report-converter/codechecker_report_converter
+    $(ROOT)/tools/report_converter/codechecker_report_converter
 
 pylint:
 	$(PYLINT_TEST_CMD)

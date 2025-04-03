@@ -18,7 +18,7 @@ from typing import Dict, Iterable, List, Optional, Set, TextIO, Tuple
 from . import util
 
 
-LOG = logging.getLogger('report-converter')
+LOG = logging.getLogger('report_converter')
 
 
 REVIEW_STATUS_VALUES = ["confirmed", "false_positive", "intentional",

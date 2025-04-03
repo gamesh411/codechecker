@@ -18,8 +18,8 @@ apps:
     environment:
       PATH: ${SNAP}/usr/bin:${PATH}
       PYTHONPATH: ${SNAP}/usr/lib/python3.8
-  report-converter:
-    command: CodeChecker/bin/report-converter
+  report_converter:
+    command: CodeChecker/bin/report_converter
   post-process-stats:
     command: CodeChecker/bin/post-process-stats
   merge-clang-extdef-mappings:

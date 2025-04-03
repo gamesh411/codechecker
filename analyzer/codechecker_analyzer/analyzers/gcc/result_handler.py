@@ -68,7 +68,7 @@ class GccResultHandler(ResultHandler):
         assert gcc_stderr, "Even in the event of no reported diagnostics, " \
                            "stderr mustn't be empty!"
 
-        # report-converter needs a file to parse, let's dump the content of
+        # report_converter needs a file to parse, let's dump the content of
         # stderr to one.
         gcc_out_folder = Path(self.workspace, "gcc")
         gcc_out_folder.mkdir(exist_ok=True)

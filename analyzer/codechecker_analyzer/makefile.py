@@ -241,7 +241,7 @@ class MakeFileCreator:
         if action.analyzer_type == ClangTidy.ANALYZER_NAME:
             analyzer_output_file = rh.analyzer_result_file + ".output"
             file_name = "{source_file}_{analyzer}_" + target
-            report_converter_cmd = ["report-converter",
+            report_converter_cmd = ["report_converter",
                                     "-t", "clang-tidy",
                                     "-o", self.__output_path,
                                     "--filename", file_name,
