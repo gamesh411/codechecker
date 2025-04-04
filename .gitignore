@@ -4,6 +4,8 @@
 
 build
 build_dist
+codechecker.egg-info
+dist
 venv
 venv_dev
 Makefile.local
