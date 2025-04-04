@@ -1,166 +1,180 @@
 #!/usr/bin/env python3
 
 import os
+from pathlib import Path
 import platform
 import setuptools
-import subprocess
 import sys
 
+from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
-from setuptools.command.install import install
-from setuptools.command.sdist import sdist
 from setuptools.extension import Extension
 
-curr_dir = os.path.dirname(os.path.realpath(__file__))
-build_dir = os.path.join(curr_dir, "build_dist")
-package_dir = os.path.join("build_dist", "CodeChecker")
-lib_dir = os.path.join(package_dir, "lib", "python3")
-req_file_paths = [
-    os.path.join("analyzer", "requirements.txt"),
-    os.path.join("web", "requirements.txt")]
-data_files_dir_path = os.path.join('share', 'codechecker')
+REQ_FILE_PATHS = [Path("analyzer", "requirements.txt"),
+                  Path("web", "requirements.txt")]
 
-data_files = [
-    (os.path.join(data_files_dir_path, "docs"), [
-        os.path.join("docs", "README.md")]),
+LD_LOGGER_SRC_PATH = Path("analyzer", "tools", "build-logger", "src")
 
-    *[(os.path.join(data_files_dir_path, os.path.dirname(p)), [p])
-      for p in req_file_paths]
+LD_LOGGER_SOURCES = [
+    "ldlogger-hooks.c",
+    "ldlogger-logger.c",
+    "ldlogger-tool.c",
+    "ldlogger-tool-gcc.c",
+    "ldlogger-tool-javac.c",
+    "ldlogger-util.c",
 ]
 
-packages = []
+LD_LOGGER_INCLUDES = ["ldlogger-hooks.h", "ldlogger-tool.h", "ldlogger-util.h"]
+
+DATA_FILES_DEST = Path("share", "codechecker")
+
+
+def get_long_description():
+    with open(
+        os.path.join("docs", "README.md"), "r", encoding="utf-8", errors="ignore"
+    ) as fh:
+        return fh.read()
+
+
+def get_codechecker_packages():
+    package_roots = [".", "analyzer", "web", "web/server", "web/client"]
+    return [
+        package_name
+        for package_list in map(setuptools.find_packages, package_roots)
+        for package_name in package_list
+    ]
 
 
 def get_requirements():
-    """ Get install requirements. """
+    """Get install requirements."""
     requirements = set()
-    for req_file_path in req_file_paths:
-        with open(req_file_path, 'r') as f:
-            requirements.update([s for s in [
-                line.split('#', 1)[0].strip(' \t\n') for line in f]
-                if s and 'codechecker' not in s])
+    for req_file_path in REQ_FILE_PATHS:
+        with open(req_file_path, "r") as f:
+            requirements.update(
+                [
+                    s
+                    for s in [line.split("#", 1)[0].strip(" \t\n") for line in f]
+                    if s and "codechecker" not in s
+                ]
+            )
 
-    return requirements
-
-
-def init_data_files():
-    """ Initalize data files which will be copied into the package. """
-    for data_dir_name in ['config', 'www']:
-        data_dir_path = os.path.join(package_dir, data_dir_name)
-        for root, _, files in os.walk(data_dir_path):
-            if not files:
-                continue
-
-            data_files.append((
-                os.path.normpath(
-                        os.path.join(data_files_dir_path, data_dir_name,
-                                    os.path.relpath(root, data_dir_path))),
-                [os.path.join(root, file_path) for file_path in files]))
+    return list(requirements)
 
 
-def init_packages():
-    """ Find and initialize the list of packages. """
-    global packages
-    packages.extend(setuptools.find_packages(where=lib_dir))
+def discover_data_files(dir_name):
+    data_files = []
+    dir_path = Path(dir_name)
+    for root, _, files in os.walk(dir_path):
+        if not files:
+            continue
+        entry = (
+            str(DATA_FILES_DEST / dir_path),
+            map(lambda p: str(dir_path / p), files),
+        )
+        data_files.append(entry)
+
+    return data_files
 
 
-ld_logger_src_dir_path = \
-    os.path.join("analyzer", "tools", "build-logger", "src")
+def get_data_files():
+    """
+    This functions returns the list of descriptors that define which files
+    will be copied into the distribution.
+    """
+    data_files = []
 
-ld_logger_sources = [
-    'ldlogger-hooks.c',
-    'ldlogger-logger.c',
-    'ldlogger-tool.c',
-    'ldlogger-tool-gcc.c',
-    'ldlogger-tool-javac.c',
-    'ldlogger-util.c'
-]
-
-ld_logger_includes = [
-    'ldlogger-hooks.h',
-    'ldlogger-tool.h',
-    'ldlogger-util.h'
-]
-
-data_files.append(
-    (
-        os.path.join(data_files_dir_path, 'ld_logger', 'include'),
-        [os.path.join(ld_logger_src_dir_path, i) for i in ld_logger_includes]
+    # docs
+    data_files.extend(
+        [
+            (str(DATA_FILES_DEST / "docs"), [str(Path("docs", "README.md"))]),
+            *map(lambda p: (str(DATA_FILES_DEST / p),
+                 [str(p)]), REQ_FILE_PATHS),
+        ]
     )
-)
 
-module_logger_name = 'codechecker_analyzer.ld_logger.lib.ldlogger'
-module_logger = Extension(
-    module_logger_name,
-    define_macros=[('__LOGGER_MAIN__', None), ('_GNU_SOURCE', None)],
-    extra_link_args=[
-        '-O2', '-fomit-frame-pointer', '-fvisibility=hidden', '-pedantic',
-        '-Wl,--no-as-needed', '-ldl'
-    ],
-    sources=[
-        os.path.join(ld_logger_src_dir_path, s) for s in ld_logger_sources])
+    # config
+    print(discover_data_files("config"))
+    data_files.extend(discover_data_files("config"))
+
+    # TODO: www is dynamically generated, make sure we find the folder
+    # www_descriptors = discover_data_files('www')
+    # www is dynamically generated, make sure we find the folder
+    # assert (len(www_descriptors) > 0)
+    # data_files.extend(www_descriptors)
+
+    # ld logger header
+    # TODO: do we need to copy the header files?
+    data_files.append(
+        (
+            str(DATA_FILES_DEST / "ld_logger" / "include"),
+            [str(LD_LOGGER_SRC_PATH / i) for i in LD_LOGGER_INCLUDES],
+        )
+    )
+
+    return data_files
+
+
+def get_ext_modules():
+    return [
+        Extension(
+            "codechecker_analyzer.ld_logger.lib.ldlogger",
+            define_macros=[("__LOGGER_MAIN__", None), ("_GNU_SOURCE", None)],
+            extra_link_args=[
+                "-O2",
+                "-fomit-frame-pointer",
+                "-fvisibility=hidden",
+                "-pedantic",
+                "-Wl,--no-as-needed",
+                "-ldl",
+            ],
+            sources=[os.path.join(LD_LOGGER_SRC_PATH, s)
+                     for s in LD_LOGGER_SOURCES],
+        )
+    ]
+
+
+class Build(build):
+    def run(self):
+        # build command.json
+        # build thrift
+        # build vue
+        build.run(self)
 
 
 class BuildExt(build_ext):
+
     def get_ext_filename(self, ext_name):
-        return os.path.join(platform.uname().machine, f"{ext_name}.so")
+        return Path(platform.architecture()[0], f"{ext_name}.so")
 
     def build_extension(self, ext):
         if sys.platform == "linux":
             build_ext.build_extension(self, ext)
 
 
-class Sdist(sdist):
-    def run(self):
-        res = subprocess.call(
-            ["make", "clean_package", "package", "package_api"],
-            env=dict(os.environ,
-                     BUILD_DIR=build_dir),
-            encoding="utf-8",
-            errors="ignore")
-
-        if res:
-            sys.exit(1)
-
-        init_data_files()
-        init_packages()
-
-        return sdist.run(self)
-
-
-class Install(install):
-    def run(self):
-        init_data_files()
-        init_packages()
-
-        return install.run(self)
-
-with open(os.path.join("docs", "README.md"), "r",
-          encoding="utf-8", errors="ignore") as fh:
-    long_description = fh.read()
-
-
 setuptools.setup(
     name="codechecker",
     version="6.26.0",
-    author='CodeChecker Team (Ericsson)',
-    author_email='codechecker-tool@googlegroups.com',
+    author="CodeChecker Team (Ericsson)",
+    author_email="codechecker-tool@googlegroups.com",
     description="CodeChecker is an analyzer tooling, defect database and "
-                "viewer extension",
-    long_description=long_description,
-    long_description_content_type = "text/markdown",
+    "viewer extension",
+    long_description=get_long_description(),
+    long_description_content_type="text/markdown",
     url="https://github.com/Ericsson/CodeChecker",
-    project_urls = {
+    project_urls={
         "Documentation": "http://codechecker.readthedocs.io",
         "Issue Tracker": "http://github.com/Ericsson/CodeChecker/issues",
     },
-    keywords=['codechecker', 'plist', 'sarif'],
-    license='Apache-2.0 WITH LLVM-exception',
-    packages=packages,
+    keywords=["codechecker", "plist", "sarif"],
+    license="Apache-2.0 WITH LLVM-exception",
+    packages=get_codechecker_packages(),
     package_dir={
-        "": lib_dir
+        "codechecker_analyzer": "analyzer/codechecker_analyzer/",
+        "codechecker_web": "web/codechecker_web/",
+        "codechecker_client": "web/client/codechecker_client/",
+        "codechecker_server": "web/server/codechecker_server/",
     },
-    data_files=data_files,
+    data_files=get_data_files(),
     include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -175,24 +189,24 @@ setuptools.setup(
         "Topic :: Software Development :: Bug Tracking",
         "Topic :: Software Development :: Quality Assurance",
     ],
-    install_requires=list(get_requirements()),
-    ext_modules=[module_logger],
+    install_requires=get_requirements(),
+    ext_modules=get_ext_modules(),
     cmdclass={
-        'sdist': Sdist,
-        'install': Install,
-        'build_ext': BuildExt,
+        "build": Build,
+        "build_ext": BuildExt,
     },
-    python_requires='>=3.8',
-    scripts=[
-        'scripts/gerrit_changed_files_to_skipfile.py'
-    ],
+    python_requires=">=3.8",
+    scripts=["scripts/gerrit_changed_files_to_skipfile.py"],
     entry_points={
-        'console_scripts': [
-            'CodeChecker = codechecker_common.cli:main',
-            'merge-clang-extdef-mappings = codechecker_merge_clang_extdef_mappings.cli:main',
-            'post-process-stats = codechecker_statistics_collector.cli:main',
-            'report-converter = codechecker_report_converter.cli:main',
-            'tu_collector = tu_collector.tu_collector:main'
+        "console_scripts": [
+            "CodeChecker = codechecker_common.cli:main",
+            (
+                "merge-clang-extdef-mappings = "
+                "codechecker_merge_clang_extdef_mappings.cli:main"
+            ),
+            "post-process-stats = codechecker_statistics_collector.cli:main",
+            "report-converter = codechecker_report_converter.cli:main",
+            "tu_collector = tu_collector.tu_collector:main",
         ]
     },
 )
