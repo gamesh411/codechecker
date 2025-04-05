@@ -125,6 +125,9 @@ def get_data_files():
     # web/config - include web-specific config files
     data_files.extend(discover_config_files("web/config"))
 
+    # server/config - include server-specific config files
+    data_files.extend(discover_config_files("web/server/config"))
+
     # Version files and commands.json
     # These files are generated during the build process
     # Make sure they're included in the package
