@@ -120,17 +120,21 @@ def get_data_files():
 
     # config - explicitly include all config files
     data_files.extend(discover_config_files("config"))
-    
+
     # web/config - include web-specific config files
     data_files.extend(discover_config_files("web/config"))
 
-    # commands.json
-    # The actual file will be generated during the build process
-    # This entry ensures the package includes the config directory structure
+    # Version files and commands.json
+    # These files are generated during the build process
+    # Make sure they're included in the package
     data_files.append(
         (
             str(CONFIG_FILES_PATH),
-            [str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "commands.json")],
+            [
+                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "commands.json"),
+                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "web_version.json"),
+                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "analyzer_version.json"),
+            ],
         )
     )
 
@@ -172,6 +176,9 @@ class Build(build):
         # Create commands.json
         self.generate_commands_json()
 
+        # Extend version files with build date and git information
+        self.extend_version_files()
+
     def generate_commands_json(self):
         """Generate commands.json file by collecting all CLI commands."""
         import glob
@@ -211,6 +218,123 @@ class Build(build):
             json.dump(subcmds, f, sort_keys=True, indent=2)
 
         print(f"Generated commands.json at {commands_json_path}")
+
+    def extend_version_files(self):
+        """Extend version files with build date and git information."""
+        import json
+        import time
+        import subprocess
+        import shutil
+
+        print("Extending version files with build date and git information...")
+
+        # Ensure the config directory exists
+        config_dir = GENERATED_FILES_DEST / CONFIG_FILES_PATH
+        os.makedirs(config_dir, exist_ok=True)
+
+        # Process web_version.json
+        web_version_file = os.path.join(config_dir, "web_version.json")
+
+        # Always copy the source version file to ensure we have the latest version
+        src_web_version = os.path.join("web", "config", "web_version.json")
+        if os.path.exists(src_web_version):
+            shutil.copy(src_web_version, web_version_file)
+            print(f"Copied {src_web_version} to {web_version_file}")
+        else:
+            print(f"Warning: Source file {src_web_version} not found")
+
+        # Process analyzer_version.json
+        analyzer_version_file = os.path.join(config_dir, "analyzer_version.json")
+
+        # Always copy the source version file to ensure we have the latest version
+        src_analyzer_version = os.path.join(
+            "analyzer", "config", "analyzer_version.json"
+        )
+        if os.path.exists(src_analyzer_version):
+            shutil.copy(src_analyzer_version, analyzer_version_file)
+            print(f"Copied {src_analyzer_version} to {analyzer_version_file}")
+        else:
+            print(f"Warning: Source file {src_analyzer_version} not found")
+
+        # Extend both version files with build date and git information
+        self._extend_version_file(web_version_file)
+        self._extend_version_file(analyzer_version_file)
+
+    def _extend_version_file(self, version_file):
+        """Extend a version file with build date and git information."""
+        import json
+        import time
+        import subprocess
+
+        if not os.path.exists(version_file):
+            print(f"Warning: Version file not found: {version_file}")
+            return
+
+        try:
+            with open(version_file, encoding="utf-8", errors="ignore") as v_file:
+                version_json_data = json.load(v_file)
+
+            # Add git information if available
+            self._add_git_info(version_json_data)
+
+            # Add build date
+            time_now = time.strftime("%Y-%m-%dT%H:%M")
+            version_json_data["package_build_date"] = time_now
+
+            # Rewrite version config file with the extended data
+            with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
+                v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
+
+            print(f"Extended version file: {version_file}")
+        except Exception as e:
+            print(f"Error extending version file {version_file}: {str(e)}")
+
+    def _add_git_info(self, version_json_data):
+        """Add git information to version data if available."""
+        import subprocess
+
+        try:
+            if not os.path.exists(".git"):
+                return
+
+            # Get git hash
+            try:
+                git_hash = subprocess.check_output(
+                    ["git", "rev-parse", "HEAD"], encoding="utf-8", errors="ignore"
+                ).strip()
+                version_json_data["git_hash"] = git_hash
+            except subprocess.CalledProcessError:
+                pass
+
+            # Get git describe information
+            try:
+                git_describe = subprocess.check_output(
+                    ["git", "describe", "--tags", "--dirty"],
+                    encoding="utf-8",
+                    errors="ignore",
+                ).strip()
+
+                # Parse git describe output
+                git_describe_data = {}
+                if "-dirty" in git_describe:
+                    git_describe_data["dirty"] = True
+                    git_describe = git_describe.replace("-dirty", "")
+                else:
+                    git_describe_data["dirty"] = False
+
+                # Extract tag information
+                if "-" in git_describe:
+                    tag = git_describe.split("-")[0]
+                else:
+                    tag = git_describe
+
+                git_describe_data["tag"] = tag
+                version_json_data["git_describe"] = git_describe_data
+            except subprocess.CalledProcessError:
+                # No tags available
+                pass
+        except Exception as e:
+            print(f"Error adding git information: {str(e)}")
 
 
 class BuildExt(build_ext):
