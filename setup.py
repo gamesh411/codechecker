@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import platform
+import sys
 import setuptools
 import sys
 
@@ -179,6 +180,9 @@ class Build(build):
         # Extend version files with build date and git information
         self.extend_version_files()
 
+        # Build API packages if they don't exist
+        self.build_api_packages()
+
     def generate_commands_json(self):
         """Generate commands.json file by collecting all CLI commands."""
         import glob
@@ -336,6 +340,126 @@ class Build(build):
         except Exception as e:
             print(f"Error adding git information: {str(e)}")
 
+    def build_api_packages(self):
+        """Build the API packages if they don't exist."""
+        import subprocess
+        import shutil
+        import os.path
+
+        print("Checking and building API packages if needed...")
+
+        # Define paths
+        api_dir = os.path.join("web", "api")
+        api_py_dir = os.path.join(api_dir, "py")
+        api_shared_dist = os.path.join(api_py_dir, "codechecker_api_shared", "dist")
+        api_dist = os.path.join(api_py_dir, "codechecker_api", "dist")
+
+        # Check if the API packages already exist
+        api_shared_tarball = os.path.join(
+            api_shared_dist, "codechecker_api_shared.tar.gz"
+        )
+        api_tarball = os.path.join(api_dist, "codechecker_api.tar.gz")
+
+        need_build = False
+
+        if not os.path.exists(api_shared_tarball) or not os.path.exists(api_tarball):
+            need_build = True
+            print("API packages not found, building them...")
+
+        if need_build:
+            try:
+                # Check if we have Docker for building the API packages
+                try:
+                    subprocess.check_output(
+                        ["docker", "--version"], encoding="utf-8", errors="ignore"
+                    )
+                    has_docker = True
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    has_docker = False
+
+                if has_docker:
+                    # Use the Makefile to build the API packages
+                    print("Building API packages using Docker...")
+                    subprocess.check_call(
+                        ["make", "-C", api_dir, "build"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                else:
+                    # Inform the user that Docker is required
+                    print("Warning: Docker is required to build the API packages.")
+                    print(
+                        "The API packages are pre-built and committed to the repository,"
+                    )
+                    print("but they may be outdated if the Thrift files have changed.")
+
+                # Ensure the API packages are available for installation
+                if os.path.exists(api_shared_tarball) and os.path.exists(api_tarball):
+                    # Copy the API packages to the build directory
+                    build_lib_dir = os.path.join("build", "lib")
+                    if os.path.exists(build_lib_dir):
+                        # Create the destination directories
+                        os.makedirs(
+                            os.path.join(
+                                build_lib_dir,
+                                "web",
+                                "api",
+                                "py",
+                                "codechecker_api",
+                                "dist",
+                            ),
+                            exist_ok=True,
+                        )
+                        os.makedirs(
+                            os.path.join(
+                                build_lib_dir,
+                                "web",
+                                "api",
+                                "py",
+                                "codechecker_api_shared",
+                                "dist",
+                            ),
+                            exist_ok=True,
+                        )
+
+                        # Copy the API packages
+                        shutil.copy(
+                            api_tarball,
+                            os.path.join(
+                                build_lib_dir,
+                                "web",
+                                "api",
+                                "py",
+                                "codechecker_api",
+                                "dist",
+                            ),
+                        )
+                        shutil.copy(
+                            api_shared_tarball,
+                            os.path.join(
+                                build_lib_dir,
+                                "web",
+                                "api",
+                                "py",
+                                "codechecker_api_shared",
+                                "dist",
+                            ),
+                        )
+
+                        print("API packages copied to build directory.")
+                    else:
+                        print(
+                            "Warning: build/lib directory not found, API packages not copied."
+                        )
+                else:
+                    print("Warning: API packages not found after build attempt.")
+
+            except Exception as e:
+                print(f"Error building API packages: {str(e)}")
+                print("Continuing with installation, but some features may not work.")
+        else:
+            print("API packages already exist, skipping build.")
+
 
 class BuildExt(build_ext):
     def get_ext_filename(self, ext_name):
@@ -344,6 +468,61 @@ class BuildExt(build_ext):
     def build_extension(self, ext):
         if sys.platform == "linux":
             build_ext.build_extension(self, ext)
+
+
+from setuptools.command.install import install
+
+
+class CustomInstall(install):
+    """Custom install command that installs API packages after main installation."""
+
+    def run(self):
+        # Run the standard installation
+        install.run(self)
+
+        # Install API packages if they exist
+        self.install_api_packages()
+
+    def install_api_packages(self):
+        """Install API packages after main installation."""
+        import subprocess
+        import os.path
+
+        print("Installing API packages...")
+
+        # Define paths to API packages
+        api_dir = os.path.join("web", "api", "py")
+        api_shared_path = os.path.join(
+            api_dir, "codechecker_api_shared", "dist", "codechecker_api_shared.tar.gz"
+        )
+        api_path = os.path.join(
+            api_dir, "codechecker_api", "dist", "codechecker_api.tar.gz"
+        )
+
+        # Install API packages if they exist
+        if os.path.exists(api_shared_path):
+            print(f"Installing {api_shared_path}")
+            try:
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", api_shared_path]
+                )
+                print(f"Successfully installed {api_shared_path}")
+            except subprocess.CalledProcessError as e:
+                print(f"Error installing {api_shared_path}: {str(e)}")
+        else:
+            print(f"Warning: API shared package not found at {api_shared_path}")
+
+        if os.path.exists(api_path):
+            print(f"Installing {api_path}")
+            try:
+                subprocess.check_call(
+                    [sys.executable, "-m", "pip", "install", api_path]
+                )
+                print(f"Successfully installed {api_path}")
+            except subprocess.CalledProcessError as e:
+                print(f"Error installing {api_path}: {str(e)}")
+        else:
+            print(f"Warning: API package not found at {api_path}")
 
 
 setuptools.setup(
@@ -395,6 +574,7 @@ setuptools.setup(
     cmdclass={
         "build": Build,
         "build_ext": BuildExt,
+        "install": CustomInstall,
     },
     python_requires=">=3.8",
     scripts=["scripts/gerrit_changed_files_to_skipfile.py"],
