@@ -79,10 +79,14 @@ def execute(analyser: str,
                        Gone=None,
                        )
 
-    with Pool(max_workers=process_count,
-              initializer=action.Worker.factory,
-              initargs=(verifier_class, analyser,)
-              ) as pool:
+    with Pool(
+        processes=process_count,
+        initializer=action.Worker.factory,
+        initargs=(
+            verifier_class,
+            analyser,
+        ),
+    ) as pool:
         if reset_urls:
             attempt, new_urls = action.run_reset(pool, labels)
             report.print_resets(analyser, attempt, new_urls)

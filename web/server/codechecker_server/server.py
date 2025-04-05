@@ -750,13 +750,23 @@ def _do_db_cleanups(config_database, context, check_env) \
 
     thr_count = util.clamp(1, len(products), cpu_count())
     overall_result, failures = True, []
-    with Pool(max_workers=thr_count) as executor:
+    with Pool(processes=thr_count) as executor:
         LOG.info("Performing database cleanup using %d concurrent jobs...",
                  thr_count)
-        for product, result in \
-                zip(products, executor.map(
-                    partial(_do_db_cleanup, context, check_env),
-                    *zip(*products))):
+        # Create a list of arguments for each product
+        product_args = []
+        for product in products:
+            id_, endpoint, display_name, connection_str = product
+            product_args.append((id_, endpoint, display_name, connection_str))
+
+        # Map the _do_db_cleanup function to each product's arguments
+        # This will work consistently across platforms thanks to our compatibility wrapper
+        results = executor.map(
+            lambda args: _do_db_cleanup(context, check_env, *args), product_args
+        )
+
+        # Process the results
+        for product, result in zip(products, results):
             success, reason = result
             if not success:
                 _, endpoint, _, _ = product
