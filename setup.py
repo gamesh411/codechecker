@@ -139,6 +139,20 @@ def get_data_files():
         )
     )
 
+    # Web frontend files
+    # These are generated during the build process by build_web_frontend
+    web_dist_path = GENERATED_FILES_DEST / DATA_FILES_DEST / "www"
+    if os.path.exists(web_dist_path):
+        for root, _, files in os.walk(web_dist_path):
+            if files:
+                rel_path = os.path.relpath(root, web_dist_path)
+                target_path = DATA_FILES_DEST / "www"
+                if rel_path != ".":
+                    target_path = target_path / rel_path
+                data_files.append(
+                    (str(target_path), [str(Path(root) / f) for f in files])
+                )
+
     # ld logger header
     # TODO: do we need to copy the header files?
     data_files.append(
@@ -182,6 +196,9 @@ class Build(build):
 
         # Build API packages if they don't exist
         self.build_api_packages()
+
+        # Build web frontend
+        self.build_web_frontend()
 
     def generate_commands_json(self):
         """Generate commands.json file by collecting all CLI commands."""
@@ -598,6 +615,133 @@ class Build(build):
                 self._copy_directory(src_item, dst_item)
             else:
                 shutil.copy2(src_item, dst_item)
+
+    def build_web_frontend(self):
+        """Build the web frontend."""
+        import os
+        import subprocess
+        import sys
+        import shutil
+
+        print("Building web frontend...")
+
+        # Define paths
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        web_dir = os.path.join(root_dir, "web")
+        vue_cli_dir = os.path.join(web_dir, "server", "vue-cli")
+        dist_dir = os.path.join(vue_cli_dir, "dist")
+
+        # Define destination path in the generated files directory
+        web_dest_dir = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
+        os.makedirs(web_dest_dir, exist_ok=True)
+
+        # Check if we should build the UI
+        build_ui_dist = os.environ.get("BUILD_UI_DIST", "YES")
+
+        if build_ui_dist.upper() == "YES":
+            # Build the Vue.js application
+            try:
+                print("Building Vue.js application...")
+
+                # Check if the dist directory already exists and is up to date
+                if os.path.exists(dist_dir):
+                    # Check if we need to rebuild based on latest commit
+                    latest_commit_file = os.path.join(dist_dir, ".build-commit")
+                    rebuild_needed = True
+
+                    if os.path.exists(latest_commit_file):
+                        try:
+                            # Try to get the latest commit in which vue-cli directory was changed
+                            latest_commit = subprocess.check_output(
+                                [
+                                    "git",
+                                    "log",
+                                    "-n",
+                                    "1",
+                                    "--pretty=format:%H",
+                                    vue_cli_dir,
+                                ],
+                                stderr=subprocess.PIPE,
+                                universal_newlines=True,
+                            ).strip()
+
+                            # Get the latest build commit from the file
+                            with open(latest_commit_file, "r") as f:
+                                latest_build_commit = f.read().strip()
+
+                            # If they match, no need to rebuild
+                            if latest_commit == latest_build_commit:
+                                rebuild_needed = False
+                                print(
+                                    "Vue.js application is up to date, skipping build."
+                                )
+                        except (subprocess.CalledProcessError, OSError, IOError):
+                            # If any error occurs, we'll rebuild to be safe
+                            pass
+
+                    if rebuild_needed:
+                        # Remove existing dist directory to ensure clean build
+                        shutil.rmtree(dist_dir)
+
+                # Create dist directory if it doesn't exist
+                os.makedirs(dist_dir, exist_ok=True)
+
+                # Save current directory to return to it later
+                current_dir = os.getcwd()
+
+                # Change to vue-cli directory
+                os.chdir(vue_cli_dir)
+
+                # Run npm install and build
+                subprocess.check_call(["npm", "install"])
+                subprocess.check_call(["npm", "run-script", "build"])
+
+                # Save the latest commit hash to the build-commit file
+                try:
+                    latest_commit = subprocess.check_output(
+                        ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True,
+                    ).strip()
+
+                    with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
+                        f.write(latest_commit)
+                except (subprocess.CalledProcessError, OSError):
+                    pass
+
+                # Return to original directory
+                os.chdir(current_dir)
+
+                # Copy the built files to the generated files directory
+                if os.path.exists(dist_dir):
+                    print(f"Copying web frontend from {dist_dir} to {web_dest_dir}")
+                    self._copy_directory(dist_dir, web_dest_dir)
+                else:
+                    print(f"Warning: Vue.js build directory {dist_dir} does not exist")
+
+            except (subprocess.CalledProcessError, OSError) as e:
+                print(f"Warning: Failed to build Vue.js application: {e}")
+                print("Continuing with installation without web frontend...")
+        else:
+            print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
+
+        # Build and package report-converter
+        try:
+            print("Building report-converter...")
+            report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
+
+            # Build report-converter using its setup.py
+            subprocess.check_call(
+                [sys.executable, "setup.py", "build"], cwd=report_converter_dir
+            )
+
+            # The report-converter package will be included automatically by setuptools
+            # since it's listed in get_codechecker_packages()
+            print("Report-converter built successfully")
+
+        except (subprocess.CalledProcessError, OSError) as e:
+            print(f"Warning: Failed to build report-converter: {e}")
+            print("Continuing with installation without report-converter...")
 
 
 class BuildExt(build_ext):
