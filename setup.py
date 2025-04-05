@@ -39,16 +39,16 @@ def get_long_description():
 
 def get_codechecker_packages():
     package_roots = [
-        ".",                                # codechecker_common
-        "analyzer",                         # codechecker_analyzer
-        "web",                             # codechecker_web
-        "web/server",                      # codechecker_server
-        "web/client",                      # codechecker_client
-        "tools/tu_collector",              # tu_collector
-        "tools/report-converter",          # codechecker_report_converter
-        "analyzer/tools/statistics_collector", # codechecker_statistics_collector
-        "analyzer/tools/merge_clang_extdef_mappings", # codechecker_merge_clang_extdef_mappings
-        "web/api/py"                       # codechecker_api, codechecker_api_shared
+        ".",  # codechecker_common
+        "analyzer",  # codechecker_analyzer
+        "web",  # codechecker_web
+        "web/server",  # codechecker_server
+        "web/client",  # codechecker_client
+        "tools/tu_collector",  # tu_collector
+        "tools/report-converter",  # codechecker_report_converter
+        "analyzer/tools/statistics_collector",  # codechecker_statistics_collector
+        "analyzer/tools/merge_clang_extdef_mappings",  # codechecker_merge_clang_extdef_mappings
+        "web/api/py",  # codechecker_api, codechecker_api_shared
     ]
     return [
         package_name
@@ -73,17 +73,32 @@ def get_requirements():
     return list(requirements)
 
 
-def discover_data_files(dir_name):
+def discover_config_files(config_dir_path):
+    """Discover all config files recursively and create data_files entries.
+
+    Args:
+        config_dir_path: Path to the config directory
+
+    Returns:
+        List of tuples (target_dir, [file_paths]) for data_files
+    """
     data_files = []
-    dir_path = Path(dir_name)
-    for root, _, files in os.walk(dir_path):
-        if not files:
-            continue
-        entry = (
-            str(DATA_FILES_DEST / dir_path),
-            map(lambda p: str(dir_path / p), files),
-        )
-        data_files.append(entry)
+    config_dir = Path(config_dir_path)
+
+    for file_path in config_dir.glob("**/*"):
+        if file_path.is_file():
+            # Create relative path from config dir
+            rel_path = file_path.relative_to(config_dir)
+            # Determine target directory
+            if len(rel_path.parts) > 1:
+                # File is in a subdirectory
+                target_dir = CONFIG_FILES_PATH / Path(*rel_path.parts[:-1])
+            else:
+                # File is directly in config directory
+                target_dir = CONFIG_FILES_PATH
+
+            # Add file to data_files
+            data_files.append((str(target_dir), [str(file_path)]))
 
     return data_files
 
@@ -103,8 +118,11 @@ def get_data_files():
         ]
     )
 
-    # config
-    data_files.extend(discover_data_files("config"))
+    # config - explicitly include all config files
+    data_files.extend(discover_config_files("config"))
+    
+    # web/config - include web-specific config files
+    data_files.extend(discover_config_files("web/config"))
 
     # commands.json
     # The actual file will be generated during the build process
