@@ -47,6 +47,7 @@ def get_codechecker_packages():
         "tools/tu_collector",              # tu_collector
         "tools/report-converter",          # codechecker_report_converter
         "analyzer/tools/statistics_collector", # codechecker_statistics_collector
+        "analyzer/tools/merge_clang_extdef_mappings", # codechecker_merge_clang_extdef_mappings
         "web/api/py"                       # codechecker_api, codechecker_api_shared
     ]
     return [
@@ -228,6 +229,7 @@ setuptools.setup(
         "tu_collector": "tools/tu_collector/tu_collector/",
         "codechecker_report_converter": "tools/report-converter/codechecker_report_converter/",
         "codechecker_statistics_collector": "analyzer/tools/statistics_collector/codechecker_statistics_collector/",
+        "codechecker_merge_clang_extdef_mappings": "analyzer/tools/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings/",
         "codechecker_api": "web/api/py/codechecker_api/",
         "codechecker_api_shared": "web/api/py/codechecker_api_shared/",
     },
