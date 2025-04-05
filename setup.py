@@ -345,6 +345,7 @@ class Build(build):
         import subprocess
         import shutil
         import os.path
+        import tempfile
 
         print("Checking and building API packages if needed...")
 
@@ -368,6 +369,19 @@ class Build(build):
 
         if need_build:
             try:
+                # Create directories for generated files if they don't exist
+                py_api_dir = os.path.join(
+                    api_py_dir, "codechecker_api", "codechecker_api"
+                )
+                py_api_shared_dir = os.path.join(
+                    api_py_dir, "codechecker_api_shared", "codechecker_api_shared"
+                )
+
+                os.makedirs(py_api_dir, exist_ok=True)
+                os.makedirs(py_api_shared_dir, exist_ok=True)
+                os.makedirs(api_shared_dist, exist_ok=True)
+                os.makedirs(api_dist, exist_ok=True)
+
                 # Check if we have Docker for building the API packages
                 try:
                     subprocess.check_output(
@@ -378,13 +392,121 @@ class Build(build):
                     has_docker = False
 
                 if has_docker:
-                    # Use the Makefile to build the API packages
                     print("Building API packages using Docker...")
-                    subprocess.check_call(
-                        ["make", "-C", api_dir, "build"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
+
+                    # These are the Thrift files that need to be processed
+                    thrift_files = [
+                        os.path.join(api_dir, "authentication.thrift"),
+                        os.path.join(api_dir, "products.thrift"),
+                        os.path.join(api_dir, "report_server.thrift"),
+                        os.path.join(api_dir, "configuration.thrift"),
+                        os.path.join(api_dir, "server_info.thrift"),
+                        os.path.join(api_dir, "codechecker_api_shared.thrift"),
+                    ]
+
+                    # Create a temporary directory for the generated files
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        # Run Docker to generate the Thrift files
+                        for thrift_file in thrift_files:
+                            if os.path.exists(thrift_file):
+                                print(f"Processing {thrift_file}...")
+                                # Get the current user ID and group ID
+                                uid = os.getuid() if hasattr(os, "getuid") else 1000
+                                gid = os.getgid() if hasattr(os, "getgid") else 1000
+
+                                # Run Thrift in Docker to generate Python code
+                                cmd = [
+                                    "docker",
+                                    "run",
+                                    "--rm",
+                                    "-u",
+                                    f"{uid}:{gid}",
+                                    "-v",
+                                    f"{os.path.abspath(api_dir)}:/data",
+                                    "thrift:0.11.0",
+                                    "thrift",
+                                    "-r",
+                                    "-o",
+                                    "/data",
+                                    "--gen",
+                                    "py",
+                                    f"/data/{os.path.basename(thrift_file)}",
+                                ]
+
+                                try:
+                                    subprocess.check_call(
+                                        cmd,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                    )
+                                    print(
+                                        f"Successfully generated Python code for {thrift_file}"
+                                    )
+                                except subprocess.CalledProcessError as e:
+                                    print(
+                                        f"Error generating Python code for {thrift_file}: {str(e)}"
+                                    )
+                            else:
+                                print(f"Warning: Thrift file {thrift_file} not found")
+
+                        # Copy the generated files to their destinations
+                        gen_py_dir = os.path.join(api_dir, "gen-py")
+                        if os.path.exists(gen_py_dir):
+                            # Copy codechecker_api_shared files
+                            if os.path.exists(
+                                os.path.join(gen_py_dir, "codechecker_api_shared")
+                            ):
+                                self._copy_directory(
+                                    os.path.join(gen_py_dir, "codechecker_api_shared"),
+                                    py_api_shared_dir,
+                                )
+
+                            # Copy all other API files
+                            for item in os.listdir(gen_py_dir):
+                                if item != "codechecker_api_shared" and os.path.isdir(
+                                    os.path.join(gen_py_dir, item)
+                                ):
+                                    self._copy_directory(
+                                        os.path.join(gen_py_dir, item), py_api_dir
+                                    )
+
+                            # Build the packages
+                            # Build codechecker_api_shared
+                            os.chdir(os.path.join(api_py_dir, "codechecker_api_shared"))
+                            subprocess.check_call([sys.executable, "setup.py", "sdist"])
+
+                            # Rename the tarball
+                            for file in os.listdir(api_shared_dist):
+                                if file.startswith(
+                                    "codechecker_api_shared-"
+                                ) and file.endswith(".tar.gz"):
+                                    os.rename(
+                                        os.path.join(api_shared_dist, file),
+                                        api_shared_tarball,
+                                    )
+
+                            # Build codechecker_api
+                            os.chdir(os.path.join(api_py_dir, "codechecker_api"))
+                            subprocess.check_call([sys.executable, "setup.py", "sdist"])
+
+                            # Rename the tarball
+                            for file in os.listdir(api_dist):
+                                if file.startswith(
+                                    "codechecker_api-"
+                                ) and file.endswith(".tar.gz"):
+                                    os.rename(os.path.join(api_dist, file), api_tarball)
+
+                            # Return to the original directory
+                            os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+                            # Clean up generated files
+                            shutil.rmtree(gen_py_dir, ignore_errors=True)
+
+                            print("Successfully built API packages")
+                        else:
+                            print(
+                                f"Warning: Generated Python directory {gen_py_dir} not found"
+                            )
                 else:
                     # Inform the user that Docker is required
                     print("Warning: Docker is required to build the API packages.")
@@ -459,6 +581,23 @@ class Build(build):
                 print("Continuing with installation, but some features may not work.")
         else:
             print("API packages already exist, skipping build.")
+
+    def _copy_directory(self, src, dst):
+        """Copy all contents from src directory to dst directory."""
+        import os
+        import shutil
+
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+
+        for item in os.listdir(src):
+            src_item = os.path.join(src, item)
+            dst_item = os.path.join(dst, item)
+
+            if os.path.isdir(src_item):
+                self._copy_directory(src_item, dst_item)
+            else:
+                shutil.copy2(src_item, dst_item)
 
 
 class BuildExt(build_ext):
