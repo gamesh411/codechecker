@@ -10,8 +10,7 @@ from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.extension import Extension
 
-REQ_FILE_PATHS = [Path("analyzer", "requirements.txt"),
-                  Path("web", "requirements.txt")]
+REQ_FILE_PATHS = [Path("analyzer", "requirements.txt"), Path("web", "requirements.txt")]
 
 LD_LOGGER_SRC_PATH = Path("analyzer", "tools", "build-logger", "src")
 
@@ -27,6 +26,8 @@ LD_LOGGER_SOURCES = [
 LD_LOGGER_INCLUDES = ["ldlogger-hooks.h", "ldlogger-tool.h", "ldlogger-util.h"]
 
 DATA_FILES_DEST = Path("share", "codechecker")
+CONFIG_FILES_PATH = DATA_FILES_DEST / "config"
+GENERATED_FILES_DEST = Path("build") / "__generated__"
 
 
 def get_long_description():
@@ -87,20 +88,22 @@ def get_data_files():
     data_files.extend(
         [
             (str(DATA_FILES_DEST / "docs"), [str(Path("docs", "README.md"))]),
-            *map(lambda p: (str(DATA_FILES_DEST / p),
-                 [str(p)]), REQ_FILE_PATHS),
+            *map(lambda p: (str(DATA_FILES_DEST / p), [str(p)]), REQ_FILE_PATHS),
         ]
     )
 
     # config
-    print(discover_data_files("config"))
     data_files.extend(discover_data_files("config"))
 
-    # TODO: www is dynamically generated, make sure we find the folder
-    # www_descriptors = discover_data_files('www')
-    # www is dynamically generated, make sure we find the folder
-    # assert (len(www_descriptors) > 0)
-    # data_files.extend(www_descriptors)
+    # commands.json
+    # The actual file will be generated during the build process
+    # This entry ensures the package includes the config directory structure
+    data_files.append(
+        (
+            str(CONFIG_FILES_PATH),
+            [str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "commands.json")],
+        )
+    )
 
     # ld logger header
     # TODO: do we need to copy the header files?
@@ -127,22 +130,61 @@ def get_ext_modules():
                 "-Wl,--no-as-needed",
                 "-ldl",
             ],
-            sources=[os.path.join(LD_LOGGER_SRC_PATH, s)
-                     for s in LD_LOGGER_SOURCES],
+            sources=[os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES],
         )
     ]
 
 
 class Build(build):
     def run(self):
-        # build command.json
-        # build thrift
-        # build vue
+        # First run the standard build
         build.run(self)
+
+        # Create commands.json
+        self.generate_commands_json()
+
+    def generate_commands_json(self):
+        """Generate commands.json file by collecting all CLI commands."""
+        import glob
+        import json
+
+        # Create config directory if it doesn't exist
+        config_dir = GENERATED_FILES_DEST / CONFIG_FILES_PATH
+        os.makedirs(config_dir, exist_ok=True)
+
+        # Define command directories to scan
+        cmd_dirs = [
+            os.path.join("codechecker_common", "cli_commands"),
+            os.path.join("analyzer", "codechecker_analyzer", "cli"),
+            os.path.join("web", "codechecker_web", "cli"),
+            os.path.join("web", "server", "codechecker_server", "cli"),
+            os.path.join("web", "client", "codechecker_client", "cli"),
+        ]
+
+        # Collect subcommands
+        subcmds = {}
+        for cmd_dir in cmd_dirs:
+            if not os.path.exists(cmd_dir):
+                continue
+
+            for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
+                cmd_file_name = os.path.basename(cmd_file)
+                # Exclude files like __init__.py or __pycache__
+                if "__" not in cmd_file_name:
+                    # [:-3] removes '.py' extension
+                    subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
+                        *cmd_file.split(os.sep)[-3:]
+                    )
+
+        # Write commands.json
+        commands_json_path = os.path.join(config_dir, "commands.json")
+        with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
+            json.dump(subcmds, f, sort_keys=True, indent=2)
+
+        print(f"Generated commands.json at {commands_json_path}")
 
 
 class BuildExt(build_ext):
-
     def get_ext_filename(self, ext_name):
         return Path(platform.architecture()[0], f"{ext_name}.so")
 
