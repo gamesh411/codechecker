@@ -38,7 +38,17 @@ def get_long_description():
 
 
 def get_codechecker_packages():
-    package_roots = [".", "analyzer", "web", "web/server", "web/client"]
+    package_roots = [
+        ".",                                # codechecker_common
+        "analyzer",                         # codechecker_analyzer
+        "web",                             # codechecker_web
+        "web/server",                      # codechecker_server
+        "web/client",                      # codechecker_client
+        "tools/tu_collector",              # tu_collector
+        "tools/report-converter",          # codechecker_report_converter
+        "analyzer/tools/statistics_collector", # codechecker_statistics_collector
+        "web/api/py"                       # codechecker_api, codechecker_api_shared
+    ]
     return [
         package_name
         for package_list in map(setuptools.find_packages, package_roots)
@@ -215,6 +225,11 @@ setuptools.setup(
         "codechecker_web": "web/codechecker_web/",
         "codechecker_client": "web/client/codechecker_client/",
         "codechecker_server": "web/server/codechecker_server/",
+        "tu_collector": "tools/tu_collector/tu_collector/",
+        "codechecker_report_converter": "tools/report-converter/codechecker_report_converter/",
+        "codechecker_statistics_collector": "analyzer/tools/statistics_collector/codechecker_statistics_collector/",
+        "codechecker_api": "web/api/py/codechecker_api/",
+        "codechecker_api_shared": "web/api/py/codechecker_api_shared/",
     },
     data_files=get_data_files(),
     include_package_data=True,
