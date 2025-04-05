@@ -752,8 +752,22 @@ class BuildExt(build_ext):
         return Path(platform.architecture()[0], f"{ext_name}.so")
 
     def build_extension(self, ext):
+        # Only build the extension on Linux platforms
         if sys.platform == "linux":
             build_ext.build_extension(self, ext)
+        else:
+            # On non-Linux platforms (like macOS), create the target directory
+            # but skip building the Linux-specific extension
+            target_dir = os.path.dirname(self.get_ext_fullpath(ext.name))
+            os.makedirs(target_dir, exist_ok=True)
+            print(f"Skipping build of {ext.name} extension on {sys.platform} platform")
+
+    def copy_extensions_to_source(self):
+        # Skip copying extensions on non-Linux platforms to avoid errors
+        if sys.platform == "linux":
+            build_ext.copy_extensions_to_source(self)
+        else:
+            print(f"Skipping copy of extensions on {sys.platform} platform")
 
 
 from setuptools.command.install import install
