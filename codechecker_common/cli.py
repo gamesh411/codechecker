@@ -57,6 +57,50 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     command_module.add_arguments_to_parser(sc_parser)
 
 
+def generate_commands_json(commands_json_path):
+    """Generate commands.json file by collecting all CLI commands.
+
+    This function is based on the generate_commands_json method in setup.py.
+    It's used to generate the commands.json file on-the-fly in development mode.
+    """
+    import glob
+    import json
+    import os
+
+    # Get the project root directory
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+    # Define command directories to scan
+    cmd_dirs = [
+        os.path.join(project_root, "codechecker_common", "cli_commands"),
+        os.path.join(project_root, "analyzer", "codechecker_analyzer", "cli"),
+        os.path.join(project_root, "web", "codechecker_web", "cli"),
+        os.path.join(project_root, "web", "server", "codechecker_server", "cli"),
+        os.path.join(project_root, "web", "client", "codechecker_client", "cli"),
+    ]
+
+    # Collect subcommands
+    subcmds = {}
+    for cmd_dir in cmd_dirs:
+        if not os.path.exists(cmd_dir):
+            continue
+
+        for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
+            cmd_file_name = os.path.basename(cmd_file)
+            # Exclude files like __init__.py or __pycache__
+            if "__" not in cmd_file_name:
+                # [:-3] removes '.py' extension
+                subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
+                    *cmd_file.split(os.sep)[-3:]
+                )
+
+    # Write commands.json
+    with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
+        json.dump(subcmds, f, sort_keys=True, indent=2)
+
+    print(f"Generated commands.json at {commands_json_path}")
+
+
 def get_data_files_dir_path():
     """ Get data files directory path """
     bin_dir = os.environ.get('CC_BIN_DIR')
@@ -65,6 +109,20 @@ def get_data_files_dir_path():
     # folder.
     if bin_dir:
         return os.path.dirname(bin_dir)
+
+    # Check for development mode installation
+    # In development mode, we need to look for the files in the source directory
+    package_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    dev_config_path = os.path.join(package_root, "config")
+    if os.path.exists(os.path.join(dev_config_path, "commands.json")):
+        return os.path.dirname(dev_config_path)
+
+    # Also check for build directory in development mode
+    build_config_path = os.path.join(
+        package_root, "build_dist", "CodeChecker", "config"
+    )
+    if os.path.exists(os.path.join(build_config_path, "commands.json")):
+        return os.path.dirname(build_config_path)
 
     # If this is a pip-installed package, try to find the data directory.
     import sysconfig
@@ -84,6 +142,13 @@ def get_data_files_dir_path():
         if os.path.exists(data_dir_path):
             return data_dir_path
 
+    # For development mode, create a config directory in the package root
+    # if commands.json doesn't exist yet and no other data directory was found
+    dev_data_dir = os.path.join(package_root, "share", "codechecker")
+    os.makedirs(dev_data_dir, exist_ok=True)
+    return dev_data_dir
+
+    # This code should never be reached since we return a directory above
     print("Failed to get CodeChecker data files directory path in: ",
           data_dir_paths)
     sys.exit(1)
@@ -104,6 +169,13 @@ def main():
     # This list is generated dynamically by scripts/build_package.py, and is
     # always meant to be available alongside the CodeChecker.py.
     commands_cfg = os.path.join(data_files_dir_path, "config", "commands.json")
+
+    # Check if commands.json exists, if not, generate it on-the-fly
+    # This is needed for development mode installations
+    if not os.path.exists(commands_cfg):
+        print(f"commands.json not found at {commands_cfg}, generating it on-the-fly...")
+        os.makedirs(os.path.dirname(commands_cfg), exist_ok=True)
+        generate_commands_json(commands_cfg)
 
     with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
         subcommands = json.load(cfg_file)
