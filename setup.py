@@ -128,14 +128,13 @@ def get_data_files():
     # server/config - include server-specific config files
     data_files.extend(discover_config_files("web/server/config"))
 
-    # Version files and commands.json
+    # Version files
     # These files are generated during the build process
     # Make sure they're included in the package
     data_files.append(
         (
             str(CONFIG_FILES_PATH),
             [
-                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "commands.json"),
                 str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "web_version.json"),
                 str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "analyzer_version.json"),
             ],
@@ -191,9 +190,6 @@ class Build(build):
         # First run the standard build
         build.run(self)
 
-        # Create commands.json
-        self.generate_commands_json()
-
         # Extend version files with build date and git information
         self.extend_version_files()
 
@@ -203,45 +199,7 @@ class Build(build):
         # Build web frontend
         self.build_web_frontend()
 
-    def generate_commands_json(self):
-        """Generate commands.json file by collecting all CLI commands."""
-        import glob
-        import json
 
-        # Create config directory if it doesn't exist
-        config_dir = GENERATED_FILES_DEST / CONFIG_FILES_PATH
-        os.makedirs(config_dir, exist_ok=True)
-
-        # Define command directories to scan
-        cmd_dirs = [
-            os.path.join("codechecker_common", "cli_commands"),
-            os.path.join("analyzer", "codechecker_analyzer", "cli"),
-            os.path.join("web", "codechecker_web", "cli"),
-            os.path.join("web", "server", "codechecker_server", "cli"),
-            os.path.join("web", "client", "codechecker_client", "cli"),
-        ]
-
-        # Collect subcommands
-        subcmds = {}
-        for cmd_dir in cmd_dirs:
-            if not os.path.exists(cmd_dir):
-                continue
-
-            for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
-                cmd_file_name = os.path.basename(cmd_file)
-                # Exclude files like __init__.py or __pycache__
-                if "__" not in cmd_file_name:
-                    # [:-3] removes '.py' extension
-                    subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
-                        *cmd_file.split(os.sep)[-3:]
-                    )
-
-        # Write commands.json
-        commands_json_path = os.path.join(config_dir, "commands.json")
-        with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
-            json.dump(subcmds, f, sort_keys=True, indent=2)
-
-        print(f"Generated commands.json at {commands_json_path}")
 
     def extend_version_files(self):
         """Extend version files with build date and git information."""

@@ -39,45 +39,100 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     subparsers has to be the return value of the add_parsers() method on an
     argparse.ArgumentParser.
     """
-    m_path, m_name = os.path.split(cmd_module_path)
+    # Since we now store the full path to the module file, we can use importlib
+    # to load it directly without relying on the import machinery
+    import importlib.util
 
-    module_name = os.path.splitext(m_name)[0]
-    target = [os.path.join(lib_dir_path, m_path)]
+    try:
+        # Load the module directly from the file path
+        module_name = os.path.splitext(os.path.basename(cmd_module_path))[0]
+        spec = importlib.util.spec_from_file_location(module_name, cmd_module_path)
+        if spec is None:
+            print(f"Warning: Could not create spec for module {cmd_module_path}")
+            return
 
-    # Load the module named as the argument.
-    cmd_spec = machinery.PathFinder().find_spec(module_name,
-                                                target)
-    command_module = cmd_spec.loader.load_module(module_name)
+        command_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(command_module)
 
-    # Now that the module is loaded, construct an ArgumentParser for it.
-    sc_parser = subparsers.add_parser(
-        sub_cmd, **command_module.get_argparser_ctor_args())
+        # Now that the module is loaded, construct an ArgumentParser for it.
+        sc_parser = subparsers.add_parser(
+            sub_cmd, **command_module.get_argparser_ctor_args()
+        )
 
-    # Run the method which adds the arguments to the subcommand's handler.
-    command_module.add_arguments_to_parser(sc_parser)
+        # Run the method which adds the arguments to the subcommand's handler.
+        command_module.add_arguments_to_parser(sc_parser)
+    except Exception as e:
+        print(f"Warning: Error loading command module {cmd_module_path}: {e}")
+        return
 
 
-def generate_commands_json(commands_json_path):
-    """Generate commands.json file by collecting all CLI commands.
+def discover_subcommands():
+    """Dynamically discover all CLI commands by exploring the filesystem.
 
-    This function is based on the generate_commands_json method in setup.py.
-    It's used to generate the commands.json file on-the-fly in development mode.
+    This function scans the filesystem for command modules and returns a dictionary
+    mapping command names to their module paths. This eliminates the need for a
+    static commands.json file.
     """
     import glob
-    import json
     import os
+    import sys
+    import importlib.util
 
     # Get the project root directory
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    if getattr(sys, "frozen", False):
+        # We're running in a bundle
+        project_root = os.path.dirname(sys.executable)
+    else:
+        # We're running in a normal Python environment
+        project_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..")
+        )
 
-    # Define command directories to scan
+    # Define possible command directories to scan
     cmd_dirs = [
-        os.path.join(project_root, "codechecker_common", "cli_commands"),
-        os.path.join(project_root, "analyzer", "codechecker_analyzer", "cli"),
-        os.path.join(project_root, "web", "codechecker_web", "cli"),
-        os.path.join(project_root, "web", "server", "codechecker_server", "cli"),
-        os.path.join(project_root, "web", "client", "codechecker_client", "cli"),
+        # First check in the standard locations for an installed package
+        os.path.join(os.path.dirname(__file__), "cli_commands"),
     ]
+
+    # Try to import the main packages to determine if we're in development or installed mode
+    try:
+        import codechecker_analyzer
+
+        analyzer_path = os.path.dirname(codechecker_analyzer.__file__)
+        cmd_dirs.append(os.path.join(analyzer_path, "cli"))
+    except ImportError:
+        # In development mode, use the project structure
+        cmd_dirs.append(
+            os.path.join(project_root, "analyzer", "codechecker_analyzer", "cli")
+        )
+
+    try:
+        import codechecker_web
+
+        web_path = os.path.dirname(codechecker_web.__file__)
+        cmd_dirs.append(os.path.join(web_path, "cli"))
+    except ImportError:
+        cmd_dirs.append(os.path.join(project_root, "web", "codechecker_web", "cli"))
+
+    try:
+        import codechecker_server
+
+        server_path = os.path.dirname(codechecker_server.__file__)
+        cmd_dirs.append(os.path.join(server_path, "cli"))
+    except ImportError:
+        cmd_dirs.append(
+            os.path.join(project_root, "web", "server", "codechecker_server", "cli")
+        )
+
+    try:
+        import codechecker_client
+
+        client_path = os.path.dirname(codechecker_client.__file__)
+        cmd_dirs.append(os.path.join(client_path, "cli"))
+    except ImportError:
+        cmd_dirs.append(
+            os.path.join(project_root, "web", "client", "codechecker_client", "cli")
+        )
 
     # Collect subcommands
     subcmds = {}
@@ -90,15 +145,14 @@ def generate_commands_json(commands_json_path):
             # Exclude files like __init__.py or __pycache__
             if "__" not in cmd_file_name:
                 # [:-3] removes '.py' extension
-                subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
-                    *cmd_file.split(os.sep)[-3:]
-                )
+                cmd_name = cmd_file_name[:-3].replace("_", "-")
 
-    # Write commands.json
-    with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
-        json.dump(subcmds, f, sort_keys=True, indent=2)
+                # Only add if not already found (prioritize earlier directories)
+                if cmd_name not in subcmds:
+                    # Store the full path to the module for easier importing
+                    subcmds[cmd_name] = cmd_file
 
-    print(f"Generated commands.json at {commands_json_path}")
+    return subcmds
 
 
 def get_data_files_dir_path():
@@ -165,20 +219,9 @@ def main():
     data_files_dir_path = get_data_files_dir_path()
     os.environ['CC_DATA_FILES_DIR'] = data_files_dir_path
 
-    # Load the available CodeChecker subcommands.
-    # This list is generated dynamically by scripts/build_package.py, and is
-    # always meant to be available alongside the CodeChecker.py.
-    commands_cfg = os.path.join(data_files_dir_path, "config", "commands.json")
-
-    # Check if commands.json exists, if not, generate it on-the-fly
-    # This is needed for development mode installations
-    if not os.path.exists(commands_cfg):
-        print(f"commands.json not found at {commands_cfg}, generating it on-the-fly...")
-        os.makedirs(os.path.dirname(commands_cfg), exist_ok=True)
-        generate_commands_json(commands_cfg)
-
-    with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
-        subcommands = json.load(cfg_file)
+    # Dynamically discover available CodeChecker subcommands by exploring the filesystem
+    # This eliminates the need for a static commands.json file and makes the system more flexible
+    subcommands = discover_subcommands()
 
     def signal_handler(signum, _):
         """
