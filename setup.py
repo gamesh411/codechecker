@@ -771,27 +771,54 @@ class BuildExt(build_ext):
 
 
 from setuptools.command.install import install
+from setuptools import find_packages
 
 
 class CustomInstall(install):
-    """Custom install command that installs API packages after main installation."""
+    """Custom install command that builds and installs API packages."""
 
     def run(self):
-        # Run the standard installation
-        install.run(self)
+        try:
+            # Build API packages first to ensure they exist
+            self.build_api_packages()
 
-        # Install API packages if they exist
-        self.install_api_packages()
+            # Install API packages before the main installation
+            # This ensures they're available when the main package is installed
+            self.install_api_packages()
+
+            # Then run the standard installation
+            install.run(self)
+        except Exception as e:
+            print(f"Error during installation: {str(e)}")
+            # Continue with standard installation even if API packages fail
+            print("Continuing with standard installation without API packages...")
+            install.run(self)
+
+    def build_api_packages(self):
+        """Build API packages by calling the build_api_packages method from the Build class."""
+        print("Building API packages...")
+
+        try:
+            # Create a Build instance and call its build_api_packages method
+            from setuptools.command.build import build
+
+            build_cmd = Build(self.distribution)
+            build_cmd.finalize_options()
+            build_cmd.build_api_packages()
+        except Exception as e:
+            print(f"Error building API packages: {str(e)}")
+            print("Will attempt to use pre-built packages if they exist.")
 
     def install_api_packages(self):
-        """Install API packages after main installation."""
+        """Install API packages before main installation."""
         import subprocess
         import os.path
 
         print("Installing API packages...")
 
-        # Define paths to API packages
-        api_dir = os.path.join("web", "api", "py")
+        # Define paths to API packages using absolute paths
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        api_dir = os.path.join(base_dir, "web", "api", "py")
         api_shared_path = os.path.join(
             api_dir, "codechecker_api_shared", "dist", "codechecker_api_shared.tar.gz"
         )
@@ -809,8 +836,11 @@ class CustomInstall(install):
                 print(f"Successfully installed {api_shared_path}")
             except subprocess.CalledProcessError as e:
                 print(f"Error installing {api_shared_path}: {str(e)}")
+                print("Continuing without API shared package...")
+                return  # Skip the rest if this fails
         else:
             print(f"Warning: API shared package not found at {api_shared_path}")
+            return  # Skip the rest if shared package doesn't exist
 
         if os.path.exists(api_path):
             print(f"Installing {api_path}")
@@ -821,6 +851,7 @@ class CustomInstall(install):
                 print(f"Successfully installed {api_path}")
             except subprocess.CalledProcessError as e:
                 print(f"Error installing {api_path}: {str(e)}")
+                print("Continuing without API package...")
         else:
             print(f"Warning: API package not found at {api_path}")
 
