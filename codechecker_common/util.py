@@ -27,6 +27,41 @@ from codechecker_common.logger import get_logger
 from .typehints import Orderable
 
 LOG = get_logger('system')
+def resolve_config_path(relative_path: str) -> str:
+    """Resolve a config file path uniformly for packaged and dev installs.
+
+    Order:
+    1) codechecker_common package_data (importlib.resources)
+    2) CC_DATA_FILES_DIR/config/<relative_path>
+    3) dev fallbacks under analyzer/config and web/config when applicable
+    """
+    # 1) Try embedded package data
+    try:
+        from importlib.resources import files as _res_files
+        pkg_file = _res_files("codechecker_common").joinpath("config", relative_path)
+        if pkg_file.is_file():
+            return str(pkg_file)
+    except Exception:
+        pass
+
+    data_root = os.environ.get('CC_DATA_FILES_DIR', '')
+    # 2) Try data root config
+    candidate = os.path.join(data_root, 'config', relative_path)
+    if os.path.exists(candidate):
+        return candidate
+
+    # 3) Dev fallbacks
+    repo_root = data_root or os.getcwd()
+    # analyzer/config
+    acand = os.path.join(repo_root, 'analyzer', 'config', relative_path)
+    if os.path.exists(acand):
+        return acand
+    # web/config
+    wcand = os.path.join(repo_root, 'web', 'config', relative_path)
+    if os.path.exists(wcand):
+        return wcand
+    return candidate
+
 
 
 def arg_match(options, args):

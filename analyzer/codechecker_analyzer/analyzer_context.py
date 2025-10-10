@@ -15,6 +15,7 @@ from argparse import ArgumentTypeError
 
 import os
 import sys
+import time
 
 from codechecker_analyzer.arg import analyzer_binary
 from codechecker_common import logger
@@ -191,7 +192,7 @@ class Context(metaclass=Singleton):
             sys.exit(1)
 
         package_version = vfile_data['version']
-        package_build_date = vfile_data['package_build_date']
+        package_build_date = vfile_data.get('package_build_date') or time.strftime("%Y-%m-%dT%H:%M")
         package_git_hash = vfile_data.get('git_hash')
         package_git_tag = vfile_data.get('git_describe', {}).get('tag')
         package_git_dirtytag = vfile_data.get('git_describe', {}).get('dirty')
@@ -302,8 +303,17 @@ class Context(metaclass=Singleton):
 
     @property
     def version_file(self):
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'analyzer_version.json')
+        # Prefer packaged location: <data_root>/config/analyzer_version.json
+        primary = os.path.join(self._data_files_dir_path, 'config',
+                               'analyzer_version.json')
+        if os.path.exists(primary):
+            return primary
+        # Editable/dev fallback: <repo_root>/analyzer/config/analyzer_version.json
+        alt = os.path.join(self._data_files_dir_path, 'analyzer', 'config',
+                           'analyzer_version.json')
+        if os.path.exists(alt):
+            return alt
+        return primary
 
     @property
     def env_var_cc_logger_bin(self):

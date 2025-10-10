@@ -14,12 +14,13 @@ from collections.abc import Mapping
 import os
 import re
 import sys
+import time
 
 from codechecker_common import logger
 from codechecker_common.checker_labels import CheckerLabels
 from codechecker_common.guidelines import Guidelines
 from codechecker_common.singleton import Singleton
-from codechecker_common.util import load_json
+from codechecker_common.util import load_json, resolve_config_path
 
 LOG = logger.get_logger('system')
 
@@ -121,7 +122,7 @@ class Context(metaclass=Singleton):
             sys.exit(1)
 
         package_version = vfile_data['version']
-        package_build_date = vfile_data['package_build_date']
+        package_build_date = vfile_data.get('package_build_date') or time.strftime("%Y-%m-%dT%H:%M")
         package_git_hash = vfile_data.get('git_hash')
         package_git_tag = vfile_data.get('git_describe', {}).get('tag')
         package_git_dirtytag = vfile_data.get('git_describe', {}).get('dirty')
@@ -159,8 +160,7 @@ class Context(metaclass=Singleton):
 
     @property
     def version_file(self):
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'web_version.json')
+        return resolve_config_path('web_version.json')
 
     @property
     def system_comment_map(self):
@@ -168,13 +168,11 @@ class Context(metaclass=Singleton):
 
     @property
     def system_comment_map_file(self):
-        return os.path.join(self._data_files_dir_path, 'config',
-                            'system_comment_kinds.json')
+        return resolve_config_path('system_comment_kinds.json')
 
     @property
     def git_commit_urls_file(self):
-        return os.path.join(
-            self._data_files_dir_path, 'config', 'git_commit_urls.json')
+        return resolve_config_path('git_commit_urls.json')
 
     @property
     def git_commit_urls(self):
