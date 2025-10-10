@@ -292,6 +292,67 @@ set the `BUILD_UI_DIST` environment variable to `NO` before the package build:
 - Use `make standalone_package` instead of `make package` to avoid
 having to manually activate the environment before running CodeChecker.
 
+### Alternative: Build with Python packaging (PEP 517)
+
+You can build and develop CodeChecker using standard Python packaging tools.
+This is useful for environments without Make, and enables editable installs for
+fast inner-loop development.
+
+1) Ensure packaging tooling is available:
+
+```sh
+python3 -m pip install --upgrade pip setuptools wheel build
+```
+
+2) Build source and wheel distributions:
+
+```sh
+python3 -m build
+# Artifacts in ./dist: codechecker-<ver>.tar.gz and .whl
+```
+
+3a) Install the built wheel (packaged mode):
+
+```sh
+python3 -m pip install dist/codechecker-*.whl
+```
+
+3b) Or, install in editable/development mode:
+
+```sh
+python3 -m pip install -e .
+```
+
+4) Install the API packages (required for Thrift API client/server):
+
+If you have the API sdists bundled in the repository, run:
+
+```sh
+CC_DATA_FILES_DIR=$(pwd) codechecker-install-api --upgrade
+```
+
+Alternatively, install from PyPI (ensure versions match the core package):
+
+```sh
+python3 -m pip install --upgrade codechecker_api_shared codechecker_api
+```
+
+5) Verify installation:
+
+```sh
+CodeChecker --help
+CodeChecker version
+```
+
+Notes:
+- Editable installs expose `CodeChecker` console scripts from your virtualenv
+  and pick up source changes immediately without rebuilding.
+- Configuration files are resolved uniformly in packaged and development
+  installs via package-embedded resources with development fallbacks; no manual
+  generation of `commands.json` is needed.
+- `setup.py` no longer invokes Docker or npm; prebuilt web assets (if present)
+  are included as package data. Build the UI separately if needed.
+
 ### Minimum Recommended package versions
 
 * In production it is recommended to execute CodeChecker with the minimum Python versions: 3.7.14, 3.8.14, 3.9.14, 3.10.6, 3.11.0, otherwise it may be vulnerable to open-redirect attacks. For more info see https://python-security.readthedocs.io/vuln/http-server-redirection.html (CVE-2021-28861).
