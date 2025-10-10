@@ -1,2 +1,14 @@
-recursive-include build_dist/CodeChecker/lib/python3/codechecker_report_converter/report/output/html/static *
 include LICENSE.TXT
+include docs/README.md
+recursive-include config *
+recursive-include web/config *
+recursive-include web/server/config *
+recursive-include analyzer/config *
+recursive-include analyzer/tools/build-logger/src *.h
+recursive-include tools/report-converter *
+recursive-include tools/tu_collector *
+recursive-include analyzer/tools/statistics_collector *
+recursive-include analyzer/tools/merge_clang_extdef_mappings *
+recursive-include web/api/py/codechecker_api_shared *
+recursive-include web/api/py/codechecker_api *
+recursive-include web/server/vue-cli/dist *
