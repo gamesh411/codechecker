@@ -1,19 +1,31 @@
 #!/usr/bin/env python3
 
 import os
-from pathlib import Path
-import platform
 import sys
 import setuptools
 import sys
+import tarfile
+import shutil
+import glob
+import json
+import time
+import subprocess
+import shutil
+import os.path
+import tempfile
 
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
+# Removed unused import: sdist
+# Removed unused import: bdist_wheel
 from setuptools.extension import Extension
 
-REQ_FILE_PATHS = [Path("analyzer", "requirements.txt"), Path("web", "requirements.txt")]
+REQ_FILE_PATHS = [
+    os.path.join("analyzer", "requirements.txt"),
+    os.path.join("web", "requirements.txt"),
+]
 
-LD_LOGGER_SRC_PATH = Path("analyzer", "tools", "build-logger", "src")
+LD_LOGGER_SRC_PATH = os.path.join("analyzer", "tools", "build-logger", "src")
 
 LD_LOGGER_SOURCES = [
     "ldlogger-hooks.c",
@@ -26,9 +38,9 @@ LD_LOGGER_SOURCES = [
 
 LD_LOGGER_INCLUDES = ["ldlogger-hooks.h", "ldlogger-tool.h", "ldlogger-util.h"]
 
-DATA_FILES_DEST = Path("share", "codechecker")
-CONFIG_FILES_PATH = DATA_FILES_DEST / "config"
-GENERATED_FILES_DEST = Path("build") / "__generated__"
+DATA_FILES_DEST = os.path.join("share", "codechecker")
+CONFIG_FILES_PATH = os.path.join(DATA_FILES_DEST, "config")
+GENERATED_FILES_DEST = os.path.join("build", "__generated__")
 
 
 def get_long_description():
@@ -74,7 +86,7 @@ def get_requirements():
     return list(requirements)
 
 
-def discover_config_files(config_dir_path):
+def discover_config_files(config_dir_path: str):
     """Discover all config files recursively and create data_files entries.
 
     Args:
@@ -84,23 +96,49 @@ def discover_config_files(config_dir_path):
         List of tuples (target_dir, [file_paths]) for data_files
     """
     data_files = []
-    config_dir = Path(config_dir_path)
 
-    for file_path in config_dir.glob("**/*"):
-        if file_path.is_file():
+    for file_path in glob.glob(os.path.join(config_dir_path, "**/*"), recursive=True):
+        if os.path.isfile(file_path):
             # Create relative path from config dir
-            rel_path = file_path.relative_to(config_dir)
+            rel_path = os.path.relpath(file_path, config_dir_path)
             # Determine target directory
-            if len(rel_path.parts) > 1:
-                # File is in a subdirectory
-                target_dir = CONFIG_FILES_PATH / Path(*rel_path.parts[:-1])
-            else:
-                # File is directly in config directory
-                target_dir = CONFIG_FILES_PATH
+            target_dir = os.path.join(CONFIG_FILES_PATH, *os.path.split(rel_path)[:-1])
 
             # Add file to data_files
-            data_files.append((str(target_dir), [str(file_path)]))
+            data_files.append((target_dir, [file_path]))
 
+    return data_files
+
+
+def get_web_frontend_data_files():
+    """
+    Get data files for web frontend assets.
+    This function should only be called AFTER the web frontend has been built.
+    """
+    data_files = []
+    
+    # Web frontend files from the generated directory
+    web_generated_www = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
+    
+    if os.path.exists(web_generated_www):
+        for root, _, files in os.walk(web_generated_www):
+            if files:
+                # Filter out files that don't actually exist
+                existing_files = [f for f in files if os.path.exists(os.path.join(root, f))]
+                if existing_files:
+                    rel_path = os.path.relpath(root, web_generated_www)
+                    target_path = os.path.join(DATA_FILES_DEST, "www")
+                    if rel_path != ".":
+                        target_path = os.path.join(target_path, rel_path)
+                    # Only include files that actually exist
+                    file_paths = []
+                    for f in existing_files:
+                        file_path = os.path.join(root, f)
+                        if os.path.exists(file_path) and os.path.isfile(file_path):
+                            file_paths.append(file_path)
+                    if file_paths:
+                        data_files.append((target_path, file_paths))
+    
     return data_files
 
 
@@ -114,8 +152,11 @@ def get_data_files():
     # docs
     data_files.extend(
         [
-            (str(DATA_FILES_DEST / "docs"), [str(Path("docs", "README.md"))]),
-            *map(lambda p: (str(DATA_FILES_DEST / p), [str(p)]), REQ_FILE_PATHS),
+            (
+                os.path.join(DATA_FILES_DEST, "docs"),
+                [os.path.join("docs", "README.md")],
+            ),
+            *map(lambda p: (os.path.join(DATA_FILES_DEST, p), [p]), REQ_FILE_PATHS),
         ]
     )
 
@@ -131,51 +172,61 @@ def get_data_files():
     # Version files and commands.json
     # These files are generated during the build process
     # Make sure they're included in the package
+    cmds_json_path = os.path.join(
+        GENERATED_FILES_DEST, CONFIG_FILES_PATH, "commands.json"
+    )
+
+    config_files = [
+        os.path.join(GENERATED_FILES_DEST, CONFIG_FILES_PATH, "analyzer_version.json"),
+        os.path.join(GENERATED_FILES_DEST, CONFIG_FILES_PATH, "web_version.json"),
+    ]
+
+    if os.environ.get("CC_EMBED_SUBCOMMANDS_JSON"):
+        config_files.append(cmds_json_path)
+
     data_files.append(
         (
-            str(CONFIG_FILES_PATH),
-            [
-                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "commands.json"),
-                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "web_version.json"),
-                str(GENERATED_FILES_DEST / CONFIG_FILES_PATH / "analyzer_version.json"),
-            ],
+            CONFIG_FILES_PATH,
+            config_files,
         )
     )
 
-    # Web frontend files
-    # Prefer prebuilt assets, include them if present without building
-    web_generated_www = GENERATED_FILES_DEST / DATA_FILES_DEST / "www"
-    web_source_dist = Path("web") / "server" / "vue-cli" / "dist"
-
-    for web_path in [web_generated_www, web_source_dist]:
-        if os.path.exists(web_path):
-            for root, _, files in os.walk(web_path):
-                if files:
-                    rel_path = os.path.relpath(root, web_path)
-                    target_path = DATA_FILES_DEST / "www"
-                    if rel_path != ".":
-                        target_path = target_path / rel_path
-                    data_files.append(
-                        (str(target_path), [str(Path(root) / f) for f in files])
-                    )
+    # Web frontend files - these will be added by custom commands after building
+    # This function only returns the static data files that don't require building
 
     # ld logger header
     # TODO: do we need to copy the header files?
     data_files.append(
         (
-            str(DATA_FILES_DEST / "ld_logger" / "include"),
-            [str(LD_LOGGER_SRC_PATH / i) for i in LD_LOGGER_INCLUDES],
+            os.path.join(DATA_FILES_DEST, "ld_logger", "include"),
+            [os.path.join(LD_LOGGER_SRC_PATH, i) for i in LD_LOGGER_INCLUDES],
         )
     )
 
     # Prebuilt API sdists (optional): include if present so users can
     # install them explicitly with codechecker-install-api
-    api_shared_sdist = Path("web") / "api" / "py" / "codechecker_api_shared" / "dist" / "codechecker_api_shared.tar.gz"
-    api_sdist = Path("web") / "api" / "py" / "codechecker_api" / "dist" / "codechecker_api.tar.gz"
+    api_shared_sdist = os.path.join(
+        "web",
+        "api",
+        "py",
+        "codechecker_api_shared",
+        "dist",
+        "codechecker_api_shared.tar.gz",
+    )
+    api_sdist = os.path.join(
+        "web", "api", "py", "codechecker_api", "dist", "codechecker_api.tar.gz"
+    )
     for sdist_path in [api_shared_sdist, api_sdist]:
         if os.path.exists(sdist_path):
-            target_dir = DATA_FILES_DEST / "web" / "api" / "py" / sdist_path.parent.parent.name / "dist"
-            data_files.append((str(target_dir), [str(sdist_path)]))
+            target_dir = os.path.join(
+                DATA_FILES_DEST,
+                "web",
+                "api",
+                "py",
+                os.path.basename(os.path.dirname(os.path.dirname(sdist_path))),
+                "dist",
+            )
+            data_files.append((target_dir, [sdist_path]))
 
     return data_files
 
@@ -201,683 +252,688 @@ def get_ext_modules():
     ]
 
 
-class Build(build):
-    def run(self):
-        # First run the standard build
-        build.run(self)
+def generate_subcommands_json():
+    """Generate commands.json file by collecting all CLI commands."""
 
-        # Create commands.json
-        self.generate_commands_json()
+    # Create config directory if it doesn't exist
+    config_dir = os.path.join(GENERATED_FILES_DEST, CONFIG_FILES_PATH)
+    os.makedirs(config_dir, exist_ok=True)
 
-        # Ensure version files exist; optionally enrich with build metadata
-        self.extend_version_files()
+    # Define command directories to scan
+    cmd_dirs = [
+        os.path.join("codechecker_common", "cli_commands"),
+        os.path.join("analyzer", "codechecker_analyzer", "cli"),
+        os.path.join("web", "codechecker_web", "cli"),
+        os.path.join("web", "server", "codechecker_server", "cli"),
+        os.path.join("web", "client", "codechecker_client", "cli"),
+    ]
 
-        # If prebuilt API tarballs are present, include them in the build
-        self._include_prebuilt_api_packages()
+    # Collect subcommands
+    subcmds = {}
+    for cmd_dir in cmd_dirs:
+        if not os.path.exists(cmd_dir):
+            continue
 
-        # Embed static config resources into the codechecker_common package so
-        # they are accessible via importlib.resources at runtime.
-        self._embed_config_resources()
+        for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
+            cmd_file_name = os.path.basename(cmd_file)
+            # Exclude files like __init__.py or __pycache__
+            if "__" not in cmd_file_name:
+                # [:-3] removes '.py' extension
+                subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
+                    *cmd_file.split(os.sep)[-3:]
+                )
 
-    def generate_commands_json(self):
-        """Generate commands.json file by collecting all CLI commands."""
-        import glob
-        import json
+    # Write commands.json
+    commands_json_path = os.path.join(config_dir, "commands.json")
+    with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
+        json.dump(subcmds, f, sort_keys=True, indent=2)
 
-        # Create config directory if it doesn't exist
-        config_dir = GENERATED_FILES_DEST / CONFIG_FILES_PATH
-        os.makedirs(config_dir, exist_ok=True)
+    print(f"Generated commands.json at {commands_json_path}")
 
-        # Define command directories to scan
-        cmd_dirs = [
-            os.path.join("codechecker_common", "cli_commands"),
-            os.path.join("analyzer", "codechecker_analyzer", "cli"),
-            os.path.join("web", "codechecker_web", "cli"),
-            os.path.join("web", "server", "codechecker_server", "cli"),
-            os.path.join("web", "client", "codechecker_client", "cli"),
-        ]
+def extend_version_files():
+    """Extend version files with build date and git information."""
 
-        # Collect subcommands
-        subcmds = {}
-        for cmd_dir in cmd_dirs:
-            if not os.path.exists(cmd_dir):
-                continue
+    print("Extending version files with build date and git information...")
 
-            for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
-                cmd_file_name = os.path.basename(cmd_file)
-                # Exclude files like __init__.py or __pycache__
-                if "__" not in cmd_file_name:
-                    # [:-3] removes '.py' extension
-                    subcmds[cmd_file_name[:-3].replace("_", "-")] = os.path.join(
-                        *cmd_file.split(os.sep)[-3:]
-                    )
+    # Ensure the config directory exists
+    config_dir = os.path.join(GENERATED_FILES_DEST, CONFIG_FILES_PATH)
+    os.makedirs(config_dir, exist_ok=True)
 
-        # Write commands.json
-        commands_json_path = os.path.join(config_dir, "commands.json")
-        with open(commands_json_path, "w", encoding="utf-8", errors="ignore") as f:
-            json.dump(subcmds, f, sort_keys=True, indent=2)
+    # Process web_version.json
+    web_version_file = os.path.join(config_dir, "web_version.json")
 
-        print(f"Generated commands.json at {commands_json_path}")
+    # Always copy the source version file to ensure we have the latest version
+    src_web_version = os.path.join("web", "config", "web_version.json")
+    if os.path.exists(src_web_version):
+        shutil.copy(src_web_version, web_version_file)
+        print(f"Copied {src_web_version} to {web_version_file}")
+    else:
+        print(f"Warning: Source file {src_web_version} not found")
 
-    def extend_version_files(self):
-        """Extend version files with build date and git information."""
-        import json
-        import time
-        import subprocess
-        import shutil
+    # Process analyzer_version.json
+    analyzer_version_file = os.path.join(config_dir, "analyzer_version.json")
 
-        print("Extending version files with build date and git information...")
+    # Always copy the source version file to ensure we have the latest version
+    src_analyzer_version = os.path.join(
+        "analyzer", "config", "analyzer_version.json"
+    )
+    if os.path.exists(src_analyzer_version):
+        shutil.copy(src_analyzer_version, analyzer_version_file)
+        print(f"Copied {src_analyzer_version} to {analyzer_version_file}")
+    else:
+        print(f"Warning: Source file {src_analyzer_version} not found")
 
-        # Ensure the config directory exists
-        config_dir = GENERATED_FILES_DEST / CONFIG_FILES_PATH
-        os.makedirs(config_dir, exist_ok=True)
+    # Ensure required keys exist for runtime even if build metadata is off
+    ensure_version_defaults(web_version_file)
+    ensure_version_defaults(analyzer_version_file)
 
-        # Process web_version.json
-        web_version_file = os.path.join(config_dir, "web_version.json")
+    # Optionally extend both version files with build metadata if enabled
+    if os.environ.get("CC_EMBED_BUILD_META"):
+        extend_version_file(web_version_file)
+        extend_version_file(analyzer_version_file)
 
-        # Always copy the source version file to ensure we have the latest version
-        src_web_version = os.path.join("web", "config", "web_version.json")
-        if os.path.exists(src_web_version):
-            shutil.copy(src_web_version, web_version_file)
-            print(f"Copied {src_web_version} to {web_version_file}")
-        else:
-            print(f"Warning: Source file {src_web_version} not found")
 
-        # Process analyzer_version.json
-        analyzer_version_file = os.path.join(config_dir, "analyzer_version.json")
+def add_git_info(version_json_data):
+    """Add git information to version data if available."""
+    import subprocess
 
-        # Always copy the source version file to ensure we have the latest version
-        src_analyzer_version = os.path.join(
-            "analyzer", "config", "analyzer_version.json"
-        )
-        if os.path.exists(src_analyzer_version):
-            shutil.copy(src_analyzer_version, analyzer_version_file)
-            print(f"Copied {src_analyzer_version} to {analyzer_version_file}")
-        else:
-            print(f"Warning: Source file {src_analyzer_version} not found")
-
-        # Ensure required keys exist for runtime even if build metadata is off
-        self._ensure_version_defaults(web_version_file)
-        self._ensure_version_defaults(analyzer_version_file)
-
-        # Optionally extend both version files with build metadata if enabled
-        if os.environ.get("CC_EMBED_BUILD_META"):
-            self._extend_version_file(web_version_file)
-            self._extend_version_file(analyzer_version_file)
-
-    def _extend_version_file(self, version_file):
-        """Extend a version file with build date and git information."""
-        import json
-        import time
-        import subprocess
-
-        if not os.path.exists(version_file):
-            print(f"Warning: Version file not found: {version_file}")
+    try:
+        if not os.path.exists(".git"):
             return
 
+        # Get git hash
         try:
-            with open(version_file, encoding="utf-8", errors="ignore") as v_file:
-                version_json_data = json.load(v_file)
-
-            # Add git information if available
-            self._add_git_info(version_json_data)
-
-            # Add build date
-            time_now = time.strftime("%Y-%m-%dT%H:%M")
-            version_json_data["package_build_date"] = time_now
-
-            # Rewrite version config file with the extended data
-            with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
-                v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
-
-            print(f"Extended version file: {version_file}")
-        except Exception as e:
-            print(f"Error extending version file {version_file}: {str(e)}")
-
-    def _ensure_version_defaults(self, version_file):
-        """Ensure required keys exist to avoid runtime errors."""
-        import json
-        if not os.path.exists(version_file):
-            return
-        try:
-            with open(version_file, encoding="utf-8", errors="ignore") as v_file:
-                version_json_data = json.load(v_file)
-            if "package_build_date" not in version_json_data:
-                version_json_data["package_build_date"] = "1970-01-01T00:00"
-                with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
-                    v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
-        except Exception:
+            git_hash = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], encoding="utf-8", errors="ignore"
+            ).strip()
+            version_json_data["git_hash"] = git_hash
+        except subprocess.CalledProcessError:
             pass
 
-    def _include_prebuilt_api_packages(self):
-        """If prebuilt API tarballs exist, extract them into build/lib.
-
-        This avoids invoking Docker/Thrift/pip during install while ensuring
-        codechecker_api and codechecker_api_shared imports work at runtime.
-        """
-        import tarfile
-        import shutil
-
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        api_dir = os.path.join(base_dir, "web", "api", "py")
-        api_shared_tarball = os.path.join(
-            api_dir, "codechecker_api_shared", "dist", "codechecker_api_shared.tar.gz"
-        )
-        api_tarball = os.path.join(
-            api_dir, "codechecker_api", "dist", "codechecker_api.tar.gz"
-        )
-
-        build_lib = os.path.join(base_dir, "build", "lib")
-        os.makedirs(build_lib, exist_ok=True)
-
-        def _extract_package(tar_path: str, package_name: str) -> None:
-            if not os.path.exists(tar_path):
-                return
-            try:
-                with tarfile.open(tar_path, "r:gz") as tf:
-                    # Extract to a temp dir first
-                    tmp_dir = os.path.join(base_dir, "build", "__api_extract__", package_name)
-                    shutil.rmtree(tmp_dir, ignore_errors=True)
-                    os.makedirs(tmp_dir, exist_ok=True)
-                    tf.extractall(tmp_dir)
-
-                    # Find top-level package dir in the extracted sdist
-                    src_pkg_dir = None
-                    for root, dirs, files in os.walk(tmp_dir):
-                        if os.path.basename(root) == package_name and "__init__.py" in files:
-                            src_pkg_dir = root
-                            break
-                    if not src_pkg_dir:
-                        print(f"Warning: Could not locate {package_name} in {tar_path}")
-                        return
-
-                    dst_pkg_dir = os.path.join(build_lib, package_name)
-                    shutil.rmtree(dst_pkg_dir, ignore_errors=True)
-                    shutil.copytree(src_pkg_dir, dst_pkg_dir)
-                    print(f"Included prebuilt {package_name} package from {tar_path}")
-            except Exception as e:
-                print(f"Warning: Failed to include {package_name} from {tar_path}: {e}")
-
-        _extract_package(api_shared_tarball, "codechecker_api_shared")
-        _extract_package(api_tarball, "codechecker_api")
-
-    def _embed_config_resources(self):
-        """Copy the top-level config directory into codechecker_common/config
-        inside build/lib so it is packaged as package data and accessible via
-        importlib.resources.
-        """
-        import shutil
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        src_config = os.path.join(base_dir, "config")
-        if not os.path.isdir(src_config):
-            return
-        dst_pkg_config = os.path.join(base_dir, "build", "lib", "codechecker_common", "config")
-        shutil.rmtree(dst_pkg_config, ignore_errors=True)
+        # Get git describe information
         try:
-            shutil.copytree(src_config, dst_pkg_config)
-            print(f"Embedded config resources into {dst_pkg_config}")
-        except Exception as e:
-            print(f"Warning: failed to embed config resources: {e}")
+            git_describe = subprocess.check_output(
+                ["git", "describe", "--tags", "--dirty"],
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
 
-    def _add_git_info(self, version_json_data):
-        """Add git information to version data if available."""
-        import subprocess
-
-        try:
-            if not os.path.exists(".git"):
-                return
-
-            # Get git hash
-            try:
-                git_hash = subprocess.check_output(
-                    ["git", "rev-parse", "HEAD"], encoding="utf-8", errors="ignore"
-                ).strip()
-                version_json_data["git_hash"] = git_hash
-            except subprocess.CalledProcessError:
-                pass
-
-            # Get git describe information
-            try:
-                git_describe = subprocess.check_output(
-                    ["git", "describe", "--tags", "--dirty"],
-                    encoding="utf-8",
-                    errors="ignore",
-                ).strip()
-
-                # Parse git describe output
-                git_describe_data = {}
-                if "-dirty" in git_describe:
-                    git_describe_data["dirty"] = True
-                    git_describe = git_describe.replace("-dirty", "")
-                else:
-                    git_describe_data["dirty"] = False
-
-                # Extract tag information
-                if "-" in git_describe:
-                    tag = git_describe.split("-")[0]
-                else:
-                    tag = git_describe
-
-                git_describe_data["tag"] = tag
-                version_json_data["git_describe"] = git_describe_data
-            except subprocess.CalledProcessError:
-                # No tags available
-                pass
-        except Exception as e:
-            print(f"Error adding git information: {str(e)}")
-
-    def build_api_packages(self):
-        """Build the API packages if they don't exist."""
-        import subprocess
-        import shutil
-        import os.path
-        import tempfile
-
-        print("Checking and building API packages if needed...")
-
-        # Define paths
-        api_dir = os.path.join("web", "api")
-        api_py_dir = os.path.join(api_dir, "py")
-        api_shared_dist = os.path.join(api_py_dir, "codechecker_api_shared", "dist")
-        api_dist = os.path.join(api_py_dir, "codechecker_api", "dist")
-
-        # Check if the API packages already exist
-        api_shared_tarball = os.path.join(
-            api_shared_dist, "codechecker_api_shared.tar.gz"
-        )
-        api_tarball = os.path.join(api_dist, "codechecker_api.tar.gz")
-
-        need_build = False
-
-        if not os.path.exists(api_shared_tarball) or not os.path.exists(api_tarball):
-            need_build = True
-            print("API packages not found, building them...")
-
-        if need_build:
-            try:
-                # Create directories for generated files if they don't exist
-                py_api_dir = os.path.join(
-                    api_py_dir, "codechecker_api", "codechecker_api"
-                )
-                py_api_shared_dir = os.path.join(
-                    api_py_dir, "codechecker_api_shared", "codechecker_api_shared"
-                )
-
-                os.makedirs(py_api_dir, exist_ok=True)
-                os.makedirs(py_api_shared_dir, exist_ok=True)
-                os.makedirs(api_shared_dist, exist_ok=True)
-                os.makedirs(api_dist, exist_ok=True)
-
-                # Check if we have Docker for building the API packages
-                try:
-                    subprocess.check_output(
-                        ["docker", "--version"], encoding="utf-8", errors="ignore"
-                    )
-                    has_docker = True
-                except (subprocess.CalledProcessError, FileNotFoundError):
-                    has_docker = False
-
-                if has_docker:
-                    print("Building API packages using Docker...")
-
-                    # These are the Thrift files that need to be processed
-                    thrift_files = [
-                        os.path.join(api_dir, "authentication.thrift"),
-                        os.path.join(api_dir, "products.thrift"),
-                        os.path.join(api_dir, "report_server.thrift"),
-                        os.path.join(api_dir, "configuration.thrift"),
-                        os.path.join(api_dir, "server_info.thrift"),
-                        os.path.join(api_dir, "codechecker_api_shared.thrift"),
-                    ]
-
-                    # Create a temporary directory for the generated files
-                    with tempfile.TemporaryDirectory() as temp_dir:
-                        # Run Docker to generate the Thrift files
-                        for thrift_file in thrift_files:
-                            if os.path.exists(thrift_file):
-                                print(f"Processing {thrift_file}...")
-                                # Get the current user ID and group ID
-                                uid = os.getuid() if hasattr(os, "getuid") else 1000
-                                gid = os.getgid() if hasattr(os, "getgid") else 1000
-
-                                # Run Thrift in Docker to generate Python code
-                                cmd = [
-                                    "docker",
-                                    "run",
-                                    "--rm",
-                                    "-u",
-                                    f"{uid}:{gid}",
-                                    "-v",
-                                    f"{os.path.abspath(api_dir)}:/data",
-                                    "thrift:0.11.0",
-                                    "thrift",
-                                    "-r",
-                                    "-o",
-                                    "/data",
-                                    "--gen",
-                                    "py",
-                                    f"/data/{os.path.basename(thrift_file)}",
-                                ]
-
-                                try:
-                                    subprocess.check_call(
-                                        cmd,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                    )
-                                    print(
-                                        f"Successfully generated Python code for {thrift_file}"
-                                    )
-                                except subprocess.CalledProcessError as e:
-                                    print(
-                                        f"Error generating Python code for {thrift_file}: {str(e)}"
-                                    )
-                            else:
-                                print(f"Warning: Thrift file {thrift_file} not found")
-
-                        # Copy the generated files to their destinations
-                        gen_py_dir = os.path.join(api_dir, "gen-py")
-                        if os.path.exists(gen_py_dir):
-                            # Copy codechecker_api_shared files
-                            if os.path.exists(
-                                os.path.join(gen_py_dir, "codechecker_api_shared")
-                            ):
-                                self._copy_directory(
-                                    os.path.join(gen_py_dir, "codechecker_api_shared"),
-                                    py_api_shared_dir,
-                                )
-
-                            # Copy all other API files
-                            for item in os.listdir(gen_py_dir):
-                                if item != "codechecker_api_shared" and os.path.isdir(
-                                    os.path.join(gen_py_dir, item)
-                                ):
-                                    self._copy_directory(
-                                        os.path.join(gen_py_dir, item), py_api_dir
-                                    )
-
-                            # Build the packages
-                            # Build codechecker_api_shared
-                            os.chdir(os.path.join(api_py_dir, "codechecker_api_shared"))
-                            subprocess.check_call([sys.executable, "setup.py", "sdist"])
-
-                            # Rename the tarball
-                            for file in os.listdir(api_shared_dist):
-                                if file.startswith(
-                                    "codechecker_api_shared-"
-                                ) and file.endswith(".tar.gz"):
-                                    os.rename(
-                                        os.path.join(api_shared_dist, file),
-                                        api_shared_tarball,
-                                    )
-
-                            # Build codechecker_api
-                            os.chdir(os.path.join(api_py_dir, "codechecker_api"))
-                            subprocess.check_call([sys.executable, "setup.py", "sdist"])
-
-                            # Rename the tarball
-                            for file in os.listdir(api_dist):
-                                if file.startswith(
-                                    "codechecker_api-"
-                                ) and file.endswith(".tar.gz"):
-                                    os.rename(os.path.join(api_dist, file), api_tarball)
-
-                            # Return to the original directory
-                            os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-                            # Clean up generated files
-                            shutil.rmtree(gen_py_dir, ignore_errors=True)
-
-                            print("Successfully built API packages")
-                        else:
-                            print(
-                                f"Warning: Generated Python directory {gen_py_dir} not found"
-                            )
-                else:
-                    # Inform the user that Docker is required
-                    print("Warning: Docker is required to build the API packages.")
-                    print(
-                        "The API packages are pre-built and committed to the repository,"
-                    )
-                    print("but they may be outdated if the Thrift files have changed.")
-
-                # Ensure the API packages are available for installation
-                if os.path.exists(api_shared_tarball) and os.path.exists(api_tarball):
-                    # Copy the API packages to the build directory
-                    build_lib_dir = os.path.join("build", "lib")
-                    if os.path.exists(build_lib_dir):
-                        # Create the destination directories
-                        os.makedirs(
-                            os.path.join(
-                                build_lib_dir,
-                                "web",
-                                "api",
-                                "py",
-                                "codechecker_api",
-                                "dist",
-                            ),
-                            exist_ok=True,
-                        )
-                        os.makedirs(
-                            os.path.join(
-                                build_lib_dir,
-                                "web",
-                                "api",
-                                "py",
-                                "codechecker_api_shared",
-                                "dist",
-                            ),
-                            exist_ok=True,
-                        )
-
-                        # Copy the API packages
-                        shutil.copy(
-                            api_tarball,
-                            os.path.join(
-                                build_lib_dir,
-                                "web",
-                                "api",
-                                "py",
-                                "codechecker_api",
-                                "dist",
-                            ),
-                        )
-                        shutil.copy(
-                            api_shared_tarball,
-                            os.path.join(
-                                build_lib_dir,
-                                "web",
-                                "api",
-                                "py",
-                                "codechecker_api_shared",
-                                "dist",
-                            ),
-                        )
-
-                        print("API packages copied to build directory.")
-                    else:
-                        print(
-                            "Warning: build/lib directory not found, API packages not copied."
-                        )
-                else:
-                    print("Warning: API packages not found after build attempt.")
-
-            except Exception as e:
-                print(f"Error building API packages: {str(e)}")
-                print("Continuing with installation, but some features may not work.")
-        else:
-            print("API packages already exist, skipping build.")
-
-    def _copy_directory(self, src, dst):
-        """Copy all contents from src directory to dst directory."""
-        import os
-        import shutil
-
-        if not os.path.exists(dst):
-            os.makedirs(dst)
-
-        for item in os.listdir(src):
-            src_item = os.path.join(src, item)
-            dst_item = os.path.join(dst, item)
-
-            if os.path.isdir(src_item):
-                self._copy_directory(src_item, dst_item)
+            # Parse git describe output
+            git_describe_data = {}
+            if "-dirty" in git_describe:
+                git_describe_data["dirty"] = True
+                git_describe = git_describe.replace("-dirty", "")
             else:
-                shutil.copy2(src_item, dst_item)
+                git_describe_data["dirty"] = False
 
-    def build_web_frontend(self):
-        """Build the web frontend."""
-        import os
-        import subprocess
-        import sys
-        import shutil
+            # Extract tag information
+            if "-" in git_describe:
+                tag = git_describe.split("-")[0]
+            else:
+                tag = git_describe
 
-        print("Building web frontend...")
+            git_describe_data["tag"] = tag
+            version_json_data["git_describe"] = git_describe_data
+        except subprocess.CalledProcessError:
+            # No tags available
+            pass
+    except Exception as e:
+        print(f"Error adding git information: {str(e)}")
 
-        # Define paths
-        root_dir = os.path.dirname(os.path.abspath(__file__))
-        web_dir = os.path.join(root_dir, "web")
-        vue_cli_dir = os.path.join(web_dir, "server", "vue-cli")
-        dist_dir = os.path.join(vue_cli_dir, "dist")
 
-        # Define destination path in the generated files directory
-        web_dest_dir = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
-        os.makedirs(web_dest_dir, exist_ok=True)
+def extend_version_file(version_file):
+    """Extend a version file with build date and git information."""
 
-        # Check if we should build the UI
-        build_ui_dist = os.environ.get("BUILD_UI_DIST", "YES")
+    if not os.path.exists(version_file):
+        print(f"Warning: Version file not found: {version_file}")
+        return
 
-        if build_ui_dist.upper() == "YES":
-            # Build the Vue.js application
-            try:
-                print("Building Vue.js application...")
+    try:
+        with open(version_file, encoding="utf-8", errors="ignore") as v_file:
+            version_json_data = json.load(v_file)
 
-                # Check if the dist directory already exists and is up to date
-                if os.path.exists(dist_dir):
-                    # Check if we need to rebuild based on latest commit
-                    latest_commit_file = os.path.join(dist_dir, ".build-commit")
-                    rebuild_needed = True
+        # Add git information if available
+        add_git_info(version_json_data)
 
-                    if os.path.exists(latest_commit_file):
-                        try:
-                            # Try to get the latest commit in which vue-cli directory was changed
-                            latest_commit = subprocess.check_output(
-                                [
-                                    "git",
-                                    "log",
-                                    "-n",
-                                    "1",
-                                    "--pretty=format:%H",
-                                    vue_cli_dir,
-                                ],
-                                stderr=subprocess.PIPE,
-                                universal_newlines=True,
-                            ).strip()
+        # Add build date
+        time_now = time.strftime("%Y-%m-%dT%H:%M")
+        version_json_data["package_build_date"] = time_now
 
-                            # Get the latest build commit from the file
-                            with open(latest_commit_file, "r") as f:
-                                latest_build_commit = f.read().strip()
+        # Rewrite version config file with the extended data
+        with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
+            v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
 
-                            # If they match, no need to rebuild
-                            if latest_commit == latest_build_commit:
-                                rebuild_needed = False
-                                print(
-                                    "Vue.js application is up to date, skipping build."
-                                )
-                        except (subprocess.CalledProcessError, OSError, IOError):
-                            # If any error occurs, we'll rebuild to be safe
-                            pass
+        print(f"Extended version file: {version_file}")
+    except Exception as e:
+        print(f"Error extending version file {version_file}: {str(e)}")
 
-                    if rebuild_needed:
-                        # Remove existing dist directory to ensure clean build
-                        shutil.rmtree(dist_dir)
 
-                # Create dist directory if it doesn't exist
-                os.makedirs(dist_dir, exist_ok=True)
+def ensure_version_defaults(version_file):
+    """Ensure required keys exist to avoid runtime errors."""
+    import json
 
-                # Save current directory to return to it later
-                current_dir = os.getcwd()
+    if not os.path.exists(version_file):
+        return
+    try:
+        with open(version_file, encoding="utf-8", errors="ignore") as v_file:
+            version_json_data = json.load(v_file)
+        if "package_build_date" not in version_json_data:
+            version_json_data["package_build_date"] = "1970-01-01T00:00"
+            with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
+                v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
+    except Exception:
+        pass
 
-                # Change to vue-cli directory
-                os.chdir(vue_cli_dir)
 
-                # Run npm install and build
-                subprocess.check_call(["npm", "install"])
-                subprocess.check_call(["npm", "run-script", "build"])
+def has_prebuilt_api_packages():
+    """Check if prebuilt API tarballs exist."""
+    return os.path.exists(
+        os.path.join(
+            "web",
+            "api",
+            "py",
+            "codechecker_api_shared",
+            "dist",
+            "codechecker_api_shared.tar.gz",
+        )
+    ) and os.path.exists(
+        os.path.join(
+            "web", "api", "py", "codechecker_api", "dist", "codechecker_api.tar.gz"
+        )
+    )
 
-                # Save the latest commit hash to the build-commit file
-                try:
-                    latest_commit = subprocess.check_output(
-                        ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
-                        stderr=subprocess.PIPE,
-                        universal_newlines=True,
-                    ).strip()
 
-                    with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
-                        f.write(latest_commit)
-                except (subprocess.CalledProcessError, OSError):
-                    pass
+def include_prebuilt_api_packages():
+    """If prebuilt API tarballs exist, extract them into build/lib.
 
-                # Return to original directory
-                os.chdir(current_dir)
+    This avoids invoking Docker/Thrift/pip during install while ensuring
+    codechecker_api and codechecker_api_shared imports work at runtime.
+    """
 
-                # Copy the built files to the generated files directory
-                if os.path.exists(dist_dir):
-                    print(f"Copying web frontend from {dist_dir} to {web_dest_dir}")
-                    self._copy_directory(dist_dir, web_dest_dir)
-                else:
-                    print(f"Warning: Vue.js build directory {dist_dir} does not exist")
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    api_dir = os.path.join(base_dir, "web", "api", "py")
+    api_shared_tarball = os.path.join(
+        api_dir, "codechecker_api_shared", "dist", "codechecker_api_shared.tar.gz"
+    )
+    api_tarball = os.path.join(
+        api_dir, "codechecker_api", "dist", "codechecker_api.tar.gz"
+    )
 
-            except (subprocess.CalledProcessError, OSError) as e:
-                print(f"Warning: Failed to build Vue.js application: {e}")
-                print("Continuing with installation without web frontend...")
-        else:
-            print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
+    build_lib = os.path.join(base_dir, "build", "lib")
+    os.makedirs(build_lib, exist_ok=True)
 
-        # Build and package report-converter
+    def _extract_package(tar_path: str, package_name: str) -> None:
+        if not os.path.exists(tar_path):
+            return
         try:
-            print("Building report-converter...")
-            report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
+            with tarfile.open(tar_path, "r:gz") as tf:
+                # Extract to a temp dir first
+                tmp_dir = os.path.join(
+                    base_dir, "build", "__api_extract__", package_name
+                )
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+                os.makedirs(tmp_dir, exist_ok=True)
+                tf.extractall(tmp_dir)
 
-            # Build report-converter using its setup.py
-            subprocess.check_call(
-                [sys.executable, "setup.py", "build"], cwd=report_converter_dir
+                # Find top-level package dir in the extracted sdist
+                src_pkg_dir = None
+                for root, dirs, files in os.walk(tmp_dir):
+                    if (
+                        os.path.basename(root) == package_name
+                        and "__init__.py" in files
+                    ):
+                        src_pkg_dir = root
+                        break
+                if not src_pkg_dir:
+                    print(f"Warning: Could not locate {package_name} in {tar_path}")
+                    return
+
+                dst_pkg_dir = os.path.join(build_lib, package_name)
+                shutil.rmtree(dst_pkg_dir, ignore_errors=True)
+                shutil.copytree(src_pkg_dir, dst_pkg_dir)
+                print(f"Included prebuilt {package_name} package from {tar_path}")
+        except Exception as e:
+            print(f"Warning: Failed to include {package_name} from {tar_path}: {e}")
+
+    _extract_package(api_shared_tarball, "codechecker_api_shared")
+    _extract_package(api_tarball, "codechecker_api")
+
+
+def copy_directory(src, dst):
+    """Copy all contents from src directory to dst directory."""
+
+    if not os.path.exists(dst):
+        os.makedirs(dst)
+
+    for item in os.listdir(src):
+        src_item = os.path.join(src, item)
+        dst_item = os.path.join(dst, item)
+
+        if os.path.isdir(src_item):
+            copy_directory(src_item, dst_item)
+        else:
+            shutil.copy2(src_item, dst_item)
+
+
+def build_api_packages():
+    """Build the API packages if they don't exist."""
+
+    print("Checking and building API packages if needed...")
+
+    # Define paths
+    api_dir = os.path.join("web", "api")
+    api_py_dir = os.path.join(api_dir, "py")
+    api_shared_dist = os.path.join(api_py_dir, "codechecker_api_shared", "dist")
+    api_dist = os.path.join(api_py_dir, "codechecker_api", "dist")
+
+    # Check if the API packages already exist
+    api_shared_tarball = os.path.join(api_shared_dist, "codechecker_api_shared.tar.gz")
+    api_tarball = os.path.join(api_dist, "codechecker_api.tar.gz")
+
+    need_build = False
+
+    if not os.path.exists(api_shared_tarball) or not os.path.exists(api_tarball):
+        need_build = True
+        print("API packages not found, building them...")
+
+    if need_build:
+        try:
+            # Create directories for generated files if they don't exist
+            py_api_dir = os.path.join(api_py_dir, "codechecker_api", "codechecker_api")
+            py_api_shared_dir = os.path.join(
+                api_py_dir, "codechecker_api_shared", "codechecker_api_shared"
             )
 
-            # The report-converter package will be included automatically by setuptools
-            # since it's listed in get_codechecker_packages()
-            print("Report-converter built successfully")
+            os.makedirs(py_api_dir, exist_ok=True)
+            os.makedirs(py_api_shared_dir, exist_ok=True)
+            os.makedirs(api_shared_dist, exist_ok=True)
+            os.makedirs(api_dist, exist_ok=True)
+
+            # Check if we have Docker for building the API packages
+            try:
+                subprocess.check_output(
+                    ["docker", "--version"], encoding="utf-8", errors="ignore"
+                )
+                has_docker = True
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                has_docker = False
+
+            if has_docker:
+                print("Building API packages using Docker...")
+
+                # These are the Thrift files that need to be processed
+                thrift_files = [
+                    os.path.join(api_dir, "authentication.thrift"),
+                    os.path.join(api_dir, "products.thrift"),
+                    os.path.join(api_dir, "report_server.thrift"),
+                    os.path.join(api_dir, "configuration.thrift"),
+                    os.path.join(api_dir, "server_info.thrift"),
+                    os.path.join(api_dir, "codechecker_api_shared.thrift"),
+                ]
+
+                # Create a temporary directory for the generated files
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    # Run Docker to generate the Thrift files
+                    for thrift_file in thrift_files:
+                        if os.path.exists(thrift_file):
+                            print(f"Processing {thrift_file}...")
+                            # Get the current user ID and group ID
+                            uid = os.getuid() if hasattr(os, "getuid") else 1000
+                            gid = os.getgid() if hasattr(os, "getgid") else 1000
+
+                            # Run Thrift in Docker to generate Python code
+                            cmd = [
+                                "docker",
+                                "run",
+                                "--rm",
+                                "-u",
+                                f"{uid}:{gid}",
+                                "-v",
+                                f"{os.path.abspath(api_dir)}:/data",
+                                "thrift:0.11.0",
+                                "thrift",
+                                "-r",
+                                "-o",
+                                "/data",
+                                "--gen",
+                                "py",
+                                f"/data/{os.path.basename(thrift_file)}",
+                            ]
+
+                            try:
+                                subprocess.check_call(
+                                    cmd,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                )
+                                print(
+                                    f"Successfully generated Python code for {thrift_file}"
+                                )
+                            except subprocess.CalledProcessError as e:
+                                print(
+                                    f"Error generating Python code for {thrift_file}: {str(e)}"
+                                )
+                        else:
+                            print(f"Warning: Thrift file {thrift_file} not found")
+
+                    # Copy the generated files to their destinations
+                    gen_py_dir = os.path.join(api_dir, "gen-py")
+                    if os.path.exists(gen_py_dir):
+                        # Copy codechecker_api_shared files
+                        if os.path.exists(
+                            os.path.join(gen_py_dir, "codechecker_api_shared")
+                        ):
+                            copy_directory(
+                                os.path.join(gen_py_dir, "codechecker_api_shared"),
+                                py_api_shared_dir,
+                            )
+
+                        # Copy all other API files
+                        for item in os.listdir(gen_py_dir):
+                            if item != "codechecker_api_shared" and os.path.isdir(
+                                os.path.join(gen_py_dir, item)
+                            ):
+                                copy_directory(
+                                    os.path.join(gen_py_dir, item), py_api_dir
+                                )
+
+                        # Build the packages
+                        # Build codechecker_api_shared
+                        os.chdir(os.path.join(api_py_dir, "codechecker_api_shared"))
+                        subprocess.check_call([sys.executable, "setup.py", "sdist"])
+
+                        # Rename the tarball
+                        for file in os.listdir(api_shared_dist):
+                            if file.startswith(
+                                "codechecker_api_shared-"
+                            ) and file.endswith(".tar.gz"):
+                                os.rename(
+                                    os.path.join(api_shared_dist, file),
+                                    api_shared_tarball,
+                                )
+
+                        # Build codechecker_api
+                        os.chdir(os.path.join(api_py_dir, "codechecker_api"))
+                        subprocess.check_call([sys.executable, "setup.py", "sdist"])
+
+                        # Rename the tarball
+                        for file in os.listdir(api_dist):
+                            if file.startswith("codechecker_api-") and file.endswith(
+                                ".tar.gz"
+                            ):
+                                os.rename(os.path.join(api_dist, file), api_tarball)
+
+                        # Return to the original directory
+                        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+                        # Clean up generated files
+                        shutil.rmtree(gen_py_dir, ignore_errors=True)
+
+                        print("Successfully built API packages")
+                    else:
+                        print(
+                            f"Warning: Generated Python directory {gen_py_dir} not found"
+                        )
+            else:
+                # Inform the user that Docker is required
+                print("Warning: Docker is required to build the API packages.")
+                print("The API packages are pre-built and committed to the repository,")
+                print("but they may be outdated if the Thrift files have changed.")
+
+            # Ensure the API packages are available for installation
+            if os.path.exists(api_shared_tarball) and os.path.exists(api_tarball):
+                # Copy the API packages to the build directory
+                build_lib_dir = os.path.join("build", "lib")
+                if os.path.exists(build_lib_dir):
+                    # Create the destination directories
+                    os.makedirs(
+                        os.path.join(
+                            build_lib_dir,
+                            "web",
+                            "api",
+                            "py",
+                            "codechecker_api",
+                            "dist",
+                        ),
+                        exist_ok=True,
+                    )
+                    os.makedirs(
+                        os.path.join(
+                            build_lib_dir,
+                            "web",
+                            "api",
+                            "py",
+                            "codechecker_api_shared",
+                            "dist",
+                        ),
+                        exist_ok=True,
+                    )
+
+                    # Copy the API packages
+                    shutil.copy(
+                        api_tarball,
+                        os.path.join(
+                            build_lib_dir,
+                            "web",
+                            "api",
+                            "py",
+                            "codechecker_api",
+                            "dist",
+                        ),
+                    )
+                    shutil.copy(
+                        api_shared_tarball,
+                        os.path.join(
+                            build_lib_dir,
+                            "web",
+                            "api",
+                            "py",
+                            "codechecker_api_shared",
+                            "dist",
+                        ),
+                    )
+
+                    print("API packages copied to build directory.")
+                else:
+                    print(
+                        "Warning: build/lib directory not found, API packages not copied."
+                    )
+            else:
+                print("Warning: API packages not found after build attempt.")
+
+        except Exception as e:
+            print(f"Error building API packages: {str(e)}")
+            print("Continuing with installation, but some features may not work.")
+    else:
+        print("API packages already exist, skipping build.")
+
+
+def build_web_frontend():
+    """Build the web frontend."""
+
+    print("Building web frontend...")
+
+    # Define paths
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    web_dir = os.path.join(root_dir, "web")
+    vue_cli_dir = os.path.join(web_dir, "server", "vue-cli")
+    dist_dir = os.path.join(vue_cli_dir, "dist")
+
+    # Define destination path in the generated files directory
+    web_dest_dir = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
+    # Create even if we don't build the web frontend
+    os.makedirs(web_dest_dir, exist_ok=True)
+
+    # Check if we should build the UI
+    build_ui_dist = os.environ.get("BUILD_UI_DIST", "YES")
+
+    if build_ui_dist.upper() == "YES":
+        # Build the Vue.js application
+        try:
+            print("Building Vue.js application...")
+
+            # Check if the dist directory already exists and is up to date
+            if os.path.exists(dist_dir):
+                # Check if we need to rebuild based on latest commit
+                latest_commit_file = os.path.join(dist_dir, ".build-commit")
+                rebuild_needed = True
+
+                if os.path.exists(latest_commit_file):
+                    try:
+                        # Try to get the latest commit in which vue-cli directory was changed
+                        latest_commit = subprocess.check_output(
+                            [
+                                "git",
+                                "log",
+                                "-n",
+                                "1",
+                                "--pretty=format:%H",
+                                vue_cli_dir,
+                            ],
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True,
+                        ).strip()
+
+                        # Get the latest build commit from the file
+                        with open(latest_commit_file, "r") as f:
+                            latest_build_commit = f.read().strip()
+
+                        # If they match, no need to rebuild
+                        if latest_commit == latest_build_commit:
+                            rebuild_needed = False
+                            print("Vue.js application is up to date, skipping build.")
+                    except (subprocess.CalledProcessError, OSError, IOError):
+                        # If any error occurs, we'll rebuild to be safe
+                        pass
+
+                if rebuild_needed:
+                    # Remove existing dist directory to ensure clean build
+                    shutil.rmtree(dist_dir)
+
+            # Create dist directory if it doesn't exist
+            os.makedirs(dist_dir, exist_ok=True)
+
+            # Save current directory to return to it later
+            current_dir = os.getcwd()
+
+            # Check if package.json exists (needed for npm commands)
+            package_json_path = os.path.join(vue_cli_dir, "package.json")
+            if not os.path.exists(package_json_path):
+                print(
+                    "Warning: package.json not found in vue-cli directory. Skipping Vue.js build."
+                )
+                print("This is expected when building from a source distribution.")
+                return
+
+            # Change to vue-cli directory
+            os.chdir(vue_cli_dir)
+
+            # Run npm install and build
+            subprocess.check_call(["npm", "install"])
+            subprocess.check_call(["npm", "run-script", "build"])
+
+            # Save the latest commit hash to the build-commit file
+            try:
+                latest_commit = subprocess.check_output(
+                    ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                ).strip()
+
+                with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
+                    f.write(latest_commit)
+            except (subprocess.CalledProcessError, OSError):
+                pass
+
+            # Return to original directory
+            os.chdir(current_dir)
+
+            # Copy the built files to the generated files directory
+            if os.path.exists(dist_dir):
+                print(f"Copying web frontend from {dist_dir} to {web_dest_dir}")
+                copy_directory(dist_dir, web_dest_dir)
+            else:
+                print(f"Warning: Vue.js build directory {dist_dir} does not exist")
 
         except (subprocess.CalledProcessError, OSError) as e:
-            print(f"Warning: Failed to build report-converter: {e}")
-            print("Continuing with installation without report-converter...")
+            print(f"Warning: Failed to build Vue.js application: {e}")
+            print("Continuing with installation without web frontend...")
+    else:
+        print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
+
+
+def build_report_converter():
+    """Build and package report-converter."""
+
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    # Build and package report-converter
+    try:
+        print("Building report-converter...")
+        report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
+
+        # Build report-converter using its setup.py
+        subprocess.check_call(
+            [sys.executable, "setup.py", "build"], cwd=report_converter_dir
+        )
+
+        # The report-converter package will be included automatically by setuptools
+        # since it's listed in get_codechecker_packages()
+        print("Report-converter built successfully")
+
+    except (subprocess.CalledProcessError, OSError) as e:
+        print(f"Warning: Failed to build report-converter: {e}")
+        print("Continuing with installation without report-converter...")
+
+
+class Build(build):
+    def run(self):
+        # Do all custom build steps BEFORE calling parent build.run()
+        if os.environ.get("CC_EMBED_SUBCOMMANDS_JSON"):
+            generate_subcommands_json()
+
+        extend_version_files()
+
+        if (
+            os.environ.get("CC_FORCE_BUILD_API_PACKAGES")
+            or not has_prebuilt_api_packages()
+        ):
+            build_api_packages()
+
+        include_prebuilt_api_packages()
+        build_web_frontend()
+        build_report_converter()
+        
+        # Update data_files after building web frontend - BEFORE parent build
+        static_data_files = get_data_files()
+        web_frontend_data_files = get_web_frontend_data_files()
+        self.distribution.data_files = static_data_files + web_frontend_data_files
+        
+        # Now call parent build with all data files properly set up
+        build.run(self)
+
+
+# Custom bdist_wheel and sdist commands removed - not needed since
+# the Build command now handles all web frontend building and data file setup
 
 
 class BuildExt(build_ext):
     def copy_extensions_to_source(self):
         # During editable installs, avoid copying built artifacts into source tree.
         # Standard build will still wheel/package the built extension.
-        if getattr(self, 'editable_mode', False):
+        if getattr(self, "editable_mode", False):
             print("Skipping copying extensions to source for editable install")
             return
         return build_ext.copy_extensions_to_source(self)
 
 
-from setuptools.command.install import install
-
-
-class CustomInstall(install):
-    """Perform a standard install without invoking external build steps."""
-
-    def run(self):
-        install.run(self)
+# CustomInstall removed - not needed since pip install . goes through bdist_wheel
 
 
 setuptools.setup(
     name="codechecker",
     version="6.27.0",
-    author='CodeChecker Team (Ericsson)',
-    author_email='codechecker-tool@googlegroups.com',
+    author="CodeChecker Team (Ericsson)",
+    author_email="codechecker-tool@googlegroups.com",
     description="CodeChecker is an analyzer tooling, defect database and "
     "viewer extension",
     long_description=get_long_description(),
@@ -904,12 +960,6 @@ setuptools.setup(
     },
     data_files=get_data_files(),
     include_package_data=True,
-    package_data={
-        # Embed config under codechecker_common/config
-        "codechecker_common": [
-            "config/**/*",
-        ],
-    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
@@ -929,10 +979,8 @@ setuptools.setup(
         "build": Build,
         "build_ext": BuildExt,
     },
-    python_requires='>=3.9',
-    scripts=[
-        'scripts/gerrit_changed_files_to_skipfile.py'
-    ],
+    python_requires=">=3.9",
+    scripts=["scripts/gerrit_changed_files_to_skipfile.py"],
     entry_points={
         "console_scripts": [
             "CodeChecker = codechecker_common.cli:main",

@@ -10,12 +10,12 @@
 Main CodeChecker script.
 """
 
-
 import argparse
-from importlib import machinery
+import importlib
 import io
 import json
 import os
+import pkgutil
 import signal
 import sys
 
@@ -32,7 +32,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self.exit(1, f"{self.prog}: error: {message}\n")
 
 
-def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
+def add_subcommand(subparsers, sub_cmd, module_name, lib_dir_path):
     """
     Load the subcommand module and then add the subcommand to the available
     subcommands in the given subparsers collection.
@@ -40,55 +40,61 @@ def add_subcommand(subparsers, sub_cmd, cmd_module_path, lib_dir_path):
     subparsers has to be the return value of the add_parsers() method on an
     argparse.ArgumentParser.
     """
-    m_path, m_name = os.path.split(cmd_module_path)
-
-    module_name = os.path.splitext(m_name)[0]
-    target = [os.path.join(lib_dir_path, m_path)]
-
-    # Load the module named as the argument.
-    cmd_spec = machinery.PathFinder().find_spec(module_name, target)
-    if not cmd_spec:
-        raise ImportError(f"Subcommand module '{module_name}' not found in {target}")
-    command_module = cmd_spec.loader.load_module(module_name)
+    try:
+        # Import the module directly using importlib
+        command_module = importlib.import_module(module_name)
+    except ImportError as e:
+        raise ImportError(f"Subcommand module '{module_name}' not found: {e}")
 
     # Now that the module is loaded, construct an ArgumentParser for it.
     sc_parser = subparsers.add_parser(
-        sub_cmd, **command_module.get_argparser_ctor_args())
+        sub_cmd, **command_module.get_argparser_ctor_args()
+    )
 
     # Run the method which adds the arguments to the subcommand's handler.
     command_module.add_arguments_to_parser(sc_parser)
 
 
-def _discover_subcommands_in_memory():
-    """Discover available subcommands without writing to disk."""
-    import glob
-    import os
+def discover_subcommands():
+    """Discover available subcommands based on the modules in the project."""
+    subcmds = {}
 
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    cmd_dirs = [
-        os.path.join(project_root, "codechecker_common", "cli_commands"),
-        os.path.join(project_root, "analyzer", "codechecker_analyzer", "cli"),
-        os.path.join(project_root, "web", "codechecker_web", "cli"),
-        os.path.join(project_root, "web", "server", "codechecker_server", "cli"),
-        os.path.join(project_root, "web", "client", "codechecker_client", "cli"),
+    # Define the packages to search for subcommands
+    packages_to_search = [
+        "codechecker_common.cli_commands",
+        "codechecker_analyzer.cli",
+        "codechecker_web.cli",
+        "codechecker_server.cli",
+        "codechecker_client.cli",
     ]
 
-    subcmds = {}
-    for cmd_dir in cmd_dirs:
-        if not os.path.exists(cmd_dir):
+    for package_name in packages_to_search:
+        try:
+            package = importlib.import_module(package_name)
+            print(f"Discovering subcommands in {package_name}")
+
+            # Use pkgutil to find all modules in the package
+            for importer, modname, ispkg in pkgutil.iter_modules(
+                package.__path__, package.__name__ + "."
+            ):
+                if "__" in modname:
+                    continue
+
+                # Convert module name to command name (e.g., "analyze" -> "analyze")
+                cmd_name = modname.split(".")[-1].replace("_", "-")
+                print(f"Found subcommand: {cmd_name} -> {modname}")
+                subcmds[cmd_name] = modname
+
+        except ImportError as e:
+            print(f"Package {package_name} not found: {e}")
             continue
-        for cmd_file in glob.glob(os.path.join(cmd_dir, "*.py")):
-            cmd_file_name = os.path.basename(cmd_file)
-            if "__" in cmd_file_name:
-                continue
-            rel_path = os.path.relpath(cmd_file, project_root)
-            subcmds[cmd_file_name[:-3].replace("_", "-")] = rel_path
+
     return subcmds
 
 
 def get_data_files_dir_path():
-    """ Get data files directory path """
-    bin_dir = os.environ.get('CC_BIN_DIR')
+    """Get data files directory path"""
+    bin_dir = os.environ.get("CC_BIN_DIR")
 
     # In case of internal package we return the parent directory of the 'bin'
     # folder.
@@ -111,19 +117,19 @@ def get_data_files_dir_path():
 
     # If this is a pip-installed package, try to find the data directory.
     import sysconfig
+
     data_dir_paths = [
         # Try to find the data directory beside the lib directory.
         # /usr/local/lib/python3.8/dist-packages/codechecker_common/cli.py
         # (this file) -> /usr/local
         os.path.abspath(os.path.join(__file__, *[os.path.pardir] * 5)),
-
         # Automatically try to find data directory if it can be found in
         # standard locations.
-        *set(sysconfig.get_path("data", s)
-             for s in sysconfig.get_scheme_names())]
+        *set(sysconfig.get_path("data", s) for s in sysconfig.get_scheme_names()),
+    ]
 
     for dir_path in data_dir_paths:
-        data_dir_path = os.path.join(dir_path, 'share', 'codechecker')
+        data_dir_path = os.path.join(dir_path, "share", "codechecker")
         if os.path.exists(data_dir_path):
             return data_dir_path
 
@@ -134,8 +140,7 @@ def get_data_files_dir_path():
     return dev_data_dir
 
     # This code should never be reached since we return a directory above
-    print("Failed to get CodeChecker data files directory path in: ",
-          data_dir_paths)
+    print("Failed to get CodeChecker data files directory path in: ", data_dir_paths)
     sys.exit(1)
 
 
@@ -178,22 +183,27 @@ def main():
     pkg_commands_cfg = None
     try:
         from importlib.resources import files as _res_files
-        pkg_commands_cfg_path = _res_files("codechecker_common").joinpath("config", "commands.json")
+
+        pkg_commands_cfg_path = _res_files("codechecker_common").joinpath(
+            "config", "commands.json"
+        )
         if pkg_commands_cfg_path.is_file():
             pkg_commands_cfg = str(pkg_commands_cfg_path)
     except Exception:
+        print("Failed to load commands.json from package")
         pkg_commands_cfg = None
 
-    commands_cfg = pkg_commands_cfg or os.path.join(data_files_dir_path, "config", "commands.json")
+    commands_cfg = pkg_commands_cfg or os.path.join(
+        data_files_dir_path, "config", "commands.json"
+    )
 
     subcommands = None
     if os.path.exists(commands_cfg):
         with open(commands_cfg, encoding="utf-8", errors="ignore") as cfg_file:
             subcommands = json.load(cfg_file)
+        print(f"Loading subcommands from commands.json found at {commands_cfg}")
     else:
-        # Development mode fallback: compute in-memory
-        print(f"commands.json not found at {commands_cfg}, using in-memory discovery...")
-        subcommands = _discover_subcommands_in_memory()
+        subcommands = discover_subcommands()
 
     def signal_handler(signum, _):
         """

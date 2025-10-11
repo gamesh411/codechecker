@@ -11,4 +11,3 @@ recursive-include analyzer/tools/statistics_collector *
 recursive-include analyzer/tools/merge_clang_extdef_mappings *
 recursive-include web/api/py/codechecker_api_shared *
 recursive-include web/api/py/codechecker_api *
-recursive-include web/server/vue-cli/dist *

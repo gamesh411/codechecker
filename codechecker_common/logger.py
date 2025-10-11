@@ -51,14 +51,8 @@ logging.setLoggerClass(CCLogger)
 
 data_files_dir_path = os.environ.get('CC_DATA_FILES_DIR', '')
 # Resolve logger.conf uniformly for packaged and dev installs.
-# Prefer embedded package resource when available; fall back to data dir.
-try:
-    from importlib.resources import files as _res_files
-    _pkg_log_cfg = _res_files("codechecker_common").joinpath("config", "logger.conf")
-    DEFAULT_LOG_CFG_FILE = str(_pkg_log_cfg) if _pkg_log_cfg.is_file() else \
-        os.path.join(data_files_dir_path, 'config', 'logger.conf')
-except Exception:
-    DEFAULT_LOG_CFG_FILE = os.path.join(data_files_dir_path, 'config', 'logger.conf')
+# Use data_files approach since config files are installed via data_files, not package_data.
+DEFAULT_LOG_CFG_FILE = os.path.join(data_files_dir_path, 'config', 'logger.conf')
 
 
 # Default config which can be used if reading log config from a
