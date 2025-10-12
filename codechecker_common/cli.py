@@ -18,6 +18,7 @@ import os
 import pkgutil
 import signal
 import sys
+import sysconfig
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -71,7 +72,6 @@ def discover_subcommands():
     for package_name in packages_to_search:
         try:
             package = importlib.import_module(package_name)
-            print(f"Discovering subcommands in {package_name}")
 
             # Use pkgutil to find all modules in the package
             for importer, modname, ispkg in pkgutil.iter_modules(
@@ -82,11 +82,11 @@ def discover_subcommands():
 
                 # Convert module name to command name (e.g., "analyze" -> "analyze")
                 cmd_name = modname.split(".")[-1].replace("_", "-")
-                print(f"Found subcommand: {cmd_name} -> {modname}")
                 subcmds[cmd_name] = modname
 
         except ImportError as e:
-            print(f"Package {package_name} not found: {e}")
+            # logger is not available yet, so use print to stderr
+            print(f"Package {package_name} not found: {e}", file=sys.stderr)
             continue
 
     return subcmds
@@ -116,8 +116,6 @@ def get_data_files_dir_path():
         return os.path.dirname(build_config_path)
 
     # If this is a pip-installed package, try to find the data directory.
-    import sysconfig
-
     data_dir_paths = [
         # Try to find the data directory beside the lib directory.
         # /usr/local/lib/python3.8/dist-packages/codechecker_common/cli.py
