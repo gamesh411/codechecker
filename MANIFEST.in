@@ -1,13 +1,16 @@
+# Files needed for source distributions but not handled by setup.py data_files
 include LICENSE.TXT
 include docs/README.md
-recursive-include config *
-recursive-include web/config *
-recursive-include web/server/config *
-recursive-include analyzer/config *
+
+# Source files needed for building (not installed as data files)
 recursive-include analyzer/tools/build-logger/src *.h
 recursive-include tools/report-converter *
 recursive-include tools/tu_collector *
 recursive-include analyzer/tools/statistics_collector *
 recursive-include analyzer/tools/merge_clang_extdef_mappings *
-recursive-include web/api/py/codechecker_api_shared *
-recursive-include web/api/py/codechecker_api *
+
+# Vue.js source files needed for building web frontend
+recursive-include web/server/vue-cli *
+
+# Note: config files, web/config, web/server/config, and API packages
+# are now handled by setup.py data_files and don't need to be in MANIFEST.in
