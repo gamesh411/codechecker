@@ -14,11 +14,7 @@ import shutil
 import os.path
 import tempfile
 
-from setuptools.command.build import build
-from setuptools.command.build_ext import build_ext
-# Removed unused import: sdist
-# Removed unused import: bdist_wheel
-from setuptools.extension import Extension
+from enum import Enum
 
 REQ_FILE_PATHS = [
     os.path.join("analyzer", "requirements.txt"),
@@ -116,15 +112,17 @@ def get_web_frontend_data_files():
     This function should only be called AFTER the web frontend has been built.
     """
     data_files = []
-    
+
     # Web frontend files from the generated directory
     web_generated_www = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
-    
+
     if os.path.exists(web_generated_www):
         for root, _, files in os.walk(web_generated_www):
             if files:
                 # Filter out files that don't actually exist
-                existing_files = [f for f in files if os.path.exists(os.path.join(root, f))]
+                existing_files = [
+                    f for f in files if os.path.exists(os.path.join(root, f))
+                ]
                 if existing_files:
                     rel_path = os.path.relpath(root, web_generated_www)
                     target_path = os.path.join(DATA_FILES_DEST, "www")
@@ -138,14 +136,48 @@ def get_web_frontend_data_files():
                             file_paths.append(file_path)
                     if file_paths:
                         data_files.append((target_path, file_paths))
-    
+
     return data_files
 
 
-def get_data_files():
+def get_ldlogger_data_files():
     """
-    This functions returns the list of descriptors that define which files
-    will be copied into the distribution.
+    Get ldlogger shared library data files that are generated during the build process.
+    """
+    data_files = []
+
+    # ldlogger shared library files
+    lib_dir_path = os.path.join(
+        GENERATED_FILES_DEST, DATA_FILES_DEST, "ld_logger", "lib"
+    )
+    if os.path.exists(lib_dir_path):
+        # Find all ldlogger.so files
+        ldlogger_files = glob.glob(
+            os.path.join(lib_dir_path, "**", "ldlogger.so"), recursive=True
+        )
+        if ldlogger_files:
+            # Group files by their subdirectory structure
+            for ldlogger_file in ldlogger_files:
+                # Get the relative path from lib_dir_path
+                rel_path = os.path.relpath(ldlogger_file, lib_dir_path)
+                # Get the directory part (e.g., "64bit" or "")
+                subdir = os.path.dirname(rel_path)
+                if subdir:
+                    # If there's a subdirectory, include it in the target path
+                    target_dir = os.path.join(
+                        DATA_FILES_DEST, "ld_logger", "lib", subdir
+                    )
+                else:
+                    # If no subdirectory, place directly in lib
+                    target_dir = os.path.join(DATA_FILES_DEST, "ld_logger", "lib")
+                data_files.append((target_dir, [ldlogger_file]))
+
+    return data_files
+
+
+def get_static_data_files():
+    """
+    This function returns the list of static data files that don't require building.
     """
     data_files = []
 
@@ -231,25 +263,62 @@ def get_data_files():
     return data_files
 
 
-def get_ext_modules():
-    # Only build the extension on Linux platforms
+def build_ldlogger_shared_libs():
+    """
+    Build traditional ldlogger.so shared libraries for LD_PRELOAD usage.
+    This complements the Python extension module build.
+    """
     if sys.platform != "linux":
-        return []
-    return [
-        Extension(
-            "codechecker_analyzer.ld_logger.lib.ldlogger",
-            define_macros=[("__LOGGER_MAIN__", None), ("_GNU_SOURCE", None)],
-            extra_link_args=[
-                "-O2",
-                "-fomit-frame-pointer",
-                "-fvisibility=hidden",
-                "-pedantic",
-                "-Wl,--no-as-needed",
-                "-ldl",
-            ],
-            sources=[os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES],
-        )
-    ]
+        return
+
+    lib_dest_dir = os.path.join(
+        GENERATED_FILES_DEST, DATA_FILES_DEST, "ld_logger", "lib"
+    )
+
+    class Arch(Enum):
+        X86_64 = "64bit"
+        X86_32 = "32bit"
+
+    def build_ldlogger(arch: Arch):
+        os.makedirs(os.path.join(lib_dest_dir, arch.value), exist_ok=True)
+        lib_sources = [os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES]
+        compile_flags = [
+            f"-m{arch.value[:2]}",
+            "-D_GNU_SOURCE",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-O2",
+            "-Wno-strict-aliasing",
+            "-fno-exceptions",
+            "-fPIC",
+            "-fomit-frame-pointer",
+            "-fvisibility=hidden",
+        ]
+
+        link_flags = ["-shared", "-Wl,--no-as-needed", "-ldl"]
+        ldlogger_so = os.path.join(lib_dest_dir, arch.value, "ldlogger.so")
+        try:
+            cmd = (
+                ["gcc"] + compile_flags + lib_sources + link_flags + ["-o", ldlogger_so]
+            )
+            subprocess.check_call(cmd)
+            print(f"Built ldlogger shared library for {arch.value}: {ldlogger_so}")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"Warning: Failed to build ldlogger shared library for {arch.value}: {e}"
+            )
+            print("LD_PRELOAD functionality will not be available")
+        except FileNotFoundError:
+            print(
+                f"Warning: gcc not found, skipping ldlogger shared library build for {arch.value}"
+            )
+            print("LD_PRELOAD functionality will not be available")
+
+    build_ldlogger(Arch.X86_64)
+    if os.environ.get("BUILD_LOGGER_64_BIT_ONLY", "NO") == "NO":
+        build_ldlogger(Arch.X86_32)
 
 
 def generate_subcommands_json():
@@ -290,6 +359,7 @@ def generate_subcommands_json():
 
     print(f"Generated commands.json at {commands_json_path}")
 
+
 def extend_version_files():
     """Extend version files with build date and git information."""
 
@@ -314,9 +384,7 @@ def extend_version_files():
     analyzer_version_file = os.path.join(config_dir, "analyzer_version.json")
 
     # Always copy the source version file to ensure we have the latest version
-    src_analyzer_version = os.path.join(
-        "analyzer", "config", "analyzer_version.json"
-    )
+    src_analyzer_version = os.path.join("analyzer", "config", "analyzer_version.json")
     if os.path.exists(src_analyzer_version):
         shutil.copy(src_analyzer_version, analyzer_version_file)
         print(f"Copied {src_analyzer_version} to {analyzer_version_file}")
@@ -443,11 +511,12 @@ def has_prebuilt_api_packages():
     )
 
 
-def include_prebuilt_api_packages():
+def include_api_packages():
     """If prebuilt API tarballs exist, extract them into build/lib.
 
-    This avoids invoking Docker/Thrift/pip during install while ensuring
-    codechecker_api and codechecker_api_shared imports work at runtime.
+    This function does not invoke Docker/Thrift/pip, only extracts the
+    tarballs and ensures the imports of codechecker_api and
+    codechecker_api_shared work at runtime.
     """
 
     base_dir = os.path.abspath(os.path.dirname(__file__))
@@ -462,7 +531,7 @@ def include_prebuilt_api_packages():
     build_lib = os.path.join(base_dir, "build", "lib")
     os.makedirs(build_lib, exist_ok=True)
 
-    def _extract_package(tar_path: str, package_name: str) -> None:
+    def extract_package(tar_path: str, package_name: str) -> None:
         if not os.path.exists(tar_path):
             return
         try:
@@ -495,8 +564,8 @@ def include_prebuilt_api_packages():
         except Exception as e:
             print(f"Warning: Failed to include {package_name} from {tar_path}: {e}")
 
-    _extract_package(api_shared_tarball, "codechecker_api_shared")
-    _extract_package(api_tarball, "codechecker_api")
+    extract_package(api_shared_tarball, "codechecker_api_shared")
+    extract_package(api_tarball, "codechecker_api")
 
 
 def copy_directory(src, dst):
@@ -885,48 +954,29 @@ def build_report_converter():
         print("Continuing with installation without report-converter...")
 
 
-class Build(build):
-    def run(self):
-        # Do all custom build steps BEFORE calling parent build.run()
-        if os.environ.get("CC_EMBED_SUBCOMMANDS_JSON"):
-            generate_subcommands_json()
+def build_and_generate_all_data_files():
+    """
+    This function returns all data files including dynamically generated ones.
+    It builds the necessary components and then collects all data files.
+    """
+    if os.environ.get("CC_EMBED_SUBCOMMANDS_JSON"):
+        generate_subcommands_json()
 
-        extend_version_files()
+    build_ldlogger_shared_libs()
+    extend_version_files()
 
-        if (
-            os.environ.get("CC_FORCE_BUILD_API_PACKAGES")
-            or not has_prebuilt_api_packages()
-        ):
-            build_api_packages()
+    if os.environ.get("CC_FORCE_BUILD_API_PACKAGES") or not has_prebuilt_api_packages():
+        build_api_packages()
 
-        include_prebuilt_api_packages()
-        build_web_frontend()
-        build_report_converter()
-        
-        # Update data_files after building web frontend - BEFORE parent build
-        static_data_files = get_data_files()
-        web_frontend_data_files = get_web_frontend_data_files()
-        self.distribution.data_files = static_data_files + web_frontend_data_files
-        
-        # Now call parent build with all data files properly set up
-        build.run(self)
+    include_api_packages()
+    build_web_frontend()
+    build_report_converter()
 
+    static_data_files = get_static_data_files()
+    ldlogger_data_files = get_ldlogger_data_files()
+    web_frontend_data_files = get_web_frontend_data_files()
 
-# Custom bdist_wheel and sdist commands removed - not needed since
-# the Build command now handles all web frontend building and data file setup
-
-
-class BuildExt(build_ext):
-    def copy_extensions_to_source(self):
-        # During editable installs, avoid copying built artifacts into source tree.
-        # Standard build will still wheel/package the built extension.
-        if getattr(self, "editable_mode", False):
-            print("Skipping copying extensions to source for editable install")
-            return
-        return build_ext.copy_extensions_to_source(self)
-
-
-# CustomInstall removed - not needed since pip install . goes through bdist_wheel
+    return static_data_files + ldlogger_data_files + web_frontend_data_files
 
 
 setuptools.setup(
@@ -958,7 +1008,7 @@ setuptools.setup(
         "codechecker_api": "web/api/py/codechecker_api/",
         "codechecker_api_shared": "web/api/py/codechecker_api_shared/",
     },
-    data_files=get_data_files(),
+    data_files=build_and_generate_all_data_files(),
     include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -974,11 +1024,6 @@ setuptools.setup(
         "Topic :: Software Development :: Quality Assurance",
     ],
     install_requires=get_requirements(),
-    ext_modules=get_ext_modules(),
-    cmdclass={
-        "build": Build,
-        "build_ext": BuildExt,
-    },
     python_requires=">=3.9",
     scripts=["scripts/gerrit_changed_files_to_skipfile.py"],
     entry_points={
