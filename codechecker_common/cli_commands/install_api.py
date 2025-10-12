@@ -54,10 +54,7 @@ def run(args: argparse.Namespace) -> int:
         return e.returncode or 1
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(**get_argparser_ctor_args())
-    add_arguments_to_parser(parser)
-    args = parser.parse_args()
+def main(args: argparse.Namespace) -> int:
     return run(args)
 
 
