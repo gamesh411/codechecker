@@ -135,6 +135,9 @@ package_ld_logger:
 	mkdir -p $(CC_BUILD_DIR)/ld_logger && \
 	mkdir -p $(CC_BUILD_BIN_DIR) && \
 	cp -r $(CURRENT_DIR)/tools/build-logger/build/* $(CC_BUILD_DIR)/ld_logger && \
+	echo "Creating symlink for ldlogger in directory $(CC_BUILD_BIN_DIR)/../ld_logger/bin/ldlogger" && \
+	echo "The real path to $CC_BUILD_BIN_DIR/.. is '$(realpath $(CC_BUILD_BIN_DIR)/..)'" && \
+	echo "The tree structure of this folder is '$(tree $(CC_BUILD_BIN_DIR)/..)'" && \
 	cd $(CC_BUILD_BIN_DIR) && \
 	ln -sf ../ld_logger/bin/ldlogger ldlogger
 
