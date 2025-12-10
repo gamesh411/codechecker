@@ -1,4 +1,107 @@
 #!/usr/bin/env python3
+"""
+CodeChecker setup.py - Modernized build system
+
+This setup.py provides a PEP 517-compliant build system for CodeChecker,
+replacing the previous Makefile-based build process.
+
+BUILD SYSTEM OVERVIEW:
+=====================
+
+The build system is organized into custom setuptools command classes:
+- CustomBuild: Handles all build steps (binaries, API packages, web frontend)
+- CustomBuildPy: Generates version files and configuration
+- CustomDevelop: Development mode installation
+- CustomBuildExt: Builds Python extension modules
+- CleanCommand: Removes build artifacts
+- StandalonePackageCommand: Creates standalone packages
+
+BUILD STEPS:
+============
+
+1. Binary Dependencies:
+   - ldlogger shared libraries (.so files for LD_PRELOAD)
+   - report-converter tool
+   - tu_collector tool
+   - statistics_collector tool
+   - merge_clang_extdef_mappings tool
+
+2. API Packages:
+   - Thrift API code generation (using Docker)
+   - Python API package building
+
+3. Web Frontend:
+   - Vue.js application build (using npm)
+
+4. Configuration Files:
+   - Version files (web_version.json, analyzer_version.json)
+   - Optional git metadata embedding
+
+ENVIRONMENT VARIABLES:
+======================
+
+Build Control:
+- CC_BUILD_ERROR_MODE: Error handling mode ("strict" or "warn", default: "strict")
+- CC_FORCE_REBUILD: Force rebuild all components ("YES" or "NO", default: "NO")
+- CC_FORCE_BUILD_API_PACKAGES: Force rebuild API packages ("YES" or "NO")
+
+Component Control:
+- CC_BUILD_UI_DIST: Build web frontend ("YES" or "NO", default: "YES")
+  (Deprecated: BUILD_UI_DIST - use CC_BUILD_UI_DIST instead)
+- CC_BUILD_LOGGER_64_BIT_ONLY: Build only 64-bit ldlogger ("YES" or "NO", default: "NO")
+  (Deprecated: BUILD_LOGGER_64_BIT_ONLY - use CC_BUILD_LOGGER_64_BIT_ONLY instead)
+
+Version Control:
+- CC_EMBED_BUILD_META: Embed git metadata in version files ("YES" or "NO")
+
+USAGE:
+======
+
+Standard build:
+    python setup.py build
+
+Development installation:
+    pip install -e .
+
+Source distribution:
+    python setup.py sdist
+
+Clean build artifacts:
+    python setup.py clean --all
+
+Standalone package:
+    python setup.py standalone_package
+
+CACHING:
+========
+
+The build system uses timestamp-based caching to skip rebuilding unchanged
+components. To force a full rebuild, set CC_FORCE_REBUILD=YES.
+
+ERROR HANDLING:
+===============
+
+By default, the build system uses "strict" mode, which fails immediately
+on build errors. Set CC_BUILD_ERROR_MODE=warn to continue with warnings
+instead of failing.
+
+DEPENDENCIES:
+=============
+
+Required:
+- Python 3.x
+
+Optional (for full functionality):
+- gcc (Linux only, for ldlogger shared libraries)
+- npm (for web frontend build)
+- Docker (for API package generation from Thrift files)
+
+Windows Support:
+- Platform-specific checks are skipped on Windows
+- Some components (e.g., ldlogger) are Linux-only
+
+For more information, see MIGRATION_PLAN.md
+"""
 
 import os
 import platform
