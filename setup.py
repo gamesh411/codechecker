@@ -32,6 +32,80 @@ def change_directory(directory):
         yield
     finally:
         os.chdir(original_dir)
+
+
+def should_force_rebuild():
+    """Check if force rebuild is requested via environment variable."""
+    return os.environ.get("CC_FORCE_REBUILD", "NO").upper() == "YES"
+
+
+def should_rebuild(output_path, source_paths):
+    """
+    Check if a build output needs to be rebuilt based on source file timestamps.
+    
+    Args:
+        output_path: Path to the build output file or directory
+        source_paths: List of source file/directory paths to check
+    
+    Returns:
+        True if rebuild is needed, False if output is up to date
+    """
+    # If force rebuild is requested, always rebuild
+    if should_force_rebuild():
+        return True
+    
+    # If output doesn't exist, need to build
+    if not os.path.exists(output_path):
+        return True
+    
+    # Get output modification time
+    try:
+        if os.path.isdir(output_path):
+            # For directories, check the most recent file modification time
+            output_time = 0
+            for root, _, files in os.walk(output_path):
+                for f in files:
+                    file_path = os.path.join(root, f)
+                    try:
+                        mtime = os.path.getmtime(file_path)
+                        output_time = max(output_time, mtime)
+                    except OSError:
+                        pass
+        else:
+            output_time = os.path.getmtime(output_path)
+    except OSError:
+        # If we can't get output time, rebuild to be safe
+        return True
+    
+    # Check if any source file is newer than output
+    for source_path in source_paths:
+        if not os.path.exists(source_path):
+            continue
+        
+        try:
+            if os.path.isdir(source_path):
+                # For directories, check the most recent file modification time
+                source_time = 0
+                for root, _, files in os.walk(source_path):
+                    for f in files:
+                        file_path = os.path.join(root, f)
+                        try:
+                            mtime = os.path.getmtime(file_path)
+                            source_time = max(source_time, mtime)
+                        except OSError:
+                            pass
+                if source_time > output_time:
+                    return True
+            else:
+                source_time = os.path.getmtime(source_path)
+                if source_time > output_time:
+                    return True
+        except OSError:
+            # If we can't check a source file, rebuild to be safe
+            return True
+    
+    # All sources are older than output, no rebuild needed
+    return False
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
