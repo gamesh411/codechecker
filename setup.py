@@ -106,6 +106,7 @@ def should_rebuild(output_path, source_paths):
     
     # All sources are older than output, no rebuild needed
     return False
+from setuptools import Command
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
@@ -1187,6 +1188,77 @@ class BuildExt(build_ext):
             build_ext.build_extension(self, ext)
 
 
+class CleanCommand(Command):
+    """
+    Custom clean command to remove build artifacts.
+    
+    Supports options:
+    - --all: Remove all build artifacts (build/, dist/, *.egg-info/, generated files)
+    - --build: Remove build/ directory
+    - --generated: Remove build/__generated__/ directory
+    - --dist: Remove dist/ directory
+    """
+    description = "clean build artifacts"
+    user_options = [
+        ('all', 'a', 'remove all build artifacts'),
+        ('build', 'b', 'remove build directory'),
+        ('generated', 'g', 'remove generated files directory'),
+        ('dist', 'd', 'remove dist directory'),
+    ]
+
+    def initialize_options(self):
+        self.all = False
+        self.build = False
+        self.generated = False
+        self.dist = False
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        if self.all:
+            self.build = True
+            self.generated = True
+            self.dist = True
+        
+        if self.build:
+            build_dir = os.path.join(root_dir, "build")
+            if os.path.exists(build_dir):
+                print(f"Removing build directory: {build_dir}")
+                shutil.rmtree(build_dir)
+            else:
+                print("Build directory does not exist")
+        
+        if self.generated:
+            generated_dir = os.path.join(root_dir, GENERATED_FILES_DEST)
+            if os.path.exists(generated_dir):
+                print(f"Removing generated files directory: {generated_dir}")
+                shutil.rmtree(generated_dir)
+            else:
+                print("Generated files directory does not exist")
+        
+        if self.dist:
+            dist_dir = os.path.join(root_dir, "dist")
+            if os.path.exists(dist_dir):
+                print(f"Removing dist directory: {dist_dir}")
+                shutil.rmtree(dist_dir)
+            else:
+                print("Dist directory does not exist")
+            
+            # Also remove egg-info directories
+            for item in os.listdir(root_dir):
+                if item.endswith(".egg-info"):
+                    egg_info_dir = os.path.join(root_dir, item)
+                    if os.path.isdir(egg_info_dir):
+                        print(f"Removing {item} directory: {egg_info_dir}")
+                        shutil.rmtree(egg_info_dir)
+        
+        if not (self.build or self.generated or self.dist):
+            print("No clean options specified. Use --help to see available options.")
+
+
 class Sdist(sdist):
     def run(self):
         res = subprocess.call(
@@ -1284,6 +1356,7 @@ setuptools.setup(
         'sdist': Sdist,
         'install': Install,
         'build_ext': BuildExt,
+        'clean': CleanCommand,
     },
     python_requires='>=3.9',
     scripts=[
