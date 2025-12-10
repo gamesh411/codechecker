@@ -462,6 +462,122 @@ def build_api_packages():
         print("API packages already exist, skipping build.")
 
 
+def build_web_frontend():
+    """Build the web frontend."""
+    print("Building web frontend...")
+
+    # Define paths
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    web_dir = os.path.join(root_dir, "web")
+    vue_cli_dir = os.path.join(web_dir, "server", "vue-cli")
+    dist_dir = os.path.join(vue_cli_dir, "dist")
+
+    # Define destination path in the generated files directory
+    web_dest_dir = os.path.join(GENERATED_FILES_DEST, DATA_FILES_DEST, "www")
+    # Create even if we don't build the web frontend
+    os.makedirs(web_dest_dir, exist_ok=True)
+
+    # Check if we should build the UI
+    # Support both old and new env var names for backward compatibility
+    build_ui_dist = (
+        os.environ.get("CC_BUILD_UI_DIST", os.environ.get("BUILD_UI_DIST", "YES"))
+    )
+
+    if build_ui_dist.upper() == "YES":
+        # Build the Vue.js application
+        try:
+            print("Building Vue.js application...")
+
+            # Check if the dist directory already exists and is up to date
+            if os.path.exists(dist_dir):
+                # Check if we need to rebuild based on latest commit
+                latest_commit_file = os.path.join(dist_dir, ".build-commit")
+                rebuild_needed = True
+
+                if os.path.exists(latest_commit_file):
+                    try:
+                        # Try to get the latest commit in which vue-cli directory was changed
+                        latest_commit = subprocess.check_output(
+                            [
+                                "git",
+                                "log",
+                                "-n",
+                                "1",
+                                "--pretty=format:%H",
+                                vue_cli_dir,
+                            ],
+                            stderr=subprocess.PIPE,
+                            universal_newlines=True,
+                        ).strip()
+
+                        # Get the latest build commit from the file
+                        with open(latest_commit_file, "r") as f:
+                            latest_build_commit = f.read().strip()
+
+                        # If they match, no need to rebuild
+                        if latest_commit == latest_build_commit:
+                            rebuild_needed = False
+                            print("Vue.js application is up to date, skipping build.")
+                    except (subprocess.CalledProcessError, OSError, IOError):
+                        # If any error occurs, we'll rebuild to be safe
+                        pass
+
+                if rebuild_needed:
+                    # Remove existing dist directory to ensure clean build
+                    shutil.rmtree(dist_dir)
+
+            # Create dist directory if it doesn't exist
+            os.makedirs(dist_dir, exist_ok=True)
+
+            # Save current directory to return to it later
+            current_dir = os.getcwd()
+
+            # Check if package.json exists (needed for npm commands)
+            package_json_path = os.path.join(vue_cli_dir, "package.json")
+            if not os.path.exists(package_json_path):
+                print(
+                    "Warning: package.json not found in vue-cli directory. Skipping Vue.js build."
+                )
+                print("This is expected when building from a source distribution.")
+                return
+
+            # Change to vue-cli directory
+            os.chdir(vue_cli_dir)
+
+            # Run npm install and build
+            subprocess.check_call(["npm", "install"])
+            subprocess.check_call(["npm", "run-script", "build"])
+
+            # Save the latest commit hash to the build-commit file
+            try:
+                latest_commit = subprocess.check_output(
+                    ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
+                    stderr=subprocess.PIPE,
+                    universal_newlines=True,
+                ).strip()
+
+                with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
+                    f.write(latest_commit)
+            except (subprocess.CalledProcessError, OSError):
+                pass
+
+            # Return to original directory
+            os.chdir(current_dir)
+
+            # Copy the built files to the generated files directory
+            if os.path.exists(dist_dir):
+                print(f"Copying web frontend from {dist_dir} to {web_dest_dir}")
+                copy_directory(dist_dir, web_dest_dir)
+            else:
+                print(f"Warning: Vue.js build directory {dist_dir} does not exist")
+
+        except (subprocess.CalledProcessError, OSError) as e:
+            print(f"Warning: Failed to build Vue.js application: {e}")
+            print("Continuing with installation without web frontend...")
+    else:
+        print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
+
+
 module_logger_name = 'codechecker_analyzer.ld_logger.lib.ldlogger'
 module_logger = Extension(
     module_logger_name,
@@ -492,6 +608,9 @@ class CustomBuild(build):
         
         # Include API packages (extract prebuilt tarballs to build/lib)
         include_api_packages()
+        
+        # Build web frontend
+        build_web_frontend()
         
         # Continue with standard build
         build.run(self)
