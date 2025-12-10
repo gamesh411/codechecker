@@ -8,10 +8,13 @@ import sys
 import shutil
 import tarfile
 import tempfile
+import json
+import time
 
 from enum import Enum
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
+from setuptools.command.build_py import build_py
 from setuptools.command.install import install
 from setuptools.command.sdist import sdist
 from setuptools.extension import Extension
@@ -578,6 +581,134 @@ def build_web_frontend():
         print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
 
 
+def add_git_info(version_json_data):
+    """Add git information to version data if available."""
+    try:
+        if not os.path.exists(".git"):
+            return
+
+        # Get git hash
+        try:
+            git_hash = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], encoding="utf-8", errors="ignore"
+            ).strip()
+            version_json_data["git_hash"] = git_hash
+        except subprocess.CalledProcessError:
+            pass
+
+        # Get git describe information
+        try:
+            git_describe = subprocess.check_output(
+                ["git", "describe", "--tags", "--dirty"],
+                encoding="utf-8",
+                errors="ignore",
+            ).strip()
+
+            # Parse git describe output
+            git_describe_data = {}
+            if "-dirty" in git_describe:
+                git_describe_data["dirty"] = True
+                git_describe = git_describe.replace("-dirty", "")
+            else:
+                git_describe_data["dirty"] = False
+
+            # Extract tag information
+            if "-" in git_describe:
+                tag = git_describe.split("-")[0]
+            else:
+                tag = git_describe
+
+            git_describe_data["tag"] = tag
+            version_json_data["git_describe"] = git_describe_data
+        except subprocess.CalledProcessError:
+            # No tags available
+            pass
+    except Exception as e:
+        print(f"Error adding git information: {str(e)}")
+
+
+def extend_version_file(version_file):
+    """Extend a version file with build date and git information."""
+    if not os.path.exists(version_file):
+        print(f"Warning: Version file not found: {version_file}")
+        return
+
+    try:
+        with open(version_file, encoding="utf-8", errors="ignore") as v_file:
+            version_json_data = json.load(v_file)
+
+        # Add git information if available
+        add_git_info(version_json_data)
+
+        # Add build date
+        time_now = time.strftime("%Y-%m-%dT%H:%M")
+        version_json_data["package_build_date"] = time_now
+
+        # Rewrite version config file with the extended data
+        with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
+            v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
+
+        print(f"Extended version file: {version_file}")
+    except Exception as e:
+        print(f"Error extending version file {version_file}: {str(e)}")
+
+
+def ensure_version_defaults(version_file):
+    """Ensure required keys exist to avoid runtime errors."""
+    if not os.path.exists(version_file):
+        return
+    try:
+        with open(version_file, encoding="utf-8", errors="ignore") as v_file:
+            version_json_data = json.load(v_file)
+        if "package_build_date" not in version_json_data:
+            version_json_data["package_build_date"] = "1970-01-01T00:00"
+            with open(version_file, "w", encoding="utf-8", errors="ignore") as v_file:
+                v_file.write(json.dumps(version_json_data, sort_keys=True, indent=4))
+    except Exception:
+        pass
+
+
+def extend_version_files():
+    """Extend version files with build date and git information."""
+    print("Extending version files with build date and git information...")
+
+    # Ensure the config directory exists
+    config_files_path = os.path.join(DATA_FILES_DEST, "config")
+    config_dir = os.path.join(GENERATED_FILES_DEST, config_files_path)
+    os.makedirs(config_dir, exist_ok=True)
+
+    # Process web_version.json
+    web_version_file = os.path.join(config_dir, "web_version.json")
+
+    # Always copy the source version file to ensure we have the latest version
+    src_web_version = os.path.join("web", "config", "web_version.json")
+    if os.path.exists(src_web_version):
+        shutil.copy(src_web_version, web_version_file)
+        print(f"Copied {src_web_version} to {web_version_file}")
+    else:
+        print(f"Warning: Source file {src_web_version} not found")
+
+    # Process analyzer_version.json
+    analyzer_version_file = os.path.join(config_dir, "analyzer_version.json")
+
+    # Always copy the source version file to ensure we have the latest version
+    src_analyzer_version = os.path.join("analyzer", "config", "analyzer_version.json")
+    if os.path.exists(src_analyzer_version):
+        shutil.copy(src_analyzer_version, analyzer_version_file)
+        print(f"Copied {src_analyzer_version} to {analyzer_version_file}")
+    else:
+        print(f"Warning: Source file {src_analyzer_version} not found")
+
+    # Ensure required keys exist for runtime even if build metadata is off
+    ensure_version_defaults(web_version_file)
+    ensure_version_defaults(analyzer_version_file)
+
+    # Optionally extend both version files with build metadata if enabled
+    if os.environ.get("CC_EMBED_BUILD_META"):
+        extend_version_file(web_version_file)
+        extend_version_file(analyzer_version_file)
+
+
 module_logger_name = 'codechecker_analyzer.ld_logger.lib.ldlogger'
 module_logger = Extension(
     module_logger_name,
@@ -588,6 +719,21 @@ module_logger = Extension(
     ],
     sources=[
         os.path.join(ld_logger_src_dir_path, s) for s in ld_logger_sources])
+
+
+class CustomBuildPy(build_py):
+    """
+    Custom build_py command that generates configuration files.
+    
+    This class handles generation of version files and other configuration
+    files that need to be created before packaging.
+    """
+    def run(self):
+        # Generate version files before building Python packages
+        extend_version_files()
+        
+        # Continue with standard build_py
+        build_py.run(self)
 
 
 class CustomBuild(build):
@@ -718,6 +864,7 @@ setuptools.setup(
     ext_modules=[module_logger],
     cmdclass={
         'build': CustomBuild,
+        'build_py': CustomBuildPy,
         'sdist': Sdist,
         'install': Install,
         'build_ext': BuildExt,
