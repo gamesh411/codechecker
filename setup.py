@@ -343,6 +343,29 @@ def build_statistics_collector():
         print("Continuing with installation without statistics_collector...")
 
 
+def build_merge_clang_extdef_mappings():
+    """Build and package merge_clang_extdef_mappings."""
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        print("Building merge_clang_extdef_mappings...")
+        merge_clang_dir = os.path.join(
+            root_dir, "analyzer", "tools", "merge_clang_extdef_mappings"
+        )
+
+        # Build merge_clang_extdef_mappings using its setup.py
+        subprocess.check_call(
+            [sys.executable, "setup.py", "build"], cwd=merge_clang_dir
+        )
+
+        # The merge_clang_extdef_mappings package will be included automatically by setuptools
+        # since it's listed in get_codechecker_packages()
+        print("merge_clang_extdef_mappings built successfully")
+
+    except (subprocess.CalledProcessError, OSError) as e:
+        print(f"Warning: Failed to build merge_clang_extdef_mappings: {e}")
+        print("Continuing with installation without merge_clang_extdef_mappings...")
+
+
 def has_prebuilt_api_packages():
     """Check if prebuilt API tarballs exist."""
     return os.path.exists(
@@ -912,6 +935,7 @@ class CustomBuild(build):
         build_report_converter()
         build_tu_collector()
         build_statistics_collector()
+        build_merge_clang_extdef_mappings()
         
         # Build API packages if needed
         if os.environ.get("CC_FORCE_BUILD_API_PACKAGES") or not has_prebuilt_api_packages():
