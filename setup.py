@@ -11,8 +11,27 @@ import tempfile
 import json
 import time
 import glob
-
+from contextlib import contextmanager
 from enum import Enum
+
+
+@contextmanager
+def change_directory(directory):
+    """
+    Context manager for temporarily changing the working directory.
+    
+    Usage:
+        with change_directory('/path/to/dir'):
+            # code that runs in /path/to/dir
+            pass
+        # automatically returns to original directory
+    """
+    original_dir = os.getcwd()
+    try:
+        os.chdir(directory)
+        yield
+    finally:
+        os.chdir(original_dir)
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
@@ -624,9 +643,7 @@ def build_api_packages():
 
                         # Build the packages
                         # Build codechecker_api_shared
-                        current_dir = os.getcwd()
-                        try:
-                            os.chdir(os.path.join(api_py_dir, "codechecker_api_shared"))
+                        with change_directory(os.path.join(api_py_dir, "codechecker_api_shared")):
                             subprocess.check_call([sys.executable, "setup.py", "sdist"])
 
                             # Rename the tarball
@@ -639,8 +656,8 @@ def build_api_packages():
                                         api_shared_tarball,
                                     )
 
-                            # Build codechecker_api
-                            os.chdir(os.path.join(api_py_dir, "codechecker_api"))
+                        # Build codechecker_api
+                        with change_directory(os.path.join(api_py_dir, "codechecker_api")):
                             subprocess.check_call([sys.executable, "setup.py", "sdist"])
 
                             # Rename the tarball
@@ -649,8 +666,6 @@ def build_api_packages():
                                     ".tar.gz"
                                 ):
                                     os.rename(os.path.join(api_dist, file), api_tarball)
-                        finally:
-                            os.chdir(current_dir)
 
                         # Clean up generated files
                         shutil.rmtree(gen_py_dir, ignore_errors=True)
@@ -740,9 +755,6 @@ def build_web_frontend():
             # Create dist directory if it doesn't exist
             os.makedirs(dist_dir, exist_ok=True)
 
-            # Save current directory to return to it later
-            current_dir = os.getcwd()
-
             # Check if package.json exists (needed for npm commands)
             package_json_path = os.path.join(vue_cli_dir, "package.json")
             if not os.path.exists(package_json_path):
@@ -752,28 +764,24 @@ def build_web_frontend():
                 print("This is expected when building from a source distribution.")
                 return
 
-            # Change to vue-cli directory
-            os.chdir(vue_cli_dir)
+            # Change to vue-cli directory using context manager
+            with change_directory(vue_cli_dir):
+                # Run npm install and build
+                subprocess.check_call(["npm", "install"])
+                subprocess.check_call(["npm", "run-script", "build"])
 
-            # Run npm install and build
-            subprocess.check_call(["npm", "install"])
-            subprocess.check_call(["npm", "run-script", "build"])
+                # Save the latest commit hash to the build-commit file
+                try:
+                    latest_commit = subprocess.check_output(
+                        ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True,
+                    ).strip()
 
-            # Save the latest commit hash to the build-commit file
-            try:
-                latest_commit = subprocess.check_output(
-                    ["git", "log", "-n", "1", "--pretty=format:%H", vue_cli_dir],
-                    stderr=subprocess.PIPE,
-                    universal_newlines=True,
-                ).strip()
-
-                with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
-                    f.write(latest_commit)
-            except (subprocess.CalledProcessError, OSError):
-                pass
-
-            # Return to original directory
-            os.chdir(current_dir)
+                    with open(os.path.join(dist_dir, ".build-commit"), "w") as f:
+                        f.write(latest_commit)
+                except (subprocess.CalledProcessError, OSError):
+                    pass
 
             # Copy the built files to the generated files directory
             if os.path.exists(dist_dir):
