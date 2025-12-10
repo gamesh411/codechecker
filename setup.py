@@ -13,6 +13,42 @@ import time
 import glob
 from contextlib import contextmanager
 from enum import Enum
+import warnings
+
+
+def get_env_var(new_name, old_name=None, default=None, deprecation_warning=True):
+    """
+    Get environment variable with backward compatibility support.
+    
+    Checks for the new variable name first, then falls back to the old name
+    if provided. Issues a deprecation warning if the old name is used.
+    
+    Args:
+        new_name: New environment variable name (e.g., 'CC_BUILD_UI_DIST')
+        old_name: Old environment variable name (e.g., 'BUILD_UI_DIST')
+        default: Default value if neither variable is set
+        deprecation_warning: Whether to issue a deprecation warning for old name
+    
+    Returns:
+        The value of the environment variable, or default if not set
+    """
+    value = os.environ.get(new_name)
+    if value is not None:
+        return value
+    
+    if old_name:
+        value = os.environ.get(old_name)
+        if value is not None and deprecation_warning:
+            warnings.warn(
+                f"Environment variable '{old_name}' is deprecated. "
+                f"Please use '{new_name}' instead. "
+                f"Support for '{old_name}' will be removed in a future version.",
+                DeprecationWarning,
+                stacklevel=2
+            )
+        return value
+    
+    return default
 
 
 @contextmanager
@@ -367,8 +403,7 @@ def build_ldlogger_shared_libs():
     
     # Support old env var name for backward compatibility
     build_64_bit_only = (
-        os.environ.get("CC_BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES" or
-        os.environ.get("BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
+        get_env_var("CC_BUILD_LOGGER_64_BIT_ONLY", "BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
     )
     
     rebuild_64bit = should_rebuild(output_64bit, ldlogger_sources)
@@ -875,10 +910,8 @@ def build_web_frontend():
     os.makedirs(web_dest_dir, exist_ok=True)
 
     # Check if we should build the UI
-    # Support both old and new env var names for backward compatibility
-    build_ui_dist = (
-        os.environ.get("CC_BUILD_UI_DIST", os.environ.get("BUILD_UI_DIST", "YES"))
-    )
+    # Support old env var name for backward compatibility
+    build_ui_dist = get_env_var("CC_BUILD_UI_DIST", "BUILD_UI_DIST", "YES")
 
     if build_ui_dist.upper() == "YES":
         # Build the Vue.js application
