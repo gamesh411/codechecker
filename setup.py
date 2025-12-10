@@ -110,6 +110,7 @@ from setuptools import Command
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
+from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.command.sdist import sdist
 from setuptools.extension import Extension
@@ -1122,6 +1123,21 @@ class CustomBuildPy(build_py):
         build_py.run(self)
 
 
+class CustomDevelop(develop):
+    """
+    Custom develop command for development mode installation.
+    
+    This ensures that all build steps (version files, etc.) are run
+    before creating the development installation symlinks.
+    """
+    def run(self):
+        # Generate version files before development installation
+        extend_version_files()
+        
+        # Continue with standard develop command
+        develop.run(self)
+
+
 class CustomBuild(build):
     """
     Custom build command for CodeChecker.
@@ -1353,6 +1369,7 @@ setuptools.setup(
     cmdclass={
         'build': CustomBuild,
         'build_py': CustomBuildPy,
+        'develop': CustomDevelop,
         'sdist': Sdist,
         'install': Install,
         'build_ext': BuildExt,
