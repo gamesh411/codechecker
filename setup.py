@@ -1275,6 +1275,54 @@ class CleanCommand(Command):
             print("No clean options specified. Use --help to see available options.")
 
 
+class StandalonePackageCommand(Command):
+    """
+    Custom command to create a standalone package with embedded virtual environment.
+    
+    This command builds the package and then wraps binaries in a virtual environment
+    using the wrap_binary_in_venv.py script, similar to the Makefile standalone_package target.
+    """
+    description = "create standalone package with embedded virtual environment"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        wrap_script = os.path.join(root_dir, "scripts", "build", "wrap_binary_in_venv.py")
+        
+        if not os.path.exists(wrap_script):
+            print(f"Warning: wrap_binary_in_venv.py not found at {wrap_script}")
+            print("Skipping standalone package creation.")
+            return
+        
+        # First, ensure we have a built package
+        print("Building package for standalone distribution...")
+        self.run_command('build')
+        self.run_command('sdist')
+        
+        # Then wrap binaries in venv
+        print("Creating standalone package with embedded virtual environment...")
+        venv_dir = os.path.join(root_dir, "venv")
+        package_dir = os.path.join(root_dir, "build_dist", "CodeChecker")
+        
+        try:
+            subprocess.check_call(
+                [sys.executable, wrap_script,
+                 "-e", venv_dir,
+                 "-o", package_dir],
+                cwd=root_dir
+            )
+            print("Standalone package created successfully")
+        except (subprocess.CalledProcessError, OSError) as e:
+            print(f"Warning: Failed to create standalone package: {e}")
+            print("Continuing without standalone package wrapper...")
+
+
 class Sdist(sdist):
     def run(self):
         res = subprocess.call(
@@ -1374,6 +1422,7 @@ setuptools.setup(
         'install': Install,
         'build_ext': BuildExt,
         'clean': CleanCommand,
+        'standalone_package': StandalonePackageCommand,
     },
     python_requires='>=3.9',
     scripts=[
