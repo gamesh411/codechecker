@@ -358,6 +358,24 @@ def build_ldlogger_shared_libs():
         GENERATED_FILES_DEST, DATA_FILES_DEST, "ld_logger", "lib"
     )
 
+    # Check if rebuild is needed (check all architectures at once)
+    ldlogger_sources = [os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES]
+    output_64bit = os.path.join(lib_dest_dir, "64bit", "ldlogger.so")
+    output_32bit = os.path.join(lib_dest_dir, "32bit", "ldlogger.so")
+    
+    # Support old env var name for backward compatibility
+    build_64_bit_only = (
+        os.environ.get("CC_BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES" or
+        os.environ.get("BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
+    )
+    
+    rebuild_64bit = should_rebuild(output_64bit, ldlogger_sources)
+    rebuild_32bit = should_rebuild(output_32bit, ldlogger_sources) if not build_64_bit_only else False
+    
+    if not rebuild_64bit and not rebuild_32bit:
+        print("ldlogger shared libraries are up to date, skipping build.")
+        return
+
     class Arch(Enum):
         X86_64 = "64bit"
         X86_32 = "32bit"
@@ -407,23 +425,35 @@ def build_ldlogger_shared_libs():
             )
             print("LD_PRELOAD functionality will not be available")
 
-    build_ldlogger(Arch.X86_64)
-    # Support old env var name for backward compatibility
-    build_64_bit_only = (
-        os.environ.get("CC_BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES" or
-        os.environ.get("BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
-    )
-    if not build_64_bit_only:
+    if rebuild_64bit:
+        build_ldlogger(Arch.X86_64)
+    if rebuild_32bit:
         build_ldlogger(Arch.X86_32)
 
 
 def build_report_converter():
     """Build and package report-converter."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
+    
+    # Check if rebuild is needed
+    build_dir = os.path.join(report_converter_dir, "build")
+    source_files = []
+    for root, _, files in os.walk(report_converter_dir):
+        # Skip build directories and hidden files
+        if "build" in root or "__pycache__" in root or ".git" in root:
+            continue
+        for f in files:
+            if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
+                source_files.append(os.path.join(root, f))
+    
+    if not should_rebuild(build_dir, source_files):
+        print("report-converter is up to date, skipping build.")
+        return
+    
     error_mode = get_error_mode()
     try:
         print("Building report-converter...")
-        report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
 
         # Build report-converter using its setup.py
         subprocess.check_call(
@@ -441,10 +471,26 @@ def build_report_converter():
 def build_tu_collector():
     """Build and package tu_collector."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    tu_collector_dir = os.path.join(root_dir, "tools", "tu_collector")
+    
+    # Check if rebuild is needed
+    build_dir = os.path.join(tu_collector_dir, "build")
+    source_files = []
+    for root, _, files in os.walk(tu_collector_dir):
+        # Skip build directories and hidden files
+        if "build" in root or "__pycache__" in root or ".git" in root:
+            continue
+        for f in files:
+            if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
+                source_files.append(os.path.join(root, f))
+    
+    if not should_rebuild(build_dir, source_files):
+        print("tu_collector is up to date, skipping build.")
+        return
+    
     error_mode = get_error_mode()
     try:
         print("Building tu_collector...")
-        tu_collector_dir = os.path.join(root_dir, "tools", "tu_collector")
 
         # Build tu_collector using its setup.py
         subprocess.check_call(
@@ -462,12 +508,28 @@ def build_tu_collector():
 def build_statistics_collector():
     """Build and package statistics_collector."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    statistics_collector_dir = os.path.join(
+        root_dir, "analyzer", "tools", "statistics_collector"
+    )
+    
+    # Check if rebuild is needed
+    build_dir = os.path.join(statistics_collector_dir, "build")
+    source_files = []
+    for root, _, files in os.walk(statistics_collector_dir):
+        # Skip build directories and hidden files
+        if "build" in root or "__pycache__" in root or ".git" in root:
+            continue
+        for f in files:
+            if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
+                source_files.append(os.path.join(root, f))
+    
+    if not should_rebuild(build_dir, source_files):
+        print("statistics_collector is up to date, skipping build.")
+        return
+    
     error_mode = get_error_mode()
     try:
         print("Building statistics_collector...")
-        statistics_collector_dir = os.path.join(
-            root_dir, "analyzer", "tools", "statistics_collector"
-        )
 
         # Build statistics_collector using its setup.py
         subprocess.check_call(
@@ -485,12 +547,28 @@ def build_statistics_collector():
 def build_merge_clang_extdef_mappings():
     """Build and package merge_clang_extdef_mappings."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    merge_clang_dir = os.path.join(
+        root_dir, "analyzer", "tools", "merge_clang_extdef_mappings"
+    )
+    
+    # Check if rebuild is needed
+    build_dir = os.path.join(merge_clang_dir, "build")
+    source_files = []
+    for root, _, files in os.walk(merge_clang_dir):
+        # Skip build directories and hidden files
+        if "build" in root or "__pycache__" in root or ".git" in root:
+            continue
+        for f in files:
+            if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
+                source_files.append(os.path.join(root, f))
+    
+    if not should_rebuild(build_dir, source_files):
+        print("merge_clang_extdef_mappings is up to date, skipping build.")
+        return
+    
     error_mode = get_error_mode()
     try:
         print("Building merge_clang_extdef_mappings...")
-        merge_clang_dir = os.path.join(
-            root_dir, "analyzer", "tools", "merge_clang_extdef_mappings"
-        )
 
         # Build merge_clang_extdef_mappings using its setup.py
         subprocess.check_call(
@@ -607,11 +685,29 @@ def build_api_packages():
     api_shared_tarball = os.path.join(api_shared_dist, "codechecker_api_shared.tar.gz")
     api_tarball = os.path.join(api_dist, "codechecker_api.tar.gz")
 
+    # Check if rebuild is needed based on Thrift file timestamps
+    thrift_files = [
+        os.path.join(api_dir, "authentication.thrift"),
+        os.path.join(api_dir, "products.thrift"),
+        os.path.join(api_dir, "report_server.thrift"),
+        os.path.join(api_dir, "configuration.thrift"),
+        os.path.join(api_dir, "server_info.thrift"),
+        os.path.join(api_dir, "codechecker_api_shared.thrift"),
+    ]
+    
+    # Filter to only existing thrift files
+    existing_thrift_files = [f for f in thrift_files if os.path.exists(f)]
+    
     need_build = False
-
     if not os.path.exists(api_shared_tarball) or not os.path.exists(api_tarball):
         need_build = True
         print("API packages not found, building them...")
+    elif existing_thrift_files:
+        # Check if any Thrift file is newer than the tarballs
+        if should_rebuild(api_shared_tarball, existing_thrift_files) or \
+           should_rebuild(api_tarball, existing_thrift_files):
+            need_build = True
+            print("API packages are outdated, rebuilding them...")
 
     if need_build:
         error_mode = get_error_mode()
