@@ -6,6 +6,7 @@ import setuptools
 import subprocess
 import sys
 
+from enum import Enum
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
@@ -20,6 +21,8 @@ req_file_paths = [
     os.path.join("analyzer", "requirements.txt"),
     os.path.join("web", "requirements.txt")]
 data_files_dir_path = os.path.join('share', 'codechecker')
+DATA_FILES_DEST = os.path.join('share', 'codechecker')
+GENERATED_FILES_DEST = os.path.join('build', '__generated__')
 
 packages = []
 
@@ -58,6 +61,7 @@ def init_packages():
 
 ld_logger_src_dir_path = \
     os.path.join("analyzer", "tools", "build-logger", "src")
+LD_LOGGER_SRC_PATH = ld_logger_src_dir_path
 
 ld_logger_sources = [
     'ldlogger-hooks.c',
@@ -67,6 +71,7 @@ ld_logger_sources = [
     'ldlogger-tool-javac.c',
     'ldlogger-util.c'
 ]
+LD_LOGGER_SOURCES = ld_logger_sources
 
 ld_logger_includes = [
     'ldlogger-hooks.h',
@@ -109,6 +114,91 @@ def get_static_data_files():
     
     return static_files
 
+
+def build_ldlogger_shared_libs():
+    """
+    Build traditional ldlogger.so shared libraries for LD_PRELOAD usage.
+    This complements the Python extension module build.
+    """
+    if sys.platform != "linux":
+        return
+
+    lib_dest_dir = os.path.join(
+        GENERATED_FILES_DEST, DATA_FILES_DEST, "ld_logger", "lib"
+    )
+
+    class Arch(Enum):
+        X86_64 = "64bit"
+        X86_32 = "32bit"
+
+    def build_ldlogger(arch: Arch):
+        os.makedirs(os.path.join(lib_dest_dir, arch.value), exist_ok=True)
+        lib_sources = [os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES]
+        compile_flags = [
+            f"-m{arch.value[:2]}",
+            "-D_GNU_SOURCE",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-O2",
+            "-Wno-strict-aliasing",
+            "-fno-exceptions",
+            "-fPIC",
+            "-fomit-frame-pointer",
+            "-fvisibility=hidden",
+        ]
+
+        link_flags = ["-shared", "-Wl,--no-as-needed", "-ldl"]
+        ldlogger_so = os.path.join(lib_dest_dir, arch.value, "ldlogger.so")
+        try:
+            cmd = (
+                ["gcc"] + compile_flags + lib_sources + link_flags + ["-o", ldlogger_so]
+            )
+            subprocess.check_call(cmd)
+            print(f"Built ldlogger shared library for {arch.value}: {ldlogger_so}")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"Warning: Failed to build ldlogger shared library for {arch.value}: {e}"
+            )
+            print("LD_PRELOAD functionality will not be available")
+        except FileNotFoundError:
+            print(
+                f"Warning: gcc not found, skipping ldlogger shared library build for {arch.value}"
+            )
+            print("LD_PRELOAD functionality will not be available")
+
+    build_ldlogger(Arch.X86_64)
+    # Support old env var name for backward compatibility
+    build_64_bit_only = (
+        os.environ.get("CC_BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES" or
+        os.environ.get("BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
+    )
+    if not build_64_bit_only:
+        build_ldlogger(Arch.X86_32)
+
+
+def build_report_converter():
+    """Build and package report-converter."""
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        print("Building report-converter...")
+        report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
+
+        # Build report-converter using its setup.py
+        subprocess.check_call(
+            [sys.executable, "setup.py", "build"], cwd=report_converter_dir
+        )
+
+        # The report-converter package will be included automatically by setuptools
+        # since it's listed in get_codechecker_packages()
+        print("Report-converter built successfully")
+
+    except (subprocess.CalledProcessError, OSError) as e:
+        print(f"Warning: Failed to build report-converter: {e}")
+        print("Continuing with installation without report-converter...")
+
+
 module_logger_name = 'codechecker_analyzer.ld_logger.lib.ldlogger'
 module_logger = Extension(
     module_logger_name,
@@ -125,15 +215,15 @@ class CustomBuild(build):
     """
     Custom build command for CodeChecker.
     
-    This class will be extended in later commits to handle all build steps
-    (binary dependencies, API packages, web frontend, etc.) that currently
-    happen at import time or via Makefile.
-    
-    For now, this is just a skeleton that calls the parent build command.
+    This class handles all build steps (binary dependencies, API packages,
+    web frontend, etc.) that previously happened at import time or via Makefile.
     """
     def run(self):
-        # Placeholder: just call parent for now
-        # Build logic will be added in subsequent commits
+        # Build binary dependencies first
+        build_ldlogger_shared_libs()
+        build_report_converter()
+        
+        # Continue with standard build
         build.run(self)
 
 
