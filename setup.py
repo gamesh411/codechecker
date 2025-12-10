@@ -320,6 +320,29 @@ def build_tu_collector():
         print("Continuing with installation without tu_collector...")
 
 
+def build_statistics_collector():
+    """Build and package statistics_collector."""
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    try:
+        print("Building statistics_collector...")
+        statistics_collector_dir = os.path.join(
+            root_dir, "analyzer", "tools", "statistics_collector"
+        )
+
+        # Build statistics_collector using its setup.py
+        subprocess.check_call(
+            [sys.executable, "setup.py", "build"], cwd=statistics_collector_dir
+        )
+
+        # The statistics_collector package will be included automatically by setuptools
+        # since it's listed in get_codechecker_packages()
+        print("statistics_collector built successfully")
+
+    except (subprocess.CalledProcessError, OSError) as e:
+        print(f"Warning: Failed to build statistics_collector: {e}")
+        print("Continuing with installation without statistics_collector...")
+
+
 def has_prebuilt_api_packages():
     """Check if prebuilt API tarballs exist."""
     return os.path.exists(
@@ -888,6 +911,7 @@ class CustomBuild(build):
         build_ldlogger_shared_libs()
         build_report_converter()
         build_tu_collector()
+        build_statistics_collector()
         
         # Build API packages if needed
         if os.environ.get("CC_FORCE_BUILD_API_PACKAGES") or not has_prebuilt_api_packages():
