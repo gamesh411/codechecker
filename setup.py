@@ -20,6 +20,44 @@ from setuptools.command.install import install
 from setuptools.command.sdist import sdist
 from setuptools.extension import Extension
 
+
+# Error handling mode: "strict" (default) or "warn"
+# In strict mode, build failures raise exceptions
+# In warn mode, build failures print warnings and continue
+def get_error_mode():
+    """Get error handling mode from environment variable."""
+    mode = os.environ.get("CC_BUILD_ERROR_MODE", "strict").lower()
+    if mode not in ("strict", "warn"):
+        print(f"Warning: Invalid CC_BUILD_ERROR_MODE '{mode}', using 'strict'")
+        return "strict"
+    return mode
+
+
+def handle_build_error(error, component_name, error_mode=None):
+    """
+    Handle build errors according to the error mode.
+    
+    Args:
+        error: The exception that occurred
+        component_name: Name of the component that failed to build
+        error_mode: Error mode ("strict" or "warn"), defaults to get_error_mode()
+    
+    Returns:
+        None (if warn mode) or raises the error (if strict mode)
+    """
+    if error_mode is None:
+        error_mode = get_error_mode()
+    
+    error_msg = f"Failed to build {component_name}: {error}"
+    
+    if error_mode == "strict":
+        print(f"ERROR: {error_msg}")
+        raise
+    else:  # warn mode
+        print(f"Warning: {error_msg}")
+        print(f"Continuing with installation without {component_name}...")
+        return None
+
 curr_dir = os.path.dirname(os.path.realpath(__file__))
 build_dir = os.path.join(curr_dir, "build_dist")
 package_dir = os.path.join("build_dist", "CodeChecker")
