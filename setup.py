@@ -164,6 +164,68 @@ def get_error_mode():
     return mode
 
 
+def check_build_dependencies():
+    """
+    Check for required and optional build dependencies.
+    
+    Provides helpful error messages with installation instructions.
+    Windows-aware: skips platform-specific checks on Windows.
+    
+    Returns:
+        tuple: (required_deps_ok, optional_deps_ok, messages)
+    """
+    required_ok = True
+    optional_ok = True
+    messages = []
+    
+    # Check for Python (always required)
+    if sys.executable is None:
+        required_ok = False
+        messages.append("ERROR: Python interpreter not found")
+    
+    # Check for gcc (Linux only, optional for ldlogger)
+    if sys.platform == "linux":
+        try:
+            subprocess.check_output(
+                ["gcc", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            optional_ok = False
+            messages.append(
+                "WARNING: gcc not found. ldlogger shared library build will be skipped."
+            )
+            messages.append("  Install with: sudo apt-get install gcc (Debian/Ubuntu)")
+            messages.append("  or: sudo yum install gcc (RHEL/CentOS)")
+    
+    # Check for npm (optional, for web frontend)
+    try:
+        subprocess.check_output(
+            ["npm", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        optional_ok = False
+        messages.append(
+            "WARNING: npm not found. Web frontend build will be skipped."
+        )
+        messages.append("  Install from: https://nodejs.org/")
+        messages.append("  or: sudo apt-get install npm (Debian/Ubuntu)")
+    
+    # Check for Docker (optional, for API packages)
+    try:
+        subprocess.check_output(
+            ["docker", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        optional_ok = False
+        messages.append(
+            "WARNING: Docker not found. API packages will use prebuilt versions."
+        )
+        messages.append("  Install from: https://docs.docker.com/get-docker/")
+        messages.append("  Note: Prebuilt API packages are included in the repository.")
+    
+    return required_ok, optional_ok, messages
+
+
 def handle_build_error(error, component_name, error_mode=None):
     """
     Handle build errors according to the error mode.
@@ -1178,6 +1240,25 @@ class CustomBuild(build):
     This class handles all build steps (binary dependencies, API packages,
     web frontend, etc.) that previously happened at import time or via Makefile.
     """
+    def run(self):
+        # Check build dependencies early
+        required_ok, optional_ok, messages = check_build_dependencies()
+        
+        # Print all messages
+        for msg in messages:
+            print(msg)
+        
+        # Fail if required dependencies are missing
+        if not required_ok:
+            error_mode = get_error_mode()
+            if error_mode == "strict":
+                raise RuntimeError("Required build dependencies are missing. See messages above.")
+            else:
+                print("WARNING: Continuing despite missing required dependencies...")
+        
+        # Continue with build steps
+        build.run(self)
+    
     def collect_data_files(self):
         """
         Collect all data files (static + dynamic) and set them on the distribution.
@@ -1223,9 +1304,6 @@ class CustomBuild(build):
         
         # Collect all data files (static + dynamic) after building
         self.collect_data_files()
-        
-        # Continue with standard build
-        build.run(self)
 
 
 class BuildExt(build_ext):
