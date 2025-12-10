@@ -6,6 +6,7 @@ import setuptools
 import subprocess
 import sys
 
+from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
 from setuptools.command.sdist import sdist
@@ -120,6 +121,22 @@ module_logger = Extension(
         os.path.join(ld_logger_src_dir_path, s) for s in ld_logger_sources])
 
 
+class CustomBuild(build):
+    """
+    Custom build command for CodeChecker.
+    
+    This class will be extended in later commits to handle all build steps
+    (binary dependencies, API packages, web frontend, etc.) that currently
+    happen at import time or via Makefile.
+    
+    For now, this is just a skeleton that calls the parent build command.
+    """
+    def run(self):
+        # Placeholder: just call parent for now
+        # Build logic will be added in subsequent commits
+        build.run(self)
+
+
 class BuildExt(build_ext):
     def get_ext_filename(self, ext_name):
         return os.path.join(platform.uname().machine, f"{ext_name}.so")
@@ -221,6 +238,7 @@ setuptools.setup(
     install_requires=list(get_requirements()),
     ext_modules=[module_logger],
     cmdclass={
+        'build': CustomBuild,
         'sdist': Sdist,
         'install': Install,
         'build_ext': BuildExt,
