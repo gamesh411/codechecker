@@ -270,6 +270,7 @@ def build_ldlogger_shared_libs():
         X86_32 = "32bit"
 
     def build_ldlogger(arch: Arch):
+        error_mode = get_error_mode()
         os.makedirs(os.path.join(lib_dest_dir, arch.value), exist_ok=True)
         lib_sources = [os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES]
         compile_flags = [
@@ -296,11 +297,18 @@ def build_ldlogger_shared_libs():
             subprocess.check_call(cmd)
             print(f"Built ldlogger shared library for {arch.value}: {ldlogger_so}")
         except subprocess.CalledProcessError as e:
+            # For ldlogger, we always warn (it's optional for LD_PRELOAD)
+            # but respect strict mode for other errors
             print(
                 f"Warning: Failed to build ldlogger shared library for {arch.value}: {e}"
             )
             print("LD_PRELOAD functionality will not be available")
+            if error_mode == "strict":
+                # In strict mode, we still want to know about failures
+                # but ldlogger is optional, so we don't fail the build
+                pass
         except FileNotFoundError:
+            # gcc not found is always a warning (optional component)
             print(
                 f"Warning: gcc not found, skipping ldlogger shared library build for {arch.value}"
             )
@@ -319,6 +327,7 @@ def build_ldlogger_shared_libs():
 def build_report_converter():
     """Build and package report-converter."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    error_mode = get_error_mode()
     try:
         print("Building report-converter...")
         report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
@@ -333,13 +342,13 @@ def build_report_converter():
         print("Report-converter built successfully")
 
     except (subprocess.CalledProcessError, OSError) as e:
-        print(f"Warning: Failed to build report-converter: {e}")
-        print("Continuing with installation without report-converter...")
+        handle_build_error(e, "report-converter", error_mode)
 
 
 def build_tu_collector():
     """Build and package tu_collector."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    error_mode = get_error_mode()
     try:
         print("Building tu_collector...")
         tu_collector_dir = os.path.join(root_dir, "tools", "tu_collector")
@@ -354,13 +363,13 @@ def build_tu_collector():
         print("tu_collector built successfully")
 
     except (subprocess.CalledProcessError, OSError) as e:
-        print(f"Warning: Failed to build tu_collector: {e}")
-        print("Continuing with installation without tu_collector...")
+        handle_build_error(e, "tu_collector", error_mode)
 
 
 def build_statistics_collector():
     """Build and package statistics_collector."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    error_mode = get_error_mode()
     try:
         print("Building statistics_collector...")
         statistics_collector_dir = os.path.join(
@@ -377,13 +386,13 @@ def build_statistics_collector():
         print("statistics_collector built successfully")
 
     except (subprocess.CalledProcessError, OSError) as e:
-        print(f"Warning: Failed to build statistics_collector: {e}")
-        print("Continuing with installation without statistics_collector...")
+        handle_build_error(e, "statistics_collector", error_mode)
 
 
 def build_merge_clang_extdef_mappings():
     """Build and package merge_clang_extdef_mappings."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
+    error_mode = get_error_mode()
     try:
         print("Building merge_clang_extdef_mappings...")
         merge_clang_dir = os.path.join(
@@ -400,8 +409,7 @@ def build_merge_clang_extdef_mappings():
         print("merge_clang_extdef_mappings built successfully")
 
     except (subprocess.CalledProcessError, OSError) as e:
-        print(f"Warning: Failed to build merge_clang_extdef_mappings: {e}")
-        print("Continuing with installation without merge_clang_extdef_mappings...")
+        handle_build_error(e, "merge_clang_extdef_mappings", error_mode)
 
 
 def has_prebuilt_api_packages():
@@ -513,6 +521,7 @@ def build_api_packages():
         print("API packages not found, building them...")
 
     if need_build:
+        error_mode = get_error_mode()
         try:
             # Create directories for generated files if they don't exist
             py_api_dir = os.path.join(api_py_dir, "codechecker_api", "codechecker_api")
@@ -658,8 +667,7 @@ def build_api_packages():
                 print("but they may be outdated if the Thrift files have changed.")
 
         except Exception as e:
-            print(f"Error building API packages: {str(e)}")
-            print("Continuing with installation, but some features may not work.")
+            handle_build_error(e, "API packages", error_mode)
     else:
         print("API packages already exist, skipping build.")
 
@@ -687,6 +695,7 @@ def build_web_frontend():
 
     if build_ui_dist.upper() == "YES":
         # Build the Vue.js application
+        error_mode = get_error_mode()
         try:
             print("Building Vue.js application...")
 
@@ -774,8 +783,7 @@ def build_web_frontend():
                 print(f"Warning: Vue.js build directory {dist_dir} does not exist")
 
         except (subprocess.CalledProcessError, OSError) as e:
-            print(f"Warning: Failed to build Vue.js application: {e}")
-            print("Continuing with installation without web frontend...")
+            handle_build_error(e, "web frontend", error_mode)
     else:
         print("Skipping web frontend build as BUILD_UI_DIST is not set to YES")
 
