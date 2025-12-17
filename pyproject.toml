@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=64.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codechecker"
+version = "6.28.0"
+description = "CodeChecker is an analyzer tooling, defect database and viewer extension"
+readme = "docs/README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0 WITH LLVM-exception"}
+authors = [
+    {name = "CodeChecker Team (Ericsson)", email = "codechecker-tool@googlegroups.com"}
+]
+keywords = ["codechecker", "plist", "sarif"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    # License classifier removed - using license expression instead (PEP 639)
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Quality Assurance",
+]
+# Declare fields that are defined dynamically in setup.py
+dynamic = ["dependencies", "scripts"]
+
+# Note: Dependencies are dynamically read from requirements.txt files in setup.py
+# via get_requirements() function, so they are not listed here statically.
+# Entry points (scripts) are also defined in setup.py.
+
+[project.urls]
+Documentation = "http://codechecker.readthedocs.io"
+"Issue Tracker" = "http://github.com/Ericsson/CodeChecker/issues"
+Homepage = "https://github.com/Ericsson/CodeChecker"
