@@ -122,23 +122,23 @@ import warnings
 def get_env_var(new_name, old_name=None, default=None, deprecation_warning=True):
     """
     Get environment variable with backward compatibility support.
-    
+
     Checks for the new variable name first, then falls back to the old name
     if provided. Issues a deprecation warning if the old name is used.
-    
+
     Args:
         new_name: New environment variable name (e.g., 'CC_BUILD_UI_DIST')
         old_name: Old environment variable name (e.g., 'BUILD_UI_DIST')
         default: Default value if neither variable is set
         deprecation_warning: Whether to issue a deprecation warning for old name
-    
+
     Returns:
         The value of the environment variable, or default if not set
     """
     value = os.environ.get(new_name)
     if value is not None:
         return value
-    
+
     if old_name:
         value = os.environ.get(old_name)
         if value is not None and deprecation_warning:
@@ -150,7 +150,7 @@ def get_env_var(new_name, old_name=None, default=None, deprecation_warning=True)
                 stacklevel=2
             )
         return value
-    
+
     return default
 
 
@@ -158,7 +158,7 @@ def get_env_var(new_name, old_name=None, default=None, deprecation_warning=True)
 def change_directory(directory):
     """
     Context manager for temporarily changing the working directory.
-    
+
     Usage:
         with change_directory('/path/to/dir'):
             # code that runs in /path/to/dir
@@ -181,22 +181,22 @@ def should_force_rebuild():
 def should_rebuild(output_path, source_paths):
     """
     Check if a build output needs to be rebuilt based on source file timestamps.
-    
+
     Args:
         output_path: Path to the build output file or directory
         source_paths: List of source file/directory paths to check
-    
+
     Returns:
         True if rebuild is needed, False if output is up to date
     """
     # If force rebuild is requested, always rebuild
     if should_force_rebuild():
         return True
-    
+
     # If output doesn't exist, need to build
     if not os.path.exists(output_path):
         return True
-    
+
     # Get output modification time
     try:
         if os.path.isdir(output_path):
@@ -215,12 +215,12 @@ def should_rebuild(output_path, source_paths):
     except OSError:
         # If we can't get output time, rebuild to be safe
         return True
-    
+
     # Check if any source file is newer than output
     for source_path in source_paths:
         if not os.path.exists(source_path):
             continue
-        
+
         try:
             if os.path.isdir(source_path):
                 # For directories, check the most recent file modification time
@@ -242,9 +242,11 @@ def should_rebuild(output_path, source_paths):
         except OSError:
             # If we can't check a source file, rebuild to be safe
             return True
-    
+
     # All sources are older than output, no rebuild needed
     return False
+
+
 from setuptools import Command
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
@@ -270,27 +272,27 @@ def get_error_mode():
 def check_build_dependencies():
     """
     Check for required and optional build dependencies.
-    
+
     Provides helpful error messages with installation instructions.
     Windows-aware: skips platform-specific checks on Windows.
-    
+
     Returns:
         tuple: (required_deps_ok, optional_deps_ok, messages)
     """
     required_ok = True
     optional_ok = True
     messages = []
-    
+
     # Check for Python (always required)
     if sys.executable is None:
         required_ok = False
         messages.append("ERROR: Python interpreter not found")
-    
+
     # Check for gcc (Linux only, optional for ldlogger)
     if sys.platform == "linux":
         try:
-            subprocess.check_output(
-                ["gcc", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            subprocess.run(
+                ["gcc", "--version"], capture_output=True, check=True
             )
         except (subprocess.CalledProcessError, FileNotFoundError):
             optional_ok = False
@@ -299,11 +301,11 @@ def check_build_dependencies():
             )
             messages.append("  Install with: sudo apt-get install gcc (Debian/Ubuntu)")
             messages.append("  or: sudo yum install gcc (RHEL/CentOS)")
-    
+
     # Check for npm (optional, for web frontend)
     try:
-        subprocess.check_output(
-            ["npm", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        subprocess.run(
+            ["npm", "--version"], capture_output=True, check=True
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         optional_ok = False
@@ -312,11 +314,11 @@ def check_build_dependencies():
         )
         messages.append("  Install from: https://nodejs.org/")
         messages.append("  or: sudo apt-get install npm (Debian/Ubuntu)")
-    
+
     # Check for Docker (optional, for API packages)
     try:
-        subprocess.check_output(
-            ["docker", "--version"], stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        subprocess.run(
+            ["docker", "--version"], capture_output=True, check=True
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         optional_ok = False
@@ -325,27 +327,27 @@ def check_build_dependencies():
         )
         messages.append("  Install from: https://docs.docker.com/get-docker/")
         messages.append("  Note: Prebuilt API packages are included in the repository.")
-    
+
     return required_ok, optional_ok, messages
 
 
 def handle_build_error(error, component_name, error_mode=None):
     """
     Handle build errors according to the error mode.
-    
+
     Args:
         error: The exception that occurred
         component_name: Name of the component that failed to build
         error_mode: Error mode ("strict" or "warn"), defaults to get_error_mode()
-    
+
     Returns:
         None (if warn mode) or raises the error (if strict mode)
     """
     if error_mode is None:
         error_mode = get_error_mode()
-    
+
     error_msg = f"Failed to build {component_name}: {error}"
-    
+
     if error_mode == "strict":
         print(f"ERROR: {error_msg}")
         raise
@@ -383,7 +385,7 @@ def get_requirements():
 def init_data_files():
     """
     Initialize data files which will be copied into the package.
-    
+
     Note: This function modifies the distribution's data_files at runtime.
     It adds dynamic files (config, www) that are generated during the build.
     This will be refactored in later commits to use build commands.
@@ -397,7 +399,54 @@ def init_data_files():
 def init_packages():
     """ Find and initialize the list of packages. """
     global packages
-    packages.extend(setuptools.find_packages(where=lib_dir))
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+
+    print(f"[DEBUG] init_packages: root_dir = {root_dir}")
+    print(f"[DEBUG] init_packages: lib_dir = {lib_dir}, exists = {os.path.exists(lib_dir)}")
+
+    # First, try to find packages in lib_dir if it exists (build output directory)
+    if os.path.exists(lib_dir):
+        lib_packages = setuptools.find_packages(where=lib_dir)
+        print(f"[DEBUG] init_packages: Found {len(lib_packages)} packages in lib_dir: {lib_packages}")
+        packages.extend(lib_packages)
+
+    # Find packages in the root directory (finds codechecker_common and its subpackages)
+    root_packages = setuptools.find_packages(where=root_dir)
+    print(f"[DEBUG] init_packages: Found {len(root_packages)} packages in root_dir")
+
+    # Also search in subdirectories where packages are located
+    search_dirs = [
+        root_dir,  # Root level packages
+        os.path.join(root_dir, "analyzer"),  # codechecker_analyzer
+        os.path.join(root_dir, "analyzer", "tools", "statistics_collector"),  # codechecker_statistics_collector
+        os.path.join(root_dir, "analyzer", "tools", "merge_clang_extdef_mappings"),  # codechecker_merge_clang_extdef_mappings
+        os.path.join(root_dir, "web"),  # codechecker_web
+        os.path.join(root_dir, "web", "server"),  # codechecker_server
+        os.path.join(root_dir, "web", "client"),  # codechecker_client
+        os.path.join(root_dir, "tools", "report-converter"),  # codechecker_report_converter
+        os.path.join(root_dir, "tools", "tu_collector"),  # tu_collector
+    ]
+
+    # Collect all packages from all search directories
+    all_found_packages = set()
+    for search_dir in search_dirs:
+        if os.path.exists(search_dir):
+            found = setuptools.find_packages(where=search_dir)
+            all_found_packages.update(found)
+            print(f"[DEBUG] init_packages: Found {len(found)} packages in {search_dir}: {found[:5]}...")
+
+    # Filter to only include relevant packages
+    for pkg in all_found_packages:
+        # Include codechecker_* packages and tu_collector
+        # Exclude test packages and other non-distribution packages
+        if (pkg.startswith('codechecker_') or pkg in ['tu_collector', 'codechecker_report_converter',
+                                                       'codechecker_statistics_collector',
+                                                       'codechecker_merge_clang_extdef_mappings']):
+            if pkg not in packages:
+                packages.append(pkg)
+                print(f"[DEBUG] init_packages: Added package: {pkg}")
+
+    print(f"[DEBUG] init_packages: Final packages list ({len(packages)} packages): {packages}")
 
 
 ld_logger_src_dir_path = \
@@ -424,35 +473,81 @@ ld_logger_includes = [
 def get_static_data_files():
     """
     Return a list of static data files that don't require building.
-    
+
     This function only returns files that exist in the source tree and don't
     need to be generated or built. Dynamic files (like generated config files,
     built web frontend, etc.) are handled separately in build commands.
-    
+
     Returns:
         List of tuples (target_directory, [list of source files])
     """
     static_files = []
-    
+
     # Documentation files
     static_files.append((
         os.path.join(data_files_dir_path, "docs"),
         [os.path.join("docs", "README.md")]
     ))
-    
+
     # Requirements files
     for req_file_path in req_file_paths:
         static_files.append((
             os.path.join(data_files_dir_path, os.path.dirname(req_file_path)),
             [req_file_path]
         ))
-    
+
+    # Config directories - include entire directory structure from all config locations
+    # This includes:
+    # - config/ (config.json, logger.conf, package_layout.json, labels/, guidelines/, etc.)
+    # - analyzer/config/ (analyzer_version.json)
+    # - web/config/ (web_version.json, git_commit_urls.json, etc.)
+    # - web/server/config/ (server_config.json)
+    #
+    # NOTE: All nested config folders are flattened in the data directory of the package.
+    config_dirs = [
+        ("config", "config"),  # (source_dir, target_subdir)
+        ("analyzer/config", "config"),
+        ("web/config", "config"),
+        ("web/server/config", "config"),
+    ]
+
+    for source_dir, target_subdir in config_dirs:
+        if os.path.exists(source_dir):
+            # Group files by their relative path from source_dir
+            config_file_groups = {}
+            for root, dirs, files in os.walk(source_dir):
+                # Skip hidden directories and files
+                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                files = [f for f in files if not f.startswith('.')]
+
+                if not files:
+                    continue
+
+                # Get relative path from source_dir
+                rel_path = os.path.relpath(root, source_dir)
+                if rel_path == ".":
+                    # Files directly in the config directory
+                    target_dir = os.path.join(data_files_dir_path, target_subdir)
+                else:
+                    # Files in subdirectories
+                    target_dir = os.path.join(data_files_dir_path, target_subdir, rel_path)
+
+                # Collect all files in this directory
+                file_list = [os.path.join(root, f) for f in files]
+                if target_dir not in config_file_groups:
+                    config_file_groups[target_dir] = []
+                config_file_groups[target_dir].extend(file_list)
+
+            # Add each group to static_files
+            for target_dir, files in config_file_groups.items():
+                static_files.append((target_dir, files))
+
     # ld_logger header files (static source files)
     static_files.append((
         os.path.join(data_files_dir_path, 'ld_logger', 'include'),
         [os.path.join(ld_logger_src_dir_path, i) for i in ld_logger_includes]
     ))
-    
+
     return static_files
 
 
@@ -565,15 +660,14 @@ def build_ldlogger_shared_libs():
     ldlogger_sources = [os.path.join(LD_LOGGER_SRC_PATH, s) for s in LD_LOGGER_SOURCES]
     output_64bit = os.path.join(lib_dest_dir, "64bit", "ldlogger.so")
     output_32bit = os.path.join(lib_dest_dir, "32bit", "ldlogger.so")
-    
+
     # Support old env var name for backward compatibility
-    build_64_bit_only = (
-        get_env_var("CC_BUILD_LOGGER_64_BIT_ONLY", "BUILD_LOGGER_64_BIT_ONLY", "NO").upper() == "YES"
-    )
-    
+    build_64_bit_only_value = get_env_var("CC_BUILD_LOGGER_64_BIT_ONLY", "BUILD_LOGGER_64_BIT_ONLY", "NO")
+    build_64_bit_only = (build_64_bit_only_value or "NO").upper() == "YES"
+
     rebuild_64bit = should_rebuild(output_64bit, ldlogger_sources)
     rebuild_32bit = should_rebuild(output_32bit, ldlogger_sources) if not build_64_bit_only else False
-    
+
     if not rebuild_64bit and not rebuild_32bit:
         print("ldlogger shared libraries are up to date, skipping build.")
         return
@@ -637,7 +731,12 @@ def build_report_converter():
     """Build and package report-converter."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
     report_converter_dir = os.path.join(root_dir, "tools", "report-converter")
-    
+
+    # Check if the directory exists (may not exist in sdist if not included)
+    if not os.path.exists(report_converter_dir):
+        print(f"Warning: report-converter directory not found at {report_converter_dir}, skipping build.")
+        return
+
     # Check if rebuild is needed
     build_dir = os.path.join(report_converter_dir, "build")
     source_files = []
@@ -648,11 +747,11 @@ def build_report_converter():
         for f in files:
             if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
                 source_files.append(os.path.join(root, f))
-    
+
     if not should_rebuild(build_dir, source_files):
         print("report-converter is up to date, skipping build.")
         return
-    
+
     error_mode = get_error_mode()
     try:
         print("Building report-converter...")
@@ -674,7 +773,12 @@ def build_tu_collector():
     """Build and package tu_collector."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
     tu_collector_dir = os.path.join(root_dir, "tools", "tu_collector")
-    
+
+    # Check if the directory exists (may not exist in sdist if not included)
+    if not os.path.exists(tu_collector_dir):
+        print(f"Warning: tu_collector directory not found at {tu_collector_dir}, skipping build.")
+        return
+
     # Check if rebuild is needed
     build_dir = os.path.join(tu_collector_dir, "build")
     source_files = []
@@ -685,11 +789,11 @@ def build_tu_collector():
         for f in files:
             if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
                 source_files.append(os.path.join(root, f))
-    
+
     if not should_rebuild(build_dir, source_files):
         print("tu_collector is up to date, skipping build.")
         return
-    
+
     error_mode = get_error_mode()
     try:
         print("Building tu_collector...")
@@ -713,7 +817,12 @@ def build_statistics_collector():
     statistics_collector_dir = os.path.join(
         root_dir, "analyzer", "tools", "statistics_collector"
     )
-    
+
+    # Check if the directory exists (may not exist in sdist if not included)
+    if not os.path.exists(statistics_collector_dir):
+        print(f"Warning: statistics_collector directory not found at {statistics_collector_dir}, skipping build.")
+        return
+
     # Check if rebuild is needed
     build_dir = os.path.join(statistics_collector_dir, "build")
     source_files = []
@@ -724,11 +833,11 @@ def build_statistics_collector():
         for f in files:
             if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
                 source_files.append(os.path.join(root, f))
-    
+
     if not should_rebuild(build_dir, source_files):
         print("statistics_collector is up to date, skipping build.")
         return
-    
+
     error_mode = get_error_mode()
     try:
         print("Building statistics_collector...")
@@ -752,7 +861,12 @@ def build_merge_clang_extdef_mappings():
     merge_clang_dir = os.path.join(
         root_dir, "analyzer", "tools", "merge_clang_extdef_mappings"
     )
-    
+
+    # Check if the directory exists (may not exist in sdist if not included)
+    if not os.path.exists(merge_clang_dir):
+        print(f"Warning: merge_clang_extdef_mappings directory not found at {merge_clang_dir}, skipping build.")
+        return
+
     # Check if rebuild is needed
     build_dir = os.path.join(merge_clang_dir, "build")
     source_files = []
@@ -763,11 +877,11 @@ def build_merge_clang_extdef_mappings():
         for f in files:
             if f.endswith((".py", ".c", ".h", ".cpp", ".hpp", "setup.py")):
                 source_files.append(os.path.join(root, f))
-    
+
     if not should_rebuild(build_dir, source_files):
         print("merge_clang_extdef_mappings is up to date, skipping build.")
         return
-    
+
     error_mode = get_error_mode()
     try:
         print("Building merge_clang_extdef_mappings...")
@@ -896,10 +1010,10 @@ def build_api_packages():
         os.path.join(api_dir, "server_info.thrift"),
         os.path.join(api_dir, "codechecker_api_shared.thrift"),
     ]
-    
+
     # Filter to only existing thrift files
     existing_thrift_files = [f for f in thrift_files if os.path.exists(f)]
-    
+
     need_build = False
     if not os.path.exists(api_shared_tarball) or not os.path.exists(api_tarball):
         need_build = True
@@ -977,11 +1091,7 @@ def build_api_packages():
                             ]
 
                             try:
-                                subprocess.check_call(
-                                    cmd,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                )
+                                subprocess.check_call(cmd)
                                 print(
                                     f"Successfully generated Python code for {thrift_file}"
                                 )
@@ -1077,6 +1187,10 @@ def build_web_frontend():
     # Check if we should build the UI
     # Support old env var name for backward compatibility
     build_ui_dist = get_env_var("CC_BUILD_UI_DIST", "BUILD_UI_DIST", "YES")
+
+    # Ensure we have a string value (default to "YES" if None or empty)
+    if not build_ui_dist:
+        build_ui_dist = "YES"
 
     if build_ui_dist.upper() == "YES":
         # Build the Vue.js application
@@ -1309,14 +1423,14 @@ module_logger = Extension(
 class CustomBuildPy(build_py):
     """
     Custom build_py command that generates configuration files.
-    
+
     This class handles generation of version files and other configuration
     files that need to be created before packaging.
     """
     def run(self):
         # Generate version files before building Python packages
         extend_version_files()
-        
+
         # Continue with standard build_py
         build_py.run(self)
 
@@ -1324,14 +1438,24 @@ class CustomBuildPy(build_py):
 class CustomDevelop(develop):
     """
     Custom develop command for development mode installation.
-    
+
     This ensures that all build steps (version files, etc.) are run
     before creating the development installation symlinks.
     """
     def run(self):
         # Generate version files before development installation
         extend_version_files()
-        
+
+        # Ensure build has run to collect data files
+        # This is important for editable installs to have all data files available
+        build_cmd = self.get_finalized_command('build')
+        if not self.distribution.data_files:
+            # Run build command to execute all build steps
+            build_cmd.run()
+            # Collect data files from build command
+            build_cmd.collect_data_files()
+            self.distribution.data_files = build_cmd.distribution.data_files
+
         # Continue with standard develop command
         develop.run(self)
 
@@ -1339,18 +1463,21 @@ class CustomDevelop(develop):
 class CustomBuild(build):
     """
     Custom build command for CodeChecker.
-    
+
     This class handles all build steps (binary dependencies, API packages,
     web frontend, etc.) that previously happened at import time or via Makefile.
     """
     def run(self):
+        # Generate version files early (needed for data file collection)
+        extend_version_files()
+
         # Check build dependencies early
         required_ok, optional_ok, messages = check_build_dependencies()
-        
+
         # Print all messages
         for msg in messages:
             print(msg)
-        
+
         # Fail if required dependencies are missing
         if not required_ok:
             error_mode = get_error_mode()
@@ -1358,70 +1485,88 @@ class CustomBuild(build):
                 raise RuntimeError("Required build dependencies are missing. See messages above.")
             else:
                 print("WARNING: Continuing despite missing required dependencies...")
-        
-        # Continue with build steps
-        build.run(self)
-    
-    def collect_data_files(self):
-        """
-        Collect all data files (static + dynamic) and set them on the distribution.
-        
-        This method collects:
-        - Static data files (docs, requirements, headers)
-        - Dynamic data files (ldlogger .so, web frontend, version files)
-        """
-        # Start with static data files
-        all_data_files = get_static_data_files()
-        
-        # Add ldlogger shared library files (if built)
-        all_data_files.extend(get_ldlogger_data_files())
-        
-        # Add version files (generated by CustomBuildPy)
-        all_data_files.extend(get_version_data_files())
-        
-        # Add web frontend files (if built)
-        all_data_files.extend(get_web_frontend_data_files())
-        
-        # Set data files on the distribution
-        self.distribution.data_files = all_data_files
-        
-        return all_data_files
-    
-    def run(self):
+
         # Build binary dependencies first
         build_ldlogger_shared_libs()
         build_report_converter()
         build_tu_collector()
         build_statistics_collector()
         build_merge_clang_extdef_mappings()
-        
+
         # Build API packages if needed
         if os.environ.get("CC_FORCE_BUILD_API_PACKAGES") or not has_prebuilt_api_packages():
             build_api_packages()
-        
+
         # Include API packages (extract prebuilt tarballs to build/lib)
         include_api_packages()
-        
+
         # Build web frontend
         build_web_frontend()
-        
+
         # Collect all data files (static + dynamic) after building
         self.collect_data_files()
 
+        # Run standard build sub-commands (build_py, build_ext, etc.)
+        build.run(self)
+
+    def collect_data_files(self):
+        """
+        Collect all data files (static + dynamic) and set them on the distribution.
+
+        This method collects:
+        - Static data files (docs, requirements, headers)
+        - Dynamic data files (ldlogger .so, web frontend, version files)
+        """
+        # Start with static data files
+        all_data_files = get_static_data_files()
+
+        # Add ldlogger shared library files (if built)
+        all_data_files.extend(get_ldlogger_data_files())
+
+        # Add version files (generated by CustomBuildPy)
+        all_data_files.extend(get_version_data_files())
+
+        # Add web frontend files (if built)
+        all_data_files.extend(get_web_frontend_data_files())
+
+        # Set data files on the distribution
+        self.distribution.data_files = all_data_files
+
+        return all_data_files
+
 
 class BuildExt(build_ext):
-    def get_ext_filename(self, ext_name):
-        return os.path.join(platform.uname().machine, f"{ext_name}.so")
+    def get_ext_filename(self, fullname):
+        return os.path.join(platform.uname().machine, f"{fullname}.so")
+
+    def build_extensions(self):
+        """Override to skip all extensions on non-Linux platforms."""
+        if sys.platform != "linux":
+            print(f"Skipping all extension builds on {sys.platform} (Linux-only)")
+            # Clear the extension list to prevent any processing
+            self.extensions = []
+            return
+        build_ext.build_extensions(self)
 
     def build_extension(self, ext):
         if sys.platform == "linux":
             build_ext.build_extension(self, ext)
+        else:
+            # On non-Linux platforms, skip extension build (ldlogger is Linux-only)
+            # Don't raise an error, just skip it
+            print(f"Skipping extension build for {ext.name} on {sys.platform} (Linux-only)")
+            pass
 
+    def get_outputs(self):
+        """Override to return empty list on non-Linux platforms."""
+        if sys.platform != "linux":
+            return []
+        return build_ext.get_outputs(self)
 
 class CleanCommand(Command):
     """
     Custom clean command to remove build artifacts.
-    
+
     Supports options:
     - --all: Remove all build artifacts (build/, dist/, *.egg-info/, generated files)
     - --build: Remove build/ directory
@@ -1447,12 +1592,12 @@ class CleanCommand(Command):
 
     def run(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
-        
+
         if self.all:
             self.build = True
             self.generated = True
             self.dist = True
-        
+
         if self.build:
             build_dir = os.path.join(root_dir, "build")
             if os.path.exists(build_dir):
@@ -1460,7 +1605,7 @@ class CleanCommand(Command):
                 shutil.rmtree(build_dir)
             else:
                 print("Build directory does not exist")
-        
+
         if self.generated:
             generated_dir = os.path.join(root_dir, GENERATED_FILES_DEST)
             if os.path.exists(generated_dir):
@@ -1468,7 +1613,7 @@ class CleanCommand(Command):
                 shutil.rmtree(generated_dir)
             else:
                 print("Generated files directory does not exist")
-        
+
         if self.dist:
             dist_dir = os.path.join(root_dir, "dist")
             if os.path.exists(dist_dir):
@@ -1476,7 +1621,7 @@ class CleanCommand(Command):
                 shutil.rmtree(dist_dir)
             else:
                 print("Dist directory does not exist")
-            
+
             # Also remove egg-info directories
             for item in os.listdir(root_dir):
                 if item.endswith(".egg-info"):
@@ -1484,7 +1629,7 @@ class CleanCommand(Command):
                     if os.path.isdir(egg_info_dir):
                         print(f"Removing {item} directory: {egg_info_dir}")
                         shutil.rmtree(egg_info_dir)
-        
+
         if not (self.build or self.generated or self.dist):
             print("No clean options specified. Use --help to see available options.")
 
@@ -1492,7 +1637,7 @@ class CleanCommand(Command):
 class StandalonePackageCommand(Command):
     """
     Custom command to create a standalone package with embedded virtual environment.
-    
+
     This command builds the package and then wraps binaries in a virtual environment
     using the wrap_binary_in_venv.py script, similar to the Makefile standalone_package target.
     """
@@ -1508,22 +1653,22 @@ class StandalonePackageCommand(Command):
     def run(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
         wrap_script = os.path.join(root_dir, "scripts", "build", "wrap_binary_in_venv.py")
-        
+
         if not os.path.exists(wrap_script):
             print(f"Warning: wrap_binary_in_venv.py not found at {wrap_script}")
             print("Skipping standalone package creation.")
             return
-        
+
         # First, ensure we have a built package
         print("Building package for standalone distribution...")
         self.run_command('build')
         self.run_command('sdist')
-        
+
         # Then wrap binaries in venv
         print("Creating standalone package with embedded virtual environment...")
         venv_dir = os.path.join(root_dir, "venv")
         package_dir = os.path.join(root_dir, "build_dist", "CodeChecker")
-        
+
         try:
             subprocess.check_call(
                 [sys.executable, wrap_script,
@@ -1539,50 +1684,34 @@ class StandalonePackageCommand(Command):
 
 class Sdist(sdist):
     def run(self):
-        res = subprocess.call(
-            ["make", "clean_package", "package", "package_api"],
-            env=dict(os.environ,
-                     BUILD_DIR=build_dir),
-            encoding="utf-8",
-            errors="ignore")
+        # Ensure build has run to collect data files
+        # This ensures all build steps (binary dependencies, API packages, web frontend) have completed
+        build_cmd = self.get_finalized_command('build')
+        if not self.distribution.data_files:
+            # Run build command to execute all build steps
+            build_cmd.run()
+            # Collect data files from build command
+            build_cmd.collect_data_files()
+            self.distribution.data_files = build_cmd.distribution.data_files
 
-        if res:
-            sys.exit(1)
-
-        # Add dynamic data files (config, www) generated by Makefile
-        for data_dir_name in ['config', 'www']:
-            data_dir_path = os.path.join(package_dir, data_dir_name)
-            if os.path.exists(data_dir_path):
-                for root, _, files in os.walk(data_dir_path):
-                    if not files:
-                        continue
-                    self.distribution.data_files.append((
-                        os.path.normpath(
-                            os.path.join(data_files_dir_path, data_dir_name,
-                                        os.path.relpath(root, data_dir_path))),
-                        [os.path.join(root, file_path) for file_path in files]))
-        
-        init_packages()
+        # Packages are already initialized at module load time, no need to call init_packages()
 
         return sdist.run(self)
 
 
 class Install(install):
     def run(self):
-        # Add dynamic data files (config, www) generated by Makefile
-        for data_dir_name in ['config', 'www']:
-            data_dir_path = os.path.join(package_dir, data_dir_name)
-            if os.path.exists(data_dir_path):
-                for root, _, files in os.walk(data_dir_path):
-                    if not files:
-                        continue
-                    self.distribution.data_files.append((
-                        os.path.normpath(
-                            os.path.join(data_files_dir_path, data_dir_name,
-                                        os.path.relpath(root, data_dir_path))),
-                        [os.path.join(root, file_path) for file_path in files]))
-        
-        init_packages()
+        # Ensure build has run to collect data files
+        # This ensures all build steps (binary dependencies, API packages, web frontend) have completed
+        build_cmd = self.get_finalized_command('build')
+        if not self.distribution.data_files:
+            # Run build command to execute all build steps
+            build_cmd.run()
+            # Collect data files from build command
+            build_cmd.collect_data_files()
+            self.distribution.data_files = build_cmd.distribution.data_files
+
+        # Packages are already initialized at module load time, no need to call init_packages()
 
         return install.run(self)
 
@@ -1590,44 +1719,54 @@ with open(os.path.join("docs", "README.md"), "r",
           encoding="utf-8", errors="ignore") as fh:
     long_description = fh.read()
 
+# Initialize packages at module load time so they're available for all commands
+# This ensures packages are discoverable during build, develop, install, and sdist
+init_packages()
 
+# Ensure lib_dir exists for package discovery (create if it doesn't exist)
+# This is needed because package_dir points to build_dist which may not exist yet
+if not os.path.exists(lib_dir):
+    os.makedirs(lib_dir, exist_ok=True)
+
+# Debug: Check if package directories exist
+package_dir_map = {
+    "codechecker_common": "codechecker_common",
+    "codechecker_analyzer": "analyzer/codechecker_analyzer",
+    "codechecker_web": "web/codechecker_web",
+    "codechecker_server": "web/server/codechecker_server",
+    "codechecker_client": "web/client/codechecker_client",
+    "codechecker_report_converter": "tools/report-converter/codechecker_report_converter",
+    "codechecker_statistics_collector": "analyzer/tools/statistics_collector/codechecker_statistics_collector",
+    "codechecker_merge_clang_extdef_mappings": "analyzer/tools/merge_clang_extdef_mappings/codechecker_merge_clang_extdef_mappings",
+    "tu_collector": "tools/tu_collector/tu_collector",
+}
+
+root_dir = os.path.dirname(os.path.abspath(__file__))
+print(f"[DEBUG] setuptools.setup: Checking package directories...")
+for pkg_name, pkg_path in package_dir_map.items():
+    full_path = os.path.join(root_dir, pkg_path)
+    exists = os.path.exists(full_path)
+    has_init = os.path.exists(os.path.join(full_path, "__init__.py")) if exists else False
+    print(f"[DEBUG]   {pkg_name}: {pkg_path} -> {full_path} (exists: {exists}, has __init__.py: {has_init})")
+
+print(f"[DEBUG] setuptools.setup: packages list = {packages}")
+print(f"[DEBUG] setuptools.setup: package_dir = {package_dir_map if packages else {}}")
+
+# Note: Most metadata (name, version, description, keywords, classifiers, etc.)
+# is defined in pyproject.toml. Only build-specific configuration is here.
 setuptools.setup(
-    name="codechecker",
-    version="6.28.0",
-    author='CodeChecker Team (Ericsson)',
-    author_email='codechecker-tool@googlegroups.com',
-    description="CodeChecker is an analyzer tooling, defect database and "
-                "viewer extension",
-    long_description=long_description,
-    long_description_content_type = "text/markdown",
-    url="https://github.com/Ericsson/CodeChecker",
-    project_urls = {
-        "Documentation": "http://codechecker.readthedocs.io",
-        "Issue Tracker": "http://github.com/Ericsson/CodeChecker/issues",
-    },
-    keywords=['codechecker', 'plist', 'sarif'],
-    license='Apache-2.0 WITH LLVM-exception',
-    packages=packages,
-    package_dir={
-        "": lib_dir
-    },
+    # Package structure
+    packages=packages if packages else setuptools.find_packages(),  # Fallback if packages list is empty
+    package_dir=package_dir_map if packages else {},  # Only set if we have packages
     data_files=[],  # Will be populated by CustomBuild.collect_data_files()
     include_package_data=True,
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Environment :: Console",
-        "Environment :: Web Environment",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Apache Software License",
-        "Operating System :: MacOS",
-        "Operating System :: POSIX",
-        "Operating System :: POSIX :: Linux",
-        "Programming Language :: Python :: 3 :: Only",
-        "Topic :: Software Development :: Bug Tracking",
-        "Topic :: Software Development :: Quality Assurance",
-    ],
+
+    # Dynamic dependencies (read from requirements.txt files)
     install_requires=list(get_requirements()),
-    ext_modules=[module_logger],
+
+    # Build configuration
+    # Only include extension module on Linux (ldlogger is Linux-only)
+    ext_modules=[module_logger] if sys.platform == "linux" else [],
     cmdclass={
         'build': CustomBuild,
         'build_py': CustomBuildPy,
@@ -1638,7 +1777,8 @@ setuptools.setup(
         'clean': CleanCommand,
         'standalone_package': StandalonePackageCommand,
     },
-    python_requires='>=3.9',
+
+    # Scripts and entry points
     scripts=[
         'scripts/gerrit_changed_files_to_skipfile.py'
     ],
