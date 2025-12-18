@@ -4,9 +4,11 @@
 
 build
 build_dist
+dist
 venv
 venv_dev
 Makefile.local
+*.egg-info
 
 /web/server/vue-cli/dist
 
