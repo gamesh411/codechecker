@@ -92,6 +92,9 @@ def add_git_info(data):
         version.get("minor", "0"),
         version.get("revision", "0"),
     )
+    rc = version.get("rc", "")
+    if rc:
+        ver_str += f"-rc{rc}"
 
     try:
         tag = subprocess.check_output(
