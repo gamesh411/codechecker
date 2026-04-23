@@ -1,0 +1,130 @@
+name: pip install
+
+on:
+  push:
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - 'config/**'
+      - 'codechecker_common/**'
+      - 'analyzer/**'
+      - 'web/**'
+      - 'tools/**'
+      - '.github/workflows/pip-install.yml'
+  pull_request:
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - 'config/**'
+      - 'codechecker_common/**'
+      - 'analyzer/**'
+      - 'web/**'
+      - 'tools/**'
+      - '.github/workflows/pip-install.yml'
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip-install-smoke:
+    name: "pip install (${{ matrix.os }}, Python ${{ matrix.python }})"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+        python: ['3.9', '3.12', '3.13']
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: pip install .
+        run: pip install .
+
+      - name: Smoke test
+        run: |
+          CodeChecker --help
+          CodeChecker version
+          report-converter --help
+          merge-clang-extdef-mappings --help
+          post-process-stats --help
+          tu_collector --help
+
+      - name: Verify data files installed
+        run: |
+          python -c "
+          import sysconfig, os
+          data = sysconfig.get_path('data')
+          cfg = os.path.join(data, 'share', 'codechecker', 'config')
+          assert os.path.isdir(cfg), f'Config dir missing: {cfg}'
+          assert os.path.isfile(os.path.join(cfg, 'package_layout.json')), 'package_layout.json missing'
+          print(f'Config dir OK: {cfg}')
+          "
+
+  pip-install-editable:
+    name: "pip install -e . (ubuntu, Python 3.12)"
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: pip install -e .
+        run: pip install -e .
+
+      - name: Smoke test
+        run: |
+          CodeChecker --help
+          CodeChecker version
+
+  pip-install-analyze:
+    name: "pip install + analyze (ubuntu, Python 3.12)"
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y clang clang-tidy cppcheck
+
+      - name: pip install .
+        run: pip install .
+
+      - name: Test analyze and parse
+        run: |
+          WORK="$RUNNER_TEMP/analyze-test"
+          mkdir -p "$WORK"
+
+          cat > "$WORK/main.c" <<'EOF'
+          int main() { int i = 1 / 0; return i; }
+          EOF
+
+          cat > "$WORK/compile_commands.json" <<EOF
+          [{"directory": "$WORK", "command": "gcc -c $WORK/main.c", "file": "$WORK/main.c"}]
+          EOF
+
+          CodeChecker analyze "$WORK/compile_commands.json" -o "$WORK/reports"
+          CodeChecker parse "$WORK/reports" -e json | python -c "
+          import sys, json
+          reports = json.load(sys.stdin)
+          assert len(reports) > 0, 'Expected at least one report'
+          print(f'Found {len(reports)} report(s) — OK')
+          "
