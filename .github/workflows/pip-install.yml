@@ -67,7 +67,6 @@ jobs:
           cfg = os.path.join(data, 'share', 'codechecker', 'config')
           assert os.path.isdir(cfg), f'Config dir missing: {cfg}'
           assert os.path.isfile(os.path.join(cfg, 'package_layout.json')), 'package_layout.json missing'
-          print(f'Config dir OK: {cfg}')
           "
 
   pip-install-editable:
@@ -126,5 +125,4 @@ jobs:
           import sys, json
           reports = json.load(sys.stdin)
           assert len(reports) > 0, 'Expected at least one report'
-          print(f'Found {len(reports)} report(s) — OK')
           "
