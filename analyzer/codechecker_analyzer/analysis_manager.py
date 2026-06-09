@@ -701,7 +701,7 @@ def start_workers(actions_map, actions, analyzer_config_map,
     # Start checking parallel.
     checked_var = multiprocess.Value('i', 1)
     actions_num = multiprocess.Value('i', len(actions))
-    pool = multiprocess.Pool(jobs,
+    pool = multiprocess.Pool(jobs,  # pylint: disable=not-callable
                              initializer=init_worker,
                              initargs=(checked_var, actions_num))
     signal.signal(signal.SIGINT, signal_handler)

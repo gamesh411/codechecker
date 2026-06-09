@@ -26,7 +26,9 @@ from typing import Dict, List, Optional, Any
 
 from codechecker_analyzer.analyzers.clangsa.analyzer import ClangSA
 
-from codechecker_common.compatibility import multiprocessing
+import multiprocess
+from multiprocess.managers import SyncManager
+
 from codechecker_common.logger import get_logger
 from codechecker_common.util import load_json
 
@@ -1339,7 +1341,7 @@ def parse_unique_log(compilation_database,
         __contains_no_intrinsic_headers.cache_clear()
 
         if jobs is None:
-            jobs = multiprocessing.cpu_count()
+            jobs = multiprocess.cpu_count()
 
         # Prepare entries for parallel processing
         entries = extend_compilation_database_entries(compilation_database)
@@ -1352,12 +1354,12 @@ def parse_unique_log(compilation_database,
         # Here we overwrite ImplicitCompilerInfo.compiker_info with a dict type
         # that can be used in multiprocess environment, since the next section
         # is executed in a process pool.
-        manager = multiprocessing.SyncManager()
+        manager = SyncManager()
         manager.start()
         ImplicitCompilerInfo.compiler_info = manager.dict()
 
         # Process entries in parallel using imap_unordered with chunk size 1024
-        with multiprocessing.Pool(jobs) as pool:
+        with multiprocess.Pool(jobs) as pool:  # pylint: disable=not-callable
             # Convert generator to list for map function
             worker_args_list = list(worker_args)
             results = pool.map(_process_entry_worker, worker_args_list)
