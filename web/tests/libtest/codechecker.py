@@ -568,6 +568,14 @@ def serv_cmd(workspace_dir, port, pg_config=None, serv_args=None):
     server_cmd.extend(['--host', 'localhost',
                        '--port', str(port)])
 
+    # Allow CI to override worker counts via env vars.
+    api_procs = os.environ.get('CC_TEST_API_WORKERS')
+    task_procs = os.environ.get('CC_TEST_TASK_WORKERS')
+    if api_procs:
+        server_cmd.extend(['--api-handler-processes', api_procs])
+    if task_procs:
+        server_cmd.extend(['--task-worker-processes', task_procs])
+
     server_cmd.extend(serv_args or [])
 
     # server_cmd.extend(['--verbose', 'debug'])

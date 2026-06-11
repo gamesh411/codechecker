@@ -997,6 +997,17 @@ class CCSimpleHttpServerIPv6(CCSimpleHttpServer):
         return f"[{str(self.address)}]:{self.port}"
 
 
+def _api_worker_main(http_server):
+    """Entry point for an API worker process.
+
+    On POSIX (fork), receives the server object via inheritance.
+    On Windows (spawn), this would need to receive serializable config
+    and reconstruct the server — not yet implemented since Windows CI
+    is not available for testing.
+    """
+    http_server.serve_forever_with_shutdown_handler()
+
+
 def start_server(config_directory: str, workspace_directory: str,
                  package_data, port: int, config_sql_server,
                  listen_address: str, force_auth: bool,
@@ -1091,11 +1102,12 @@ def start_server(config_directory: str, workspace_directory: str,
     # Note that Queue under the hood uses OS-level primitives such as a socket
     # or a pipe, where the read-write buffers have a **LIMITED** capacity, and
     # are usually **NOT** backed by the full amount of available system memory.
-    bg_task_queue: Queue = Queue()
-    is_server_shutting_down = Value('B', False)
-
     sync_manager = SyncManager()
     sync_manager.start()
+
+    # Use Manager proxies so these can be passed to spawn workers.
+    bg_task_queue = sync_manager.Queue()
+    is_server_shutting_down = sync_manager.Value('B', False)
     task_pipes = sync_manager.dict()
 
     def _cleanup_incomplete_tasks(action: str) -> int:
@@ -1209,7 +1221,8 @@ def start_server(config_directory: str, workspace_directory: str,
         spawned_api_proc_count += 1
 
         p = _start_process_with_no_signal_handling(
-            target=http_server.serve_forever_with_shutdown_handler,
+            target=_api_worker_main,
+            args=(http_server,),
             name=f"CodeChecker-API-{spawned_api_proc_count}")
         api_processes[cast(int, p.pid)] = p
         signal_log(LOG, "DEBUG", f"API handler child process {p.pid} started!")
