@@ -577,7 +577,8 @@ def _do_db_cleanup(context, check_env,
         return False, str(e)
 
 
-def _do_db_cleanups(config_database, context, check_env) \
+def _do_db_cleanups(config_database, context, check_env,
+                    workspace: str = "") \
         -> Tuple[bool, List[Tuple[str, str]]]:
     """
     Performs on-demand start-up database cleanup on all the products present
@@ -602,6 +603,12 @@ def _do_db_cleanups(config_database, context, check_env) \
     products = _get_products()
     if not products:
         return True, []
+
+    # Ensure cwd is valid before spawning worker processes. On macOS the
+    # default 'spawn' start method calls os.getcwd() during process creation
+    # which fails if the inherited cwd was deleted.
+    if workspace and os.path.isdir(workspace):
+        os.chdir(workspace)
 
     thr_count = util.clamp(1, len(products), cpu_count())
     overall_result, failures = True, []
@@ -1062,7 +1069,8 @@ def start_server(config_directory: str, workspace_directory: str,
     if not skip_db_cleanup:
         all_success, fails = _do_db_cleanups(config_sql_server,
                                              context,
-                                             check_env)
+                                             check_env,
+                                             workspace_directory)
         if not all_success:
             LOG.error("Failed to perform automatic cleanup on %d products! "
                       "Earlier logs might contain additional detailed "
