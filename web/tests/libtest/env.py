@@ -12,7 +12,6 @@ Test environment setup and configuration helpers.
 
 import os
 import json
-import sys
 import tempfile
 import shutil
 import socket
@@ -354,12 +353,6 @@ def test_env(test_workspace):
     base_env['PATH'] = os.path.join(codechecker_package(), 'bin') + \
         ':' + base_env['PATH']
     base_env['HOME'] = test_workspace
-
-    if sys.platform == "darwin":
-        # Forked server workers may call macOS frameworks (e.g. Security
-        # framework via urllib3) which aren't fork-safe. This suppresses
-        # the Obj-C fork safety crash.
-        base_env['OBJC_DISABLE_INITIALIZE_FORK_SAFETY'] = 'YES'
 
     return base_env
 

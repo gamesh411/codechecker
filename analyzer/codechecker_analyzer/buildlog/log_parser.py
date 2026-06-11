@@ -1243,6 +1243,11 @@ class CompileActionUniqueingType(Enum):
     # recognizing symlink and remove duplication
 
 
+def _init_log_parser_worker(compiler_info_dict):
+    """Set shared manager dict in spawn workers."""
+    ImplicitCompilerInfo.compiler_info = compiler_info_dict
+
+
 def _process_entry_worker(args):
     """
     Worker function for processing compilation database entries in parallel.
@@ -1359,7 +1364,10 @@ def parse_unique_log(compilation_database,
         ImplicitCompilerInfo.compiler_info = manager.dict()
 
         # Process entries in parallel using imap_unordered with chunk size 1024
-        with multiprocess.Pool(jobs) as pool:  # pylint: disable=not-callable
+        with multiprocess.Pool(  # pylint: disable=not-callable
+                jobs,
+                initializer=_init_log_parser_worker,
+                initargs=(ImplicitCompilerInfo.compiler_info,)) as pool:
             # Convert generator to list for map function
             worker_args_list = list(worker_args)
             results = pool.map(_process_entry_worker, worker_args_list)
