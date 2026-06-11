@@ -13,6 +13,7 @@
 import os
 import shutil
 import subprocess
+import sys
 
 from libtest import codechecker
 from libtest import env
@@ -21,6 +22,9 @@ import multiprocess
 
 # Stopping event for CodeChecker server.
 __STOP_SERVER = multiprocess.Event()
+
+# OAuth mock server process.
+__OAUTH_SERVER = None
 
 # Test workspace initialized at setup for authentication tests.
 TEST_WORKSPACE = None
@@ -66,9 +70,21 @@ def setup_class_common():
 
     codechecker.add_test_package_product(host_port_cfg, TEST_WORKSPACE)
 
-    subprocess.Popen(["python3", "oauth_server.py"],
-                     cwd="tests/functional/authentication")
+    subprocess.run(["pkill", "-f", "oauth_server.py"],
+                   capture_output=True, check=False)
+    sleep(1)
+
+    global __OAUTH_SERVER
+    __OAUTH_SERVER = subprocess.Popen(
+        [sys.executable, "oauth_server.py"],
+        cwd="tests/functional/authentication",
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL)
     sleep(5)
+
+    if __OAUTH_SERVER.poll() is not None:
+        print(f"OAuth mock server exited with code "
+              f"{__OAUTH_SERVER.returncode}")
 
 
 def teardown_class_common():
@@ -76,6 +92,12 @@ def teardown_class_common():
     # TODO If environment variable is set keep the workspace
     # and print out the path.
     global TEST_WORKSPACE
+    global __OAUTH_SERVER
+
+    if __OAUTH_SERVER:
+        __OAUTH_SERVER.terminate()
+        __OAUTH_SERVER.wait()
+        __OAUTH_SERVER = None
 
     # Removing the product through this server requires credentials.
     codechecker_cfg = env.import_test_cfg(TEST_WORKSPACE)['codechecker_cfg']
