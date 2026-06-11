@@ -1003,6 +1003,12 @@ def start_server(config_directory: str, workspace_directory: str,
     """
     LOG.debug("Starting CodeChecker server...")
 
+    # On macOS, forked worker processes crash when calling into Obj-C
+    # frameworks (e.g. Security.framework via urllib3 for HTTPS).
+    # This env var disables the fork-safety check in the Obj-C runtime.
+    if sys.platform == "darwin":
+        os.environ["OBJC_DISABLE_INITIALIZE_FORK_SAFETY"] = "YES"
+
     # The root user file is DEPRECATED AND IGNORED
     root_file = os.path.join(config_directory, 'root.user')
     if os.path.exists(root_file):
