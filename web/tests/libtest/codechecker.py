@@ -641,7 +641,7 @@ def start_or_get_server(auth_required=False):
                 encoding="utf-8",
                 errors="ignore")
 
-            wait_for_server_start(server_stdout)
+            wait_for_server_start(server_stdout, port=port)
 
         if pg_config:
             # The behaviour is that CodeChecker servers only configure a
@@ -664,7 +664,7 @@ def start_or_get_server(auth_required=False):
     }
 
 
-def wait_for_server_start(stdoutfile):
+def wait_for_server_start(stdoutfile, port=None):
     print("Waiting for server start reading file " + stdoutfile)
     n = 0
     server_start_timeout = timedelta(minutes=5)
@@ -686,6 +686,19 @@ def wait_for_server_start(stdoutfile):
                     print(f"[DIAG] Server FATAL error after "
                           f"{n}s. Output:")
                     print(out[-2000:])
+
+        # Fallback: check if port is accepting connections.
+        if port and n > 3:
+            import socket
+            try:
+                s = socket.create_connection(
+                    ("localhost", port), timeout=1)
+                s.close()
+                print(f"Server port {port} open after {n}s "
+                      "(file detection missed it)")
+                return
+            except (ConnectionRefusedError, OSError):
+                pass
 
         if n > server_start_timeout.total_seconds():
             print("[FATAL!] Server failed to start after "
@@ -750,7 +763,8 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
     server_proc.start()
     server_output_file = os.path.join(codechecker_cfg['workspace'],
                                       str(server_proc.pid) + ".out")
-    wait_for_server_start(server_output_file)
+    wait_for_server_start(server_output_file,
+                          port=codechecker_cfg['viewer_port'])
 
     return {
         'viewer_host': 'localhost',
