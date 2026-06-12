@@ -19,8 +19,6 @@ from typing import List, Optional, cast
 
 import multiprocess
 
-import sys
-
 from codechecker_api_shared.ttypes import RequestFailed, Ternary
 from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
@@ -39,8 +37,6 @@ TEST_WORKSPACE: Optional[str] = None
 # Note: Test names in this file follow a strict ordinal convention, because
 # the assertions are created with a specific execution history!
 
-@unittest.skipIf(sys.platform == "darwin",
-                 "Task timing tests unreliable with spawn on macOS CI")
 class TaskManagementAPITests(unittest.TestCase):
     def setup_class(self):
         global TEST_WORKSPACE

@@ -75,16 +75,40 @@ def setup_class_common():
     sleep(1)
 
     global __OAUTH_SERVER
+    oauth_log = os.path.join(TEST_WORKSPACE, "oauth_server.log")
+    oauth_out = open(oauth_log, "w", encoding="utf-8")
     __OAUTH_SERVER = subprocess.Popen(
         [sys.executable, "oauth_server.py"],
         cwd="tests/functional/authentication",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL)
-    sleep(10 if sys.platform == "darwin" else 5)
+        stdout=oauth_out,
+        stderr=oauth_out)
 
-    if __OAUTH_SERVER.poll() is not None:
-        print(f"OAuth mock server exited with code "
-              f"{__OAUTH_SERVER.returncode}")
+    # Wait for mock server to be ready (port 3000 open).
+    import socket
+    ready = False
+    for i in range(30):
+        try:
+            s = socket.create_connection(("127.0.0.1", 3000), timeout=1)
+            s.close()
+            ready = True
+            print(f"OAuth mock server ready after {i+1}s")
+            break
+        except (ConnectionRefusedError, OSError):
+            if __OAUTH_SERVER.poll() is not None:
+                oauth_out.flush()
+                with open(oauth_log, encoding="utf-8") as f:
+                    print(f"OAuth mock server DIED "
+                          f"(rc={__OAUTH_SERVER.returncode}): "
+                          f"{f.read()}")
+                break
+            sleep(1)
+
+    if not ready:
+        oauth_out.flush()
+        with open(oauth_log, encoding="utf-8") as f:
+            print(f"OAuth mock server NOT ready after 30s. "
+                  f"Log: {f.read()}")
+        print(f"OAuth server poll: {__OAUTH_SERVER.poll()}")
 
 
 def teardown_class_common():

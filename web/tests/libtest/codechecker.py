@@ -680,6 +680,12 @@ def wait_for_server_start(stdoutfile):
                 if "usage: CodeChecker" in out:
                     return
 
+                # Fail fast if server crashed during startup.
+                if "[ERROR" in out and n > 5:
+                    print(f"[DIAG] Server output contains ERROR after "
+                          f"{n}s. Output:")
+                    print(out[-2000:])
+
         if n > server_start_timeout.total_seconds():
             print("[FATAL!] Server failed to start after "
                   f"'{str(server_start_timeout)}' "

@@ -220,7 +220,8 @@ class OauthServer(BaseHTTPRequestHandler):
 
 webServer = HTTPServer((HOSTNAME, SERVERPORT), OauthServer)
 webServer.allow_reuse_address = True
-# print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}")
+print(f"OAuth mock server started on http://{HOSTNAME}:{SERVERPORT}",
+      flush=True)
 
 webServer.serve_forever()
 webServer.server_close()
