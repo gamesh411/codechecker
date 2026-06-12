@@ -9,21 +9,31 @@ CI tests revealed significant performance differences compared to
 Linux (fork). This document records profiling findings and known
 issues for future development.
 
-## Profiling Results (local macOS ARM64)
+## Profiling Results
 
-### Worker spawn overhead
+### Local macOS ARM64 (M-series, fast NVMe)
 - Single spawn worker lifecycle: ~0.46s (imports + setup)
-  - `SQLServer` import: 0.22s
-  - `server` module import: 0.15s
-  - Other imports: 0.01s
+  - `codechecker_server.server` import: 0.26s (887 files, 997 modules)
   - Process overhead: 0.07s
 - With 2 API + 2 task workers: server ready in **1.65s**
-- With 12 API + 12 task workers: server ready in **~4s** locally
 
-### Comparison: fork vs spawn server start
-- Fork (Linux): <0.5s (workers inherit everything, no imports)
-- Spawn (macOS, 2+2 workers): ~1.6s
-- Spawn (macOS, 12+12 workers): ~4s locally, much worse on CI
+### GitHub Actions macOS runner (3 CPU, 7 GB RAM)
+- `codechecker_server.server` import: **35.95s** (same 887 files)
+- Per-file I/O latency: ~40ms (vs <0.3ms local)
+- With 2 API + 2 task workers: server startup ~60-80s
+- With 3 servers (task test): total startup ~150-240s
+
+### Root cause of CI slowness
+The macOS GitHub Actions runner has **extremely slow file I/O**
+(~40ms per file operation vs <0.3ms on local NVMe). Since spawn
+workers must import 887 Python files from scratch, each worker
+takes ~36 seconds to become ready. This is a VM/infrastructure
+constraint, not a code issue.
+
+This means:
+- 1 server with 2+2 workers on 3 cores: ~50-80s startup
+- 3 servers sequential (task test): 150-240s startup
+- OAuth mock server (128 files): ~5s startup
 
 ## CI-Specific Issues
 
@@ -60,44 +70,36 @@ the task worker picks up and starts the task within 1 second.
 With spawn, worker startup adds latency. These tests are
 incompatible with spawn without redesign.
 
-## Key Bottleneck: NOT spawn itself
+## Key Bottleneck: CI runner I/O
 
-The actual spawn overhead is small (~0.5s per worker). The real
-bottlenecks on CI are:
+Measured: importing `codechecker_server.server` loads 887 .pyc
+files. On the CI runner this takes 36s (40ms/file). Locally it
+takes 0.26s (0.3ms/file). The difference is **133x slower I/O**.
 
-1. **Server crash without fast-fail** - if the server dies during
-   startup, `wait_for_server_start` silently waits up to 5 minutes.
-   This makes failures appear as "slowness" when it's really a
-   crash. All 165-second waits on CI are likely server crashes.
-2. **SQLite race on parallel starts** - if two servers start
-   concurrently on the same workspace, the second sees "schema
-   missing" and tries CREATE TABLE simultaneously with the first.
-   This causes a crash, not a hang.
-3. **Cold import caches** - CI runners have cold filesystem caches,
-   making Python module imports slower (~2-3x vs local)
-4. **Core contention** - spawning N workers on a 3-core runner
-   serializes heavily during the import phase
+This is NOT fixable by code changes alone. The import dependency
+tree (SQLAlchemy, Alembic, Thrift, authlib, etc.) is required for
+server operation. Spawn workers must import all of it.
+
+Implications for tests:
+1. Server startup with 2+2 workers: allow 80-90s
+2. Task tests (3 servers): need 4+ minutes total startup
+3. Any test that starts a server needs appropriate timeouts
 
 ## Recommendations
 
-### For production use
-- Server start with spawn takes ~2-4s. Acceptable for a long-running
-  server process.
-- Use `--api-handler-processes` and `--task-worker-processes` to
-  control worker count explicitly on constrained hardware.
+### For CI tests
+- Set `CC_TEST_API_WORKERS=2` and `CC_TEST_TASK_WORKERS=2` (done).
+- Tests starting servers must tolerate 80-90s startup time.
+- Task tests (3 servers) need 4+ minutes just for startup.
+- Skip timing-sensitive tests (task state checks with 1s sleep)
+  on macOS CI — the assumptions cannot hold.
+- Use polling loops for readiness checks, not fixed sleeps.
 
-### For CI
-- Set `CC_TEST_API_WORKERS=2` and `CC_TEST_TASK_WORKERS=2` via env
-  to reduce spawn overhead in test servers.
-- Tests that start multiple servers on the same SQLite DB are
-  inherently problematic with spawn. Consider PostgreSQL or
-  separate workspaces.
-- Timing-sensitive tests (task state checks with sleep) should use
-  polling loops instead of fixed sleeps.
-
-### For future optimization
-- Consider lazy worker spawning (start workers on first request)
-- Consider a worker pool warmup approach (pre-import modules in
-  a forkserver-like pattern)
-- The `SyncManager` in `log_parser.py` is never shut down - each
-  `CodeChecker analyze` invocation leaks a manager process
+### For future optimization (if CI time is unacceptable)
+- Lazy imports: defer SQLAlchemy/Alembic/Thrift imports to first
+  use rather than module-level. Would reduce spawn worker import
+  to only what's needed for HTTP serving.
+- Zipimport: bundle .pyc files into a zip for single-seek import.
+- Reduce worker count to 1+1 on CI (saves 36s per extra worker).
+- Pre-compile a single-file server bootstrap that spawn workers
+  can import quickly, deferring heavy deps to request time.
