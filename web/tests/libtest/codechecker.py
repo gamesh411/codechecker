@@ -681,8 +681,9 @@ def wait_for_server_start(stdoutfile):
                     return
 
                 # Fail fast if server crashed during startup.
-                if "[ERROR" in out and n > 5:
-                    print(f"[DIAG] Server output contains ERROR after "
+                if "Config database initialization failed" in out \
+                        or "Failed to create schema" in out:
+                    print(f"[DIAG] Server FATAL error after "
                           f"{n}s. Output:")
                     print(out[-2000:])
 
@@ -716,6 +717,9 @@ def start_server(codechecker_cfg, event, server_args=None, pg_config=None):
         server_stdout = os.path.join(codechecker_cfg['workspace'],
                                      str(os.getpid()) + ".out")
         print("Redirecting server output to " + server_stdout)
+        # Force unbuffered output so "Server waiting" is visible immediately.
+        checking_env = dict(checking_env)
+        checking_env['PYTHONUNBUFFERED'] = '1'
         with open(server_stdout, "w",
                   encoding="utf-8", errors="ignore") as server_out:
             proc = subprocess.Popen(
