@@ -136,7 +136,8 @@ class TaskManagementAPITests(unittest.TestCase):
             session_token=root_token)
 
     def test_task_1_query_status(self):
-        task_token = self._anonymous_task_client.createDummyTask(2, False)
+        task_token = self._anonymous_task_client.createDummyTask(
+            _TASK_PICKUP_WAIT + 2, False)
 
         time.sleep(_TASK_PICKUP_WAIT)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
@@ -149,7 +150,7 @@ class TaskManagementAPITests(unittest.TestCase):
         self.assertIn("Dummy task", task_info.summary)
         self.assertEqual(task_info.cancelFlagSet, False)
 
-        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
+        time.sleep(3)  # Wait for task to complete.
         task_info = self._anonymous_task_client.getTaskInfo(task_token)
         self.assertEqual(task_info.status,
                          TaskStatus._NAMES_TO_VALUES["COMPLETED"])
@@ -163,7 +164,8 @@ class TaskManagementAPITests(unittest.TestCase):
         self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_2_query_status_of_failed(self):
-        task_token = self._anonymous_task_client.createDummyTask(2, True)
+        task_token = self._anonymous_task_client.createDummyTask(
+            _TASK_PICKUP_WAIT + 2, True)
 
         time.sleep(_TASK_PICKUP_WAIT)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
@@ -173,14 +175,15 @@ class TaskManagementAPITests(unittest.TestCase):
                          TaskStatus._NAMES_TO_VALUES["RUNNING"])
         self.assertEqual(task_info.cancelFlagSet, False)
 
-        time.sleep(2)  # A bit more than exactly what remains of 2 seconds!
+        time.sleep(3)  # Wait for task to fail.
         task_info = self._anonymous_task_client.getTaskInfo(task_token)
         self.assertEqual(task_info.status,
                          TaskStatus._NAMES_TO_VALUES["FAILED"])
         self.assertEqual(task_info.cancelFlagSet, False)
 
     def test_task_3_cancel(self):
-        task_token = self._anonymous_task_client.createDummyTask(3, False)
+        task_token = self._anonymous_task_client.createDummyTask(
+            _TASK_PICKUP_WAIT + 10, False)
 
         time.sleep(_TASK_PICKUP_WAIT)
         cancel_req: bool = self._privileged_task_client.cancelTask(task_token)
