@@ -80,7 +80,7 @@ def setup_class_common():
         cwd="tests/functional/authentication",
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL)
-    sleep(5)
+    sleep(10 if sys.platform == "darwin" else 5)
 
     if __OAUTH_SERVER.poll() is not None:
         print(f"OAuth mock server exited with code "
