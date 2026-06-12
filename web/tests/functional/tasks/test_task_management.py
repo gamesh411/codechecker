@@ -13,19 +13,21 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import os
 import shutil
-import unittest
+import sys
 import time
+import unittest
 from typing import List, Optional, cast
 
 import multiprocess
-
-import sys
 
 from codechecker_api_shared.ttypes import RequestFailed, Ternary
 from codechecker_api.codeCheckerServersideTasks_v6.ttypes import \
     AdministratorTaskInfo, TaskFilter, TaskInfo, TaskStatus
 
 from libtest import codechecker, env
+
+# On macOS, spawn workers need time to import before processing tasks.
+_TASK_PICKUP_WAIT = 60 if sys.platform == "darwin" else 1
 
 
 # Stop events for the CodeChecker servers.
@@ -39,9 +41,6 @@ TEST_WORKSPACE: Optional[str] = None
 # Note: Test names in this file follow a strict ordinal convention, because
 # the assertions are created with a specific execution history!
 
-@unittest.skipIf(sys.platform == "darwin",
-                 "Spawn workers take ~84s to import on macOS CI; "
-                 "task timing assumptions (1s) are incompatible.")
 class TaskManagementAPITests(unittest.TestCase):
     def setup_class(self):
         global TEST_WORKSPACE
@@ -139,7 +138,7 @@ class TaskManagementAPITests(unittest.TestCase):
     def test_task_1_query_status(self):
         task_token = self._anonymous_task_client.createDummyTask(2, False)
 
-        time.sleep(1)
+        time.sleep(_TASK_PICKUP_WAIT)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
             task_token)
         self.assertEqual(task_info.token, task_token)
@@ -166,7 +165,7 @@ class TaskManagementAPITests(unittest.TestCase):
     def test_task_2_query_status_of_failed(self):
         task_token = self._anonymous_task_client.createDummyTask(2, True)
 
-        time.sleep(1)
+        time.sleep(_TASK_PICKUP_WAIT)
         task_info: TaskInfo = self._anonymous_task_client.getTaskInfo(
             task_token)
         self.assertEqual(task_info.token, task_token)
@@ -183,7 +182,7 @@ class TaskManagementAPITests(unittest.TestCase):
     def test_task_3_cancel(self):
         task_token = self._anonymous_task_client.createDummyTask(3, False)
 
-        time.sleep(1)
+        time.sleep(_TASK_PICKUP_WAIT)
         cancel_req: bool = self._privileged_task_client.cancelTask(task_token)
         self.assertTrue(cancel_req)
 
@@ -366,7 +365,7 @@ class TaskManagementAPITests(unittest.TestCase):
         # Let every task terminate. We should only need 1 second per task,
         # running likely in a multithreaded environment.
         # Let's have some leeway, though...
-        time.sleep(2)
+        time.sleep(_TASK_PICKUP_WAIT + 2)
 
         task_infos = self._privileged_task_client.getTasks(TaskFilter(
             enqueuedAfterEpoch=current_time_epoch,

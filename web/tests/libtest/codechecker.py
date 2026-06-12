@@ -687,17 +687,17 @@ def wait_for_server_start(stdoutfile, port=None):
                           f"{n}s. Output:")
                     print(out[-2000:])
 
-        # Fallback: check if port is accepting connections.
+        # Fallback: check if server can handle HTTP requests.
         if port and n > 3:
-            import socket
+            import urllib.request
             try:
-                s = socket.create_connection(
-                    ("localhost", port), timeout=1)
-                s.close()
-                print(f"Server port {port} open after {n}s "
-                      "(file detection missed it)")
+                urllib.request.urlopen(
+                    f"http://localhost:{port}/", timeout=1)
+            except urllib.error.HTTPError:
+                # Any HTTP response (even 404) means server is ready.
+                print(f"Server responding on port {port} after {n}s")
                 return
-            except (ConnectionRefusedError, OSError):
+            except (ConnectionRefusedError, OSError, urllib.error.URLError):
                 pass
 
         if n > server_start_timeout.total_seconds():
