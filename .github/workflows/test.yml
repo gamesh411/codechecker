@@ -211,33 +211,16 @@ jobs:
           pip3 install -r web/requirements_py/auth/requirements.txt
           BUILD_UI_DIST=NO make package
 
-          # === Environment diagnostics ===
-          echo "=== macOS CI Environment ==="
-          echo "CPUs: $(sysctl -n hw.ncpu)"
-          echo "RAM: $(sysctl -n hw.memsize | awk '{printf "%.1f GB", $0/1024/1024/1024}')"
-          python3 -c "import multiprocess; print(f'multiprocess {multiprocess.__version__}')"
-          python3 -c "import sys; print(f'Python {sys.version}')"
-          python3 -c "import os; print(f'cpu_count={os.cpu_count()}')"
-          python3 -c "import sys,os; sys.path.insert(0,os.environ.get('CC_LIB_DIR','build/CodeChecker/lib/python3')); import time; t0=time.time(); import codechecker_server.server; print(f'server import: {time.time()-t0:.2f}s')"
-          # Check port 3000 availability
-          lsof -i :3000 || echo "Port 3000 is free"
-          echo "=== End diagnostics ==="
-
-          # Run ONLY the failing test classes for fast diagnosis.
+          # Run full functional test suite.
           cd web
-          rm -rf ../build/workspace
-          REPO_ROOT="$(cd .. && pwd)" \
-          BUILD_DIR="$(cd .. && pwd)/build" \
-          TEST_CLANG_VERSION=stable \
-          TEST_PROJ="$(pwd)/tests/projects" \
-            pytest -c pytest.ini -x \
-              -k 'DictAuth or TaskManagementAPITests' \
-              tests/functional
+          make test_matrix_sqlite
         env:
           CC_TEST_API_WORKERS: "2"
           CC_TEST_TASK_WORKERS: "2"
 
-      # Unit test step temporarily removed for diagnostic run.
+      - name: Run unit tests coverage
+        working-directory: web
+        run: make test_unit_cov
 
   gui:
     name: GUI
