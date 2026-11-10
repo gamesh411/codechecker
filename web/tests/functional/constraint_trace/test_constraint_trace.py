@@ -118,6 +118,41 @@ class TestConstraintTrace(unittest.TestCase):
             {'symbol': 'reg_$2<int b>',
              'range': '{ [-2147483648, -1], [1, 2147483647] }'}])
 
+    def test_snapshot_maps_variables_to_values(self):
+        """
+        Each step names its visible variables, resolved to the symbols the
+        ranges are keyed by or to a concrete value.
+        """
+        details = self._details('with_snapshots')
+
+        trace = json.loads(details.constraintTrace)
+        variables = {variable['name']: variable
+                     for variable in trace['steps'][0]['variables']}
+
+        # Hand-derived from demo/two-path.c: f's parameters and local.
+        self.assertEqual(variables['a'], {
+            'name': 'a', 'value': 'reg_$1<int a>', 'kind': 'symbol'})
+        self.assertEqual(variables['b'], {
+            'name': 'b', 'value': 'reg_$2<int b>', 'kind': 'symbol'})
+        self.assertEqual(variables['p'], {
+            'name': 'p', 'value': '0', 'kind': 'integer'})
+
+    def test_path_condition_keeps_dead_symbols(self):
+        """
+        Symbols dropped as dead vanish from the known ranges of later steps
+        but stay in the accumulated path condition.
+        """
+        details = self._details('with_snapshots')
+
+        trace = json.loads(details.constraintTrace)
+        last_step = trace['steps'][-1]
+
+        self.assertEqual(last_step['symbol_ranges'], [])
+        self.assertEqual(last_step['path_condition'], [
+            {'symbol': 'reg_$1<int a>', 'range': '{ [0, 0] }'},
+            {'symbol': 'reg_$2<int b>',
+             'range': '{ [-2147483648, -1], [1, 2147483647] }'}])
+
     def test_trace_is_not_extended_report_data(self):
         """
         The new blob item type must not leak through extendedData, where an

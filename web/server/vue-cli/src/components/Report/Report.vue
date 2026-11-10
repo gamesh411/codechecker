@@ -505,7 +505,10 @@ const selectedConstraintStep = computed(() => {
   return {
     index: _event.$index,
     message: _event.msg,
-    symbolRanges: _snapshot?.symbol_ranges ?? []
+    symbolRanges: _snapshot?.symbol_ranges ?? [],
+    variables: _snapshot?.variables ?? [],
+    pathCondition: _snapshot?.path_condition ?? [],
+    symbolNames: constraintSymbolNames(_event.$index - 1)
   };
 });
 const editorCols = computed(() => {
@@ -938,6 +941,21 @@ async function drawBugPath() {
     await nextTick();
     addArrowLines();
   }
+}
+
+// A symbol's name in the path condition, kept from the last step it had one,
+// because the variable can be gone by the time its constraint is shown.
+function constraintSymbolNames(stepIndex) {
+  const _names = new Map();
+  constraintTrace.value.steps
+    .filter(step => step.kind === "event" && step.index <= stepIndex)
+    .sort((a, b) => a.index - b.index)
+    .forEach(step => {
+      (step.variables ?? [])
+        .filter(variable => variable.kind === "symbol")
+        .forEach(variable => _names.set(variable.value, variable.name));
+    });
+  return _names;
 }
 
 function parseConstraintTrace(trace) {

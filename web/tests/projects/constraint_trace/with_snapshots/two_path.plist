@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 6f60ffd4616a7c1e032a21289a7967a833956c5f)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git b71d8133c3878acafd4ef70c7ec1a444fbcab322)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -604,10 +604,74 @@
         <key>range</key><string>{ [0, 0] }</string>
        </dict>
       </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$1&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$2&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$9&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int a&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
      </dict>
      <dict>
       <key>path_index</key><integer>5</integer>
       <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int a&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int b&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$1&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$2&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$9&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
       <array>
        <dict>
         <key>symbol</key><string>reg_$1&lt;int a&gt;</string>
@@ -624,11 +688,79 @@
       <key>symbol_ranges</key>
       <array>
       </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$1&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$2&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$9&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int a&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int b&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
      </dict>
      <dict>
       <key>path_index</key><integer>17</integer>
       <key>symbol_ranges</key>
       <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$1&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$2&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$9&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int a&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int b&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
       </array>
      </dict>
     </array>
