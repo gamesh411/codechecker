@@ -3254,7 +3254,7 @@ class ThriftRequestHandler:
                                 [line.fileId if line.fileId is not None
                                     else LOG.warning(
                                         "File content requested "
-                                        f"without fileId {line.fileId}")
+                                        "without fileId %s", line.fileId)
                                     for line in chunk])) \
                         .all()
                 for content in contents:
@@ -4216,8 +4216,8 @@ class ThriftRequestHandler:
                     # cases where it occurred due to underlying reasons.
                     # Handling it silently ensures that the Number of runs
                     # counter is not affected by the exception.
-                    LOG.warning(f"Suppressed an exception while "
-                                f"deleting run {run.name}. Error: {e}")
+                    LOG.warning("Suppressed an exception while "
+                                "deleting run %s. Error: %s", run.name, e)
 
             session.close()
 
