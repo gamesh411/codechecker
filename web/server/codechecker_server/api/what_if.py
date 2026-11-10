@@ -21,7 +21,7 @@ from dataclasses import dataclass
 import z3
 
 from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
-    WhatIfResult
+    WhatIfResult, WhatIfSyntaxError
 
 from codechecker_common.logger import get_logger
 
@@ -38,8 +38,12 @@ NO_SMTLIB_REASON = \
     "Clang built with Z3."
 
 
-class WhatIfSyntaxError(Exception):
+class ConstraintSyntaxError(Exception):
     """ The reader's text is not a What-If Constraint. """
+
+    def __init__(self, message: str, offset: int):
+        super().__init__(message)
+        self.offset = offset
 
 
 class _Unanswerable(Exception):
@@ -48,55 +52,97 @@ class _Unanswerable(Exception):
 
 @dataclass(frozen=True)
 class Term:
-    """ `variable op value`. """
+    """ `variable op value`, where a `null` value is 0. """
     variable: str
     op: str
     value: int
 
 
+@dataclass(frozen=True)
+class _Token:
+    kind: str
+    text: str
+    offset: int
+
+
 _TOKEN = re.compile(
-    r'\s*(?:(?P<number>-?\d+)|(?P<name>[A-Za-z_]\w*)'
+    r'\s*(?:(?P<number>-?\d+)|(?P<name>[A-Za-z_]\w*)|(?P<and>&&)'
     r'|(?P<op>==|!=|<=|>=|<|>)|(?P<other>\S))')
 
 OPERATORS = ('==', '!=', '<', '<=', '>', '>=')
 
-
-def _tokenize(text: str) -> list[tuple[str, str]]:
-    tokens = []
-    for match in _TOKEN.finditer(text):
-        if match.lastgroup:
-            tokens.append((match.lastgroup, match.group(match.lastgroup)))
-    return tokens
+_COMPARE = {'==': lambda a, b: a == b, '!=': lambda a, b: a != b,
+            '<': lambda a, b: a < b, '<=': lambda a, b: a <= b,
+            '>': lambda a, b: a > b, '>=': lambda a, b: a >= b}
 
 
-def _expect(tokens: list[tuple[str, str]], kind: str, what: str) -> str:
-    if not tokens:
-        raise WhatIfSyntaxError(f"Expected {what} at the end.")
-    token_kind, text = tokens.pop(0)
-    if token_kind != kind:
-        raise WhatIfSyntaxError(f"Expected {what}, found `{text}`.")
-    return text
+class _Tokens:
+    """ The reader's text as tokens, consumed from the front. """
+
+    def __init__(self, text: str):
+        self._tokens = [_Token(match.lastgroup, match.group(match.lastgroup),
+                               match.start(match.lastgroup))
+                        for match in _TOKEN.finditer(text)
+                        if match.lastgroup]
+        self._end = len(text)
+
+    def __bool__(self):
+        return bool(self._tokens)
+
+    def pop(self, kinds: tuple[str, ...], what: str) -> _Token:
+        if not self._tokens:
+            raise ConstraintSyntaxError(f"Expected {what} at the end.",
+                                        self._end)
+        token = self._tokens[0]
+        if token.kind not in kinds:
+            raise ConstraintSyntaxError(
+                f"Expected {what}, found `{token.text}`.", token.offset)
+        return self._tokens.pop(0)
 
 
-def _parse_term(tokens: list[tuple[str, str]]) -> Term:
-    variable = _expect(tokens, 'name', 'a variable name')
-    op = _expect(tokens, 'op', 'one of ' + ' '.join(OPERATORS))
-    value = int(_expect(tokens, 'number', 'an integer'))
-    return Term(variable, op, value)
+def _parse_term(tokens: _Tokens) -> Term:
+    variable = tokens.pop(('name',), 'a variable name').text
+    op = tokens.pop(('op',), 'an operator (' +
+                    ', '.join(f'`{op}`' for op in OPERATORS) + ')').text
+    value = tokens.pop(('number', 'name'), 'an integer or null')
+    if value.kind == 'name' and value.text != 'null':
+        raise ConstraintSyntaxError(
+            f"Expected an integer or null, found `{value.text}`.",
+            value.offset)
+    return Term(variable, op, 0 if value.text == 'null' else int(value.text))
 
 
 def parse_constraint(text: str) -> list[Term]:
     """
     Parse the reader's text into the terms that must all hold. Raises
-    WhatIfSyntaxError with a message for the reader.
+    ConstraintSyntaxError with a message for the reader and where reading
+    failed.
     """
-    tokens = _tokenize(text)
+    tokens = _Tokens(text)
     if not tokens:
-        raise WhatIfSyntaxError("Expected `variable op value`.")
+        raise ConstraintSyntaxError("Expected `variable op value`.", 0)
     terms = [_parse_term(tokens)]
-    if tokens:
-        raise WhatIfSyntaxError(f"Unexpected `{tokens[0][1]}`.")
+    while tokens:
+        tokens.pop(('and',), '`&&` or the end')
+        terms.append(_parse_term(tokens))
     return terms
+
+
+def _concrete_term(term: Term, variable: dict, ctx: z3.Context):
+    """
+    The term on a concretely known value, decided by comparing the two. An
+    address is never null, but its number is not recorded.
+    """
+    if variable['kind'] == 'integer':
+        holds = _COMPARE[term.op](int(variable['value']), term.value)
+    elif term.value == 0:
+        holds = term.op in ('!=', '>', '>=')
+    else:
+        raise _Unanswerable(
+            f"`{term.variable}` holds {variable['value']}, whose numeric "
+            "value is not recorded, so only a comparison with 0 or null can "
+            "be decided.")
+    return z3.BoolVal(holds, ctx=ctx)
 
 
 def _bitvector_term(term: Term, smt: str, signed: bool,
@@ -159,11 +205,32 @@ def check_what_if(trace_json: str | None, constraints) -> WhatIfResult:
     """
     Check the Bug Path whose Constraint Snapshots are in `trace_json` (the
     stored constraint trace) against What-If Constraints, a list of objects
-    with `pathStep` and `expression`.
+    with `pathStep` and `expression`, which must all hold together.
 
+    A constraint that cannot be read is reported as a syntax error, with the
+    Baseline Verdict, and nothing is solved with the constraints.
+    """
+    parsed = []
+    for index, constraint in enumerate(constraints):
+        try:
+            parsed.append((constraint.pathStep,
+                           parse_constraint(constraint.expression)))
+        except ConstraintSyntaxError as ex:
+            result = _check_path(trace_json, [])
+            result.verdict = PathVerdict.UNKNOWN
+            result.reason = f"Cannot read the constraint: {ex}"
+            result.syntaxError = WhatIfSyntaxError(index, str(ex), ex.offset)
+            return result
+
+    return _check_path(trace_json, parsed)
+
+
+def _check_path(trace_json: str | None,
+                constraints: list[tuple[int, list[Term]]]) -> WhatIfResult:
+    """
     The path condition accumulated at the last Path Step holds every
     constraint of the path, so it is what both verdicts are solved over. A
-    constraint's anchor only decides which symbol its variable stands for.
+    constraint's anchor only decides which value its variables stand for.
     """
     trace = json.loads(trace_json) if trace_json else None
     if not trace or not trace.get('steps'):
@@ -186,44 +253,51 @@ def check_what_if(trace_json: str | None, constraints) -> WhatIfResult:
         return WhatIfResult(PathVerdict.UNKNOWN, reason,
                             PathVerdict.UNKNOWN, reason)
 
-    def result(verdict, reason=None):
-        return WhatIfResult(verdict, reason, baseline, baseline_reason)
-
     declarations = last['smt_declarations']
     formulas = []
     try:
-        for constraint in constraints:
-            step = steps.get(constraint.pathStep)
-            if step is None:
-                raise _Unanswerable(
-                    f"This path has no Path Step {constraint.pathStep}.")
-            declarations = _union(declarations,
-                                  step.get('smt_declarations', []))
-            variables = {variable['name']: variable
-                         for variable in step['variables']}
+        for index, (order, terms) in enumerate(constraints):
+            try:
+                step = steps.get(order)
+                if step is None:
+                    raise _Unanswerable(f"This path has no Path Step {order}.")
+                declarations = _union(declarations,
+                                      step.get('smt_declarations', []))
+                formulas.extend(_step_terms(terms, step, declarations, ctx))
+            except _Unanswerable as ex:
+                return WhatIfResult(PathVerdict.UNKNOWN, str(ex), baseline,
+                                    baseline_reason,
+                                    reasonConstraintIndex=index)
 
-            for term in parse_constraint(constraint.expression):
-                variable = variables.get(term.variable)
-                if variable is None:
-                    raise _Unanswerable(
-                        f"`{term.variable}` has no tracked value at this "
-                        "Path Step.")
-                if 'smt' not in variable:
-                    raise _Unanswerable(
-                        f"`{term.variable}` holds {variable['value']} at "
-                        "this Path Step, and checking a concrete value is "
-                        "not supported yet.")
-                formulas.append(_bitvector_term(
-                    term, variable['smt'], variable['smt_signed'],
-                    declarations, ctx))
-
-        return result(*_solve(ctx, declarations, last['smt_assertions'],
-                              formulas))
-    except WhatIfSyntaxError as ex:
-        return result(PathVerdict.UNKNOWN, f"Cannot read the constraint: {ex}")
-    except _Unanswerable as ex:
-        return result(PathVerdict.UNKNOWN, str(ex))
+        return WhatIfResult(*_solve(ctx, declarations, last['smt_assertions'],
+                                    formulas),
+                            baseline, baseline_reason)
     except z3.Z3Exception as ex:
         LOG.error("Unreadable SMT-LIB in a constraint trace: %s", ex)
-        return result(PathVerdict.UNKNOWN,
-                      "The solver input recorded for this path is unreadable.")
+        return WhatIfResult(
+            PathVerdict.UNKNOWN,
+            "The solver input recorded for this path is unreadable.",
+            baseline, baseline_reason)
+
+
+def _step_terms(terms: list[Term], step: dict, declarations: list[str],
+                ctx: z3.Context) -> list:
+    """ Z3 formulas for terms on the variables of one Path Step. """
+    variables = {variable['name']: variable for variable in step['variables']}
+    formulas = []
+    for term in terms:
+        variable = variables.get(term.variable)
+        if variable is None:
+            raise _Unanswerable(
+                f"`{term.variable}` has no tracked value at this Path Step.")
+        if variable['kind'] != 'symbol':
+            formulas.append(_concrete_term(term, variable, ctx))
+        elif 'smt' not in variable:
+            raise _Unanswerable(
+                f"`{term.variable}` holds {variable['value']}, whose type "
+                "the check cannot reason about.")
+        else:
+            formulas.append(_bitvector_term(
+                term, variable['smt'], variable['smt_signed'],
+                declarations, ctx))
+    return formulas

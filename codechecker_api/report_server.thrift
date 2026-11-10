@@ -187,15 +187,24 @@ enum PathVerdict {
 // stored.
 struct WhatIfConstraint {
   1: i64    pathStep,   // The `order` of a step in ReportDetails.constraintTrace.
-  2: string expression, // `variable op value`, e.g. `b == 0`, on a variable of that step.
+  2: string expression, // `variable op value` terms joined by `&&`, e.g. `b == 0 && p != null`, on variables of that step.
 }
 typedef list<WhatIfConstraint> WhatIfConstraints
 
+// A What-If Constraint whose text is not in the grammar.
+struct WhatIfSyntaxError {
+  1: i64    constraintIndex, // Position of the constraint in the request.
+  2: string message,
+  3: i64    offset,          // Character offset in its expression where reading failed.
+}
+
 struct WhatIfResult {
-  1: PathVerdict     verdict,         // Of the Bug Path with the What-If Constraints.
-  2: optional string reason,          // Why verdict is UNKNOWN.
-  3: PathVerdict     baselineVerdict, // Of the Bug Path without them.
-  4: optional string baselineReason,  // Why baselineVerdict is UNKNOWN.
+  1: PathVerdict                verdict,               // Of the Bug Path with all What-If Constraints together.
+  2: optional string            reason,                // Why verdict is UNKNOWN.
+  3: PathVerdict                baselineVerdict,       // Of the Bug Path without them.
+  4: optional string            baselineReason,        // Why baselineVerdict is UNKNOWN.
+  5: optional WhatIfSyntaxError syntaxError,           // Set when a constraint cannot be read; nothing is solved with the constraints and verdict is UNKNOWN.
+  6: optional i64               reasonConstraintIndex, // The constraint that reason is about, when it is about one.
 }
 
 typedef string AnalyzerType

@@ -277,6 +277,7 @@
                       v-fill-height
                       :step="selectedConstraintStep"
                       :report-id="report.reportId"
+                      :what-if="whatIf"
                       @close="clearStepSelection"
                     />
                   </v-col>
@@ -386,6 +387,7 @@ import PathStepPicker from "./PathStepPicker";
 import ReportStepMessage from "./ReportStepMessage";
 
 import { useReviewStatus } from "@/composables/useReviewStatus";
+import { useWhatIf } from "@/composables/useWhatIf";
 
 const props = defineProps({
   treeItem: { type: Object, default: null }
@@ -428,6 +430,7 @@ const docUrl = ref(null);
 const rootEl = ref(null);
 
 const reviewStatus = useReviewStatus();
+const whatIf = useWhatIf();
 
 const instance = getCurrentInstance();
 const parentAppContext = instance.appContext;
@@ -637,6 +640,9 @@ watch(showArrows, async () => {
 watch(report, () => {
   updateCommentCount(report.value);
 });
+
+// What-If Constraints belong to the open report view only.
+watch(() => report.value?.reportId?.toString(), whatIf.reset);
 
 watch(
   [ showConstraints, constraintPathSteps, selectedControlStep, sourceFile ],

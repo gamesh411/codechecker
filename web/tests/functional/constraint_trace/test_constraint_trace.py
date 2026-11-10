@@ -52,7 +52,7 @@ class TestConstraintTrace(unittest.TestCase):
         codechecker_cfg.update(server_access)
 
         for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                         'z3_refuted']:
+                         'z3_refuted', 'concrete_value']:
             report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
             shutil.copytree(
                 os.path.join(project.path('constraint_trace'), run_name),
@@ -341,6 +341,102 @@ class TestConstraintTrace(unittest.TestCase):
 
         self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
         self.assertIn('this path', result.reason)
+
+    def test_terms_joined_by_and_all_hold(self):
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+
+        self.assertEqual(
+            self._check('with_snapshots', (step, 'a == 0 && b > 3')).verdict,
+            PathVerdict.FEASIBLE)
+        self.assertEqual(
+            self._check('with_snapshots', (step, 'b > 3 && b < 2')).verdict,
+            PathVerdict.INFEASIBLE)
+
+    def test_constraints_on_several_steps_apply_together(self):
+        """
+        `a == 0` at the first step and `b == 3` at the second are both
+        consistent with this path; `b == 0` at the second step is not, and
+        rules it out together with any other constraint.
+        """
+        first = self._event_step('with_snapshots',
+                                 "Assuming 'a' is equal to 0")
+        second = self._event_step('with_snapshots',
+                                  "Assuming 'b' is not equal to 0")
+
+        self.assertEqual(
+            self._check('with_snapshots',
+                        (first, 'a == 0'), (second, 'b == 3')).verdict,
+            PathVerdict.FEASIBLE)
+        self.assertEqual(
+            self._check('with_snapshots',
+                        (first, 'a == 0'), (second, 'b == 0')).verdict,
+            PathVerdict.INFEASIBLE)
+
+    def test_concrete_address_is_compared_directly(self):
+        """
+        Hand-derived from demo/concrete-value.c: `p` holds &x while `q` is
+        assumed null, so `p == 0` there rules this path out.
+        """
+        step = self._event_step('concrete_value', "Assuming 'q' is null")
+
+        for text, verdict in [('p == 0', PathVerdict.INFEASIBLE),
+                              ('p == null', PathVerdict.INFEASIBLE),
+                              ('p != null', PathVerdict.FEASIBLE),
+                              ('q == null && p != 0', PathVerdict.FEASIBLE),
+                              ('q != null', PathVerdict.INFEASIBLE)]:
+            result = self._check('concrete_value', (step, text))
+            self.assertEqual(result.verdict, verdict, text)
+            self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_concrete_integer_is_compared_directly(self):
+        """ After the null store, `p` holds the integer 0. """
+        step = self._event_step('concrete_value',
+                                "Null pointer value stored to 'p'")
+
+        self.assertEqual(
+            self._check('concrete_value', (step, 'p == null')).verdict,
+            PathVerdict.FEASIBLE)
+        self.assertEqual(
+            self._check('concrete_value', (step, 'p != 0')).verdict,
+            PathVerdict.INFEASIBLE)
+
+    def test_address_against_a_number_is_unknown(self):
+        step = self._event_step('concrete_value', "Assuming 'q' is null")
+
+        result = self._check('concrete_value', (step, 'p == 4096'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('`p` holds &x', result.reason)
+        self.assertEqual(result.reasonConstraintIndex, 0)
+
+    def test_syntax_error_is_reported_apart_from_verdicts(self):
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+
+        result = self._check('with_snapshots',
+                             (step, 'b == 3'), (step, 'a = 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+        self.assertEqual(result.syntaxError.constraintIndex, 1)
+        self.assertEqual(result.syntaxError.offset, 2)
+        self.assertEqual(result.syntaxError.message,
+                         'Expected an operator (`==`, `!=`, `<`, `<=`, `>`, '
+                         '`>=`), found `=`.')
+
+    def test_unknown_reason_names_its_constraint(self):
+        first = self._event_step('with_snapshots',
+                                 "Assuming 'a' is equal to 0")
+        second = self._event_step('with_snapshots',
+                                  "Assuming 'b' is not equal to 0")
+
+        result = self._check('with_snapshots',
+                             (first, 'a == 0'), (second, 'q == 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(result.reasonConstraintIndex, 1)
+        self.assertIsNone(result.syntaxError)
 
     def test_check_writes_nothing_to_the_database(self):
         """

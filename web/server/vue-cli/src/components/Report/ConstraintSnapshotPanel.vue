@@ -30,191 +30,148 @@
 
     <v-divider />
 
-    <div class="panel-body flex-grow-1">
-      <section class="panel-section panel-known px-3 py-2">
-        <h4 class="panel-section-title text-overline">
-          Known here
-        </h4>
-        <p class="panel-section-hint text-caption text-medium-emphasis">
-          What the analyzer held at this step.
-        </p>
+    <div class="panel-scroll-area">
+      <div ref="body" class="panel-body">
+        <div class="panel-body-content">
+          <section class="panel-section panel-known px-3 py-2">
+            <h4 class="panel-section-title text-overline">
+              Known here
+            </h4>
+            <p class="panel-section-hint text-caption text-medium-emphasis">
+              What the analyzer held at this step.
+            </p>
 
-        <div v-if="variableRows.length" class="panel-group">
-          <h5 class="panel-group-title text-caption">
-            Variables
-          </h5>
-          <div
-            v-for="row in variableRows"
-            :key="row.name"
-            class="panel-row"
-          >
-            <div class="panel-name" :title="row.name">
-              {{ row.name }}
-            </div>
-            <div class="panel-value">
-              <span :class="{ 'text-medium-emphasis': row.muted }">
-                <range-text v-if="row.range" :range="row.range" />
-                <template v-else>{{ row.display }}</template>
-              </span>
-              <div v-if="row.symbol" class="panel-symbol">
-                {{ row.symbol }}
+            <div v-if="variableRows.length" class="panel-group">
+              <h5 class="panel-group-title text-caption">
+                Variables
+              </h5>
+              <div
+                v-for="row in variableRows"
+                :key="row.name"
+                class="panel-row"
+              >
+                <div class="panel-name" :title="row.name">
+                  {{ row.name }}
+                </div>
+                <div class="panel-value">
+                  <span :class="{ 'text-medium-emphasis': row.muted }">
+                    <range-text v-if="row.range" :range="row.range" />
+                    <template v-else>{{ row.display }}</template>
+                  </span>
+                  <div v-if="row.symbol" class="panel-symbol">
+                    {{ row.symbol }}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div v-if="otherSymbols.length" class="panel-group">
-          <h5 class="panel-group-title text-caption">
-            Other symbols
-          </h5>
-          <div
-            v-for="range in otherSymbols"
-            :key="range.symbol"
-            class="panel-row panel-row-raw"
-          >
-            <div class="panel-name panel-raw-symbol" :title="range.symbol">
-              {{ range.symbol }}
-            </div>
-            <div class="panel-value">
-              <range-text :range="range.range" />
-            </div>
-          </div>
-        </div>
-
-        <p
-          v-if="!variableRows.length && !otherSymbols.length"
-          class="panel-empty ma-0 text-body-2 text-medium-emphasis"
-        >
-          No variables or symbol ranges are known at this step.
-        </p>
-      </section>
-
-      <section class="panel-section panel-accumulated px-3 py-2">
-        <h4 class="panel-section-title text-overline">
-          Accumulated path condition
-        </h4>
-        <p class="panel-section-hint text-caption text-medium-emphasis">
-          Everything assumed from the start of the path up to this step,
-          including values the analyzer has since dropped.
-        </p>
-
-        <div
-          v-for="row in accumulatedRows"
-          :key="row.symbol"
-          class="panel-row"
-          :class="{ 'panel-row-raw': !row.name }"
-        >
-          <div
-            class="panel-name"
-            :class="{ 'panel-raw-symbol': !row.name }"
-            :title="row.symbol"
-          >
-            {{ row.name ?? row.symbol }}
-          </div>
-          <div class="panel-value">
-            <range-text :range="row.range" />
-            <div class="panel-meta">
-              <span v-if="row.name" class="panel-symbol">{{ row.symbol }}</span>
-              <span
-                v-if="row.dropped"
-                class="panel-dropped text-caption"
-                title="The analyzer no longer tracks this value at this step"
+            <div v-if="otherSymbols.length" class="panel-group">
+              <h5 class="panel-group-title text-caption">
+                Other symbols
+              </h5>
+              <div
+                v-for="range in otherSymbols"
+                :key="range.symbol"
+                class="panel-row panel-row-raw"
               >
-                dropped
-              </span>
+                <div class="panel-name panel-raw-symbol" :title="range.symbol">
+                  {{ range.symbol }}
+                </div>
+                <div class="panel-value">
+                  <range-text :range="range.range" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <p
-          v-if="!accumulatedRows.length"
-          class="panel-empty ma-0 text-body-2 text-medium-emphasis"
-        >
-          No constraints have been collected on this path yet.
-        </p>
-      </section>
-    </div>
+            <p
+              v-if="!variableRows.length && !otherSymbols.length"
+              class="panel-empty ma-0 text-body-2 text-medium-emphasis"
+            >
+              No variables or symbol ranges are known at this step.
+            </p>
+          </section>
 
-    <section class="panel-what-if px-3 pt-2 pb-3">
-      <h4 class="panel-section-title text-overline">
-        What if
-      </h4>
-      <p class="panel-section-hint text-caption text-medium-emphasis">
-        Assume something at this step and check whether this path survives
-        it.
-      </p>
+          <section class="panel-section panel-accumulated px-3 py-2">
+            <h4 class="panel-section-title text-overline">
+              Accumulated path condition
+            </h4>
+            <p class="panel-section-hint text-caption text-medium-emphasis">
+              Everything assumed from the start of the path up to this step,
+              including values the analyzer has since dropped.
+            </p>
 
-      <form class="d-flex align-start" @submit.prevent="check">
-        <v-text-field
-          v-model="expression"
-          class="what-if-input"
-          density="compact"
-          variant="outlined"
-          hide-details
-          placeholder="b == 0"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="What-If Constraint at this step"
-        />
-        <v-btn
-          class="what-if-check ml-2"
-          type="submit"
-          color="primary"
-          variant="flat"
-          :loading="checking"
-          :disabled="!expression.trim()"
-        >
-          Check
-        </v-btn>
-      </form>
+            <div
+              v-for="row in accumulatedRows"
+              :key="row.symbol"
+              class="panel-row"
+              :class="{ 'panel-row-raw': !row.name }"
+            >
+              <div
+                class="panel-name"
+                :class="{ 'panel-raw-symbol': !row.name }"
+                :title="row.symbol"
+              >
+                {{ row.name ?? row.symbol }}
+              </div>
+              <div class="panel-value">
+                <range-text :range="row.range" />
+                <div class="panel-meta">
+                  <span v-if="row.name" class="panel-symbol">
+                    {{ row.symbol }}
+                  </span>
+                  <span
+                    v-if="row.dropped"
+                    class="panel-dropped text-caption"
+                    :title="DROPPED_HINT"
+                  >
+                    dropped
+                  </span>
+                </div>
+              </div>
+            </div>
 
-      <div
-        v-if="result"
-        class="what-if-result mt-2"
-        role="status"
-      >
-        <div
-          v-if="result.baseline"
-          class="what-if-verdict what-if-baseline"
-        >
-          <div class="what-if-verdict-label">
-            Without your constraint: {{ result.baseline.label }}
-          </div>
-          <div class="what-if-verdict-text">
-            {{ result.baseline.text }}
-          </div>
-        </div>
-        <div
-          v-if="result.verdict"
-          class="what-if-verdict"
-          :class="`what-if-${result.verdict.kind}`"
-        >
-          <div class="what-if-verdict-label">
-            {{ result.verdict.label }}
-          </div>
-          <div class="what-if-verdict-text">
-            {{ result.verdict.lead }}
-            <code class="what-if-expression">{{ result.expression }}</code>
-            {{ result.verdict.trail }}
-          </div>
+            <p
+              v-if="!accumulatedRows.length"
+              class="panel-empty ma-0 text-body-2 text-medium-emphasis"
+            >
+              No constraints have been collected on this path yet.
+            </p>
+          </section>
         </div>
       </div>
-    </section>
+      <div v-if="canScrollUp" class="scroll-shadow scroll-shadow-top" />
+      <div v-if="canScrollDown" class="scroll-shadow scroll-shadow-bottom" />
+    </div>
+
+    <what-if-section
+      class="panel-what-if"
+      :step="step"
+      :report-id="reportId"
+      :what-if="whatIf"
+    />
   </v-card>
 </template>
 
 <script setup>
-import { computed, h, ref, watch } from "vue";
+import { computed, h, ref } from "vue";
 
-import { ccService, handleThriftError } from "@cc-api";
-import { PathVerdict, WhatIfConstraint } from "@cc/report-server-types";
+import { useScrollShadows } from "@/composables/useScrollShadows";
+
+import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
   step: { type: Object, required: true },
-  reportId: { type: Object, required: true }
+  reportId: { type: Object, required: true },
+  // From useWhatIf, owned by the report view.
+  whatIf: { type: Object, required: true }
 });
 
 const emit = defineEmits([ "close" ]);
+
+const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
+
+const body = ref(null);
+const { canScrollUp, canScrollDown } = useScrollShadows(body);
 
 // One span per interval, so a long range set wraps only between intervals.
 function RangeText({ range }) {
@@ -248,96 +205,6 @@ const otherSymbols = computed(() => {
   return props.step.symbolRanges.filter(range => !_named.has(range.symbol));
 });
 
-const expression = ref("");
-const checking = ref(false);
-const result = ref(null);
-
-// A verdict belongs to the step it was checked at.
-watch(() => props.step.order, () => { result.value = null; });
-
-const VERDICT_LABELS = {
-  [PathVerdict.FEASIBLE]: "Feasible",
-  [PathVerdict.INFEASIBLE]: "Infeasible",
-  [PathVerdict.UNKNOWN]: "Unknown"
-};
-
-// Every verdict is about this path: the bug may still be reachable through
-// another path the analyzer did not report.
-// The text reads `lead`, the checked expression, then `trail`.
-function describeVerdict(checked, verdict, reason) {
-  const _at = `at ${checked.heading}.`;
-  switch (verdict) {
-  case PathVerdict.FEASIBLE:
-    return {
-      kind: "feasible",
-      lead: "This path stays feasible with",
-      trail: _at
-    };
-  case PathVerdict.INFEASIBLE:
-    return {
-      kind: "infeasible",
-      lead: "This path is infeasible with",
-      trail: `${_at} The bug may still be reachable through another path.`
-    };
-  default:
-    return {
-      kind: "unknown",
-      lead: "No verdict for this path with",
-      trail: `${_at} ${reason}`
-    };
-  }
-}
-
-function describeBaseline(verdict, reason) {
-  if (verdict === PathVerdict.INFEASIBLE) {
-    return "Z3 finds this path infeasible even with nothing added, although " +
-      "the analyzer's own solver accepted it. Your constraint is not what " +
-      "rules it out.";
-  }
-  return `There is no verdict for this path even with nothing added. ${reason}`;
-}
-
-function check() {
-  const _checked = {
-    expression: expression.value.trim(),
-    heading: props.step.heading,
-    order: props.step.order
-  };
-  if (!_checked.expression || checking.value) return;
-
-  checking.value = true;
-  ccService.getClient().checkWhatIf(
-    props.reportId,
-    [ new WhatIfConstraint({
-      pathStep: _checked.order,
-      expression: _checked.expression
-    }) ],
-    handleThriftError(res => {
-      checking.value = false;
-      if (props.step.order !== _checked.order) return;
-
-      const _baselineFeasible = res.baselineVerdict === PathVerdict.FEASIBLE;
-      // The same reason twice says nothing new, e.g. a report without
-      // solver input, so it is shown once as the baseline.
-      const _repeatsBaseline = !_baselineFeasible &&
-        res.verdict === PathVerdict.UNKNOWN &&
-        res.reason === res.baselineReason;
-      result.value = {
-        expression: _checked.expression,
-        baseline: _baselineFeasible ? null : {
-          label: VERDICT_LABELS[res.baselineVerdict],
-          text: describeBaseline(res.baselineVerdict, res.baselineReason)
-        },
-        verdict: _repeatsBaseline ? null : {
-          label: VERDICT_LABELS[res.verdict],
-          ...describeVerdict(_checked, res.verdict, res.reason)
-        }
-      };
-    }, () => {
-      checking.value = false;
-    }));
-}
-
 const accumulatedRows = computed(() =>
   props.step.pathCondition.map(range => ({
     symbol: range.symbol,
@@ -363,9 +230,15 @@ const accumulatedRows = computed(() =>
   }
 
   .panel-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .panel-body-content {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    min-height: 100%;
   }
 
   .panel-accumulated {
@@ -466,57 +339,39 @@ const accumulatedRows = computed(() =>
     line-height: 1.35;
   }
 
+  // The snapshot and the What-If section share the height; the snapshot
+  // keeps enough of it to stay readable, and each scrolls on its own.
+  .panel-scroll-area {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-height: 120px;
+  }
+
   .panel-what-if {
-    border-top: 2px solid #c6ccd4;
+    flex: 0 1 auto;
+    max-height: 55%;
   }
 
-  .what-if-input input {
-    font-family: monospace;
-    font-size: 0.875rem;
+  // Shows that a scrolled area cuts content off at that edge.
+  .scroll-shadow {
+    position: absolute;
+    z-index: 1;
+    right: 0;
+    left: 0;
+    height: 12px;
+    pointer-events: none;
   }
 
-  .what-if-check {
-    height: 40px;
+  .scroll-shadow-top {
+    top: 0;
+    background: linear-gradient(rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0));
   }
 
-  .what-if-verdict {
-    padding: 6px 10px;
-    border-left: 4px solid #9aa3ad;
-    border-radius: 3px;
-    background-color: #f1f3f5;
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
-
-  .what-if-verdict + .what-if-verdict {
-    margin-top: 6px;
-  }
-
-  .what-if-verdict-label {
-    font-weight: 600;
-  }
-
-  .what-if-expression {
-    padding: 0 3px;
-    border-radius: 2px;
-    background-color: rgba(0, 0, 0, 0.06);
-    font-size: 0.8125rem;
-    white-space: nowrap;
-  }
-
-  .what-if-feasible {
-    border-left-color: #2e7d32;
-    background-color: #edf6ee;
-  }
-
-  .what-if-infeasible {
-    border-left-color: #c62828;
-    background-color: #fbeeee;
-  }
-
-  .what-if-baseline {
-    border-left-color: #b26a00;
-    background-color: #fdf4e3;
+  .scroll-shadow-bottom {
+    bottom: 0;
+    background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.16));
   }
 }
 </style>
