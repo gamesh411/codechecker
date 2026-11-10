@@ -16,7 +16,7 @@
           class="pa-0 mb-2"
         >
           <v-row
-            :class="['ma-0', editorCols === 12 ? 'flex-nowrap' : undefined]"
+            class="ma-0"
           >
             <v-col
               cols="auto"
@@ -69,7 +69,7 @@
 
             <v-col
               cols="auto"
-              class="pa-0"
+              class="toolbar-checkboxes pa-0"
               align-self="center"
             >
               <v-checkbox
@@ -85,27 +85,22 @@
                 density="compact"
                 hide-details
               />
-            </v-col>
-
-            <v-col
-              cols="auto"
-              class="pa-0 ml-1"
-              align-self="center"
-            >
               <v-tooltip location="bottom" max-width="320">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <div v-bind="tooltipProps">
-                    <v-btn
-                      class="show-constraints-btn"
-                      :active="showConstraints"
-                      :color="showConstraints ? 'primary' : undefined"
-                      :disabled="!hasConstraintTrace"
-                      icon="mdi-variable"
-                      variant="text"
-                      size="small"
+                    <v-checkbox
+                      v-model="showConstraints"
+                      class="
+                        show-arrows
+                        ma-0
+                        align-center
+                        justify-center
+                        text-caption
+                      "
+                      label="Show constraints"
                       density="compact"
-                      aria-label="Show constraints"
-                      @click="showConstraints = !showConstraints"
+                      hide-details
+                      :disabled="!hasConstraintTrace"
                     />
                   </div>
                 </template>
@@ -117,7 +112,7 @@
 
             <v-col
               cols="auto"
-              class="pa-0"
+              class="py-0 pr-0"
               align-self="center"
             >
               <toggle-blame-view-btn
@@ -214,7 +209,7 @@
                   </v-col>
 
                   <v-col
-                    class="file-path py-0 pl-1"
+                    class="file-path-col py-0 pl-1 pr-2"
                     align-self="center"
                   >
                     <copy-btn
@@ -250,32 +245,37 @@
                   </v-col>
                 </v-row>
 
-                <v-row
-                  v-fill-height
-                  :class="[
-                    'editor',
-                    'ma-0',
-                    enableBlameView ? 'blame' : undefined,
-                    showConstraints ? 'constraints-enabled' : undefined
-                  ]"
-                >
-                  <div ref="editorContainer" class="editor-container" />
+                <v-row class="ma-0 flex-nowrap">
+                  <v-col class="editor-col pa-0">
+                    <v-row
+                      v-fill-height
+                      :class="[
+                        'editor',
+                        'ma-0',
+                        enableBlameView ? 'blame' : undefined,
+                        showConstraints ? 'constraints-enabled' : undefined
+                      ]"
+                    >
+                      <div ref="editorContainer" class="editor-container" />
+                    </v-row>
+                  </v-col>
+
+                  <v-col
+                    v-if="selectedConstraintStep"
+                    class="pa-0"
+                    :cols="constraintCols"
+                  >
+                    <constraint-snapshot-panel
+                      v-fill-height
+                      :step="selectedConstraintStep"
+                      @close="selectedStepId = null"
+                    />
+                  </v-col>
                 </v-row>
               </v-container>
             </v-col>
           </v-row>
         </v-container>
-      </v-col>
-      <v-col
-        v-if="selectedConstraintStep"
-        class="pa-0"
-        :cols="constraintCols"
-      >
-        <constraint-snapshot-panel
-          v-fill-height
-          :step="selectedConstraintStep"
-          @close="selectedStepId = null"
-        />
       </v-col>
       <v-col
         v-if="showComments"
@@ -395,7 +395,7 @@ const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
 const showConstraints = ref(false);
-const constraintCols = ref(3);
+const constraintCols = ref(4);
 const constraintTrace = ref(null);
 const pathStepsById = ref(new Map());
 const selectedStepId = ref(null);
@@ -511,8 +511,7 @@ const selectedConstraintStep = computed(() => {
 const editorCols = computed(() => {
   const maxCols = 12;
   const commentsCols = showComments.value ? commentCols.value : 0;
-  const panelCols = selectedConstraintStep.value ? constraintCols.value : 0;
-  return maxCols - commentsCols - panelCols;
+  return maxCols - commentsCols;
 });
 const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
@@ -565,7 +564,6 @@ watch(showArrows, async () => {
   await nextTick();
   if (showArrows.value) {
     await drawBugPath();
-    addArrowLines();
   } else {
     clearHighlightWidgets();
     clearArrowLines();
@@ -934,6 +932,11 @@ async function drawBugPath() {
   if (showArrows.value) {
     const _points = _reportDetail.executionPath.filter(_isSameFile);
     createArrowConnection(_points);
+
+    // The editor's viewport-changed handler only sees the marks added after
+    // the document was set, so the first draw has to connect them itself.
+    await nextTick();
+    addArrowLines();
   }
 }
 
@@ -1174,6 +1177,18 @@ function truncate(text, length) {
   .header {
     background-color: #f7f7f7;
 
+    // Keeps the long path shrinkable beside the copy button, so that its
+    // ellipsis clips the path's left end instead of hiding all of it.
+    .file-path-col {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+
+      .file-path {
+        min-width: 0;
+      }
+    }
+
     .file-path {
       font-family: monospace;
       color: rgb(var(--v-theme-on-surface));
@@ -1236,20 +1251,39 @@ function truncate(text, length) {
 </style>
 
 <style lang="scss" scoped>
-.show-constraints-btn {
-  width: 16px;
-  height: 20px;
-  min-width: 0;
-  padding: 0;
-
-  :deep(.v-icon) {
-    font-size: 16px;
-  }
-}
-
 :deep(.show-arrows .v-input__control .v-selection-control) {
   min-height: 0;
   max-height: 30px;
+}
+
+.editor-col {
+  min-width: 0;
+}
+
+// Two stacked checkboxes must fit the height of the toolbar buttons, and the
+// toolbar has no spare width at 1400px.
+:deep(.toolbar-checkboxes .v-label) {
+  font-size: 0.875rem;
+}
+
+:deep(.toolbar-checkboxes .v-selection-control) {
+  min-height: 0;
+  max-height: 18px;
+}
+
+:deep(.toolbar-checkboxes .v-selection-control__wrapper) {
+  height: 18px;
+  width: 18px;
+}
+
+:deep(.toolbar-checkboxes .v-selection-control__input) {
+  height: 18px;
+  width: 18px;
+}
+
+:deep(.toolbar-checkboxes .v-selection-control__input .v-icon) {
+  font-size: 18px;
+  margin-left: -3px;
 }
 
 :deep(.select-review-status .v-input__control .v-field) {
