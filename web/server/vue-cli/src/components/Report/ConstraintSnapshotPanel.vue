@@ -23,7 +23,7 @@
 
     <div class="panel-step px-3 py-2 text-body-2">
       <span class="panel-step-index text-medium-emphasis mr-1">
-        Step {{ step.index }}
+        {{ step.heading }}
       </span>
       {{ step.message }}
     </div>

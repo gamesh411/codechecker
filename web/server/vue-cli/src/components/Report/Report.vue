@@ -247,6 +247,14 @@
 
                 <v-row class="ma-0 flex-nowrap">
                   <v-col class="editor-col pa-0">
+                    <div
+                      v-if="lineSelectionHint"
+                      class="line-selection-hint"
+                      role="status"
+                    >
+                      {{ lineSelectionHint }}
+                    </div>
+
                     <v-row
                       v-fill-height
                       :class="[
@@ -268,10 +276,18 @@
                     <constraint-snapshot-panel
                       v-fill-height
                       :step="selectedConstraintStep"
-                      @close="selectedStepId = null"
+                      @close="clearStepSelection"
                     />
                   </v-col>
                 </v-row>
+
+                <path-step-picker
+                  v-model="stepPicker.open"
+                  :target="stepPicker.target"
+                  :line="stepPicker.line"
+                  :steps="stepPicker.steps"
+                  @select="selectPathStep"
+                />
               </v-container>
             </v-col>
           </v-row>
@@ -365,6 +381,7 @@ import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
 import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
+import PathStepPicker from "./PathStepPicker";
 import ReportStepMessage from "./ReportStepMessage";
 
 import { useReviewStatus } from "@/composables/useReviewStatus";
@@ -398,7 +415,11 @@ const showConstraints = ref(false);
 const constraintCols = ref(4);
 const constraintTrace = ref(null);
 const pathStepsById = ref(new Map());
+const constraintPathSteps = ref([]);
 const selectedStepId = ref(null);
+const selectedControlIndex = ref(null);
+const stepPicker = ref({ open: false, target: null, line: null, steps: [] });
+const lineSelectionHint = ref(null);
 const loading = ref(true);
 const bus = mitt();
 const selectedChecker = ref(null);
@@ -416,6 +437,7 @@ const languageCompartment = new Compartment();
 const vFillHeight = FillHeight;
 
 const addMarks = StateEffect.define();
+const setPathStepLines = StateEffect.define();
 const addWidgets = StateEffect.define();
 const clearMarks = StateEffect.define();
 const clearWidgets = StateEffect.define();
@@ -444,6 +466,24 @@ const markField = StateField.define({
     }
 
     return marks;
+  },
+  provide: f => EditorView.decorations.from(f)
+});
+
+const pathStepLineField = StateField.define({
+  create() {
+    return Decoration.none;
+  },
+  update(lines, tr) {
+    lines = lines.map(tr.changes);
+
+    for (const effect of tr.effects) {
+      if (effect.is(setPathStepLines)) {
+        return effect.value;
+      }
+    }
+
+    return lines;
   },
   provide: f => EditorView.decorations.from(f)
 });
@@ -487,14 +527,32 @@ const hasConstraintTrace = computed(() =>
 );
 const constraintToggleHint = computed(() =>
   hasConstraintTrace.value
-    ? "Show constraints: click a bug path step to see what the analyzer " +
-      "knew there."
+    ? "Show constraints: click a bug path step or a source line to see " +
+      "what the analyzer knew there."
     : "This report has no constraint data. Analyze with the analyzer config " +
       "option emit-constraint-snapshots=true to see what the analyzer knew " +
       "at each step."
 );
+const selectedControlStep = computed(() =>
+  selectedControlIndex.value === null
+    ? undefined
+    : constraintPathSteps.value.find(step => step.kind === "control" &&
+      step.positionIndex === selectedControlIndex.value)
+);
 const selectedConstraintStep = computed(() => {
   if (!showConstraints.value || !hasConstraintTrace.value) return null;
+
+  const _control = selectedControlStep.value;
+  if (_control) {
+    return {
+      heading: _control.label,
+      message: _control.message,
+      symbolRanges: _control.snapshot.symbol_ranges ?? [],
+      variables: _control.snapshot.variables ?? [],
+      pathCondition: _control.snapshot.path_condition ?? [],
+      symbolNames: constraintSymbolNames(_control.order)
+    };
+  }
 
   const _event = pathStepsById.value.get(selectedStepId.value);
   if (!_event) return null;
@@ -503,12 +561,12 @@ const selectedConstraintStep = computed(() => {
     step.kind === "event" && step.index === _event.$index - 1);
 
   return {
-    index: _event.$index,
+    heading: `Step ${_event.$index}`,
     message: _event.msg,
     symbolRanges: _snapshot?.symbol_ranges ?? [],
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
-    symbolNames: constraintSymbolNames(_event.$index - 1)
+    symbolNames: constraintSymbolNames(_snapshot?.order ?? -1)
   };
 });
 const editorCols = computed(() => {
@@ -577,6 +635,11 @@ watch(report, () => {
   updateCommentCount(report.value);
 });
 
+watch(
+  [ showConstraints, constraintPathSteps, selectedControlStep, sourceFile ],
+  refreshPathStepLines
+);
+
 // A narrower editor can re-wrap step bubbles, which moves the arrow endpoints.
 watch(editorCols, async () => {
   if (!showArrows.value) return;
@@ -602,6 +665,9 @@ class AdvancedLineWidget extends WidgetType {
   toDOM() {
     this.container = document.createElement("div");
     this.container.style.userSelect = "text";
+    // Counts the bubble's margin in the height CodeMirror measures, which
+    // otherwise drifts the line numbers from the text by 2px per bubble.
+    this.container.style.display = "flow-root";
     const vnode = h(ReportStepMessage, this.data);
     vnode.appContext = this.appContext;
 
@@ -641,7 +707,16 @@ onMounted(() => {
     parent: editorContainer.value,
     extensions: [
       basicSetup,
-      lineNumbers(),
+      lineNumbers({
+        domEventHandlers: {
+          click: (view, line, event) => {
+            selectStepsOnLine(
+              view.state.doc.lineAt(line.from).number, event);
+            return false;
+          }
+        }
+      }),
+      EditorView.domEventHandlers({ click: onEditorClick }),
       highlightSelectionMatches(),
       EditorState.readOnly.of(true),
       languageCompartment.of(cpp()),
@@ -653,6 +728,7 @@ onMounted(() => {
         }
       }),
       markField,
+      pathStepLineField,
       lineWidgetField(parentAppContext),
       gitBlame.blameCompartment.of([]),
       compactTheme
@@ -679,10 +755,7 @@ onMounted(() => {
     });
   });
 
-  bus.on("stepClicked", stepId => {
-    selectedStepId.value = stepId;
-    highlightReportStep(stepId);
-  });
+  bus.on("stepClicked", selectEventStep);
 
   bus.on("showDocumentation", () => {
     selectedChecker.value = new Checker({
@@ -694,6 +767,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("keydown", findText);
+  clearTimeout(lineHintTimer);
 });
 
 function init(_treeItem) {
@@ -738,8 +812,7 @@ async function loadReportStep(_report, { stepId, fileId, startLine }) {
 
   const _line = startLine.toNumber();
   jumpTo(_line, 0);
-  highlightReportStep(stepId);
-  selectedStepId.value = stepId;
+  selectEventStep(stepId);
 
   loading.value = false;
 }
@@ -779,6 +852,146 @@ function findText(evt) {
 
 function highlightReportStep(stepId) {
   highlightCurrentBubble(stepId);
+}
+
+function selectEventStep(stepId) {
+  selectedControlIndex.value = null;
+  selectedStepId.value = stepId;
+  highlightReportStep(stepId);
+}
+
+function clearStepSelection() {
+  selectedControlIndex.value = null;
+  selectedStepId.value = null;
+}
+
+function selectPathStep(step) {
+  lineSelectionHint.value = null;
+  if (step.kind === "event") {
+    selectEventStep(step.stepId);
+  } else {
+    selectedStepId.value = null;
+    selectedControlIndex.value = step.positionIndex;
+    highlightCurrentBubble(null);
+  }
+}
+
+// Read the line from the clicked element, not from coordinates: the editor's
+// height estimate can lag behind the bubbles, and a coordinate lookup then
+// lands on a neighbouring line. A drag that ends on the code is not a click.
+function onEditorClick(event, view) {
+  if (!view.state.selection.main.empty) return false;
+
+  const _line = event.target.closest(".cm-line");
+  if (!_line) return false;
+
+  selectStepsOnLine(
+    view.state.doc.lineAt(view.posAtDOM(_line)).number, event);
+  return false;
+}
+
+function selectStepsOnLine(line, event) {
+  if (!showConstraints.value || !hasConstraintTrace.value) return;
+
+  const _steps = pathStepsOnLine(line);
+  if (_steps.length === 0) {
+    showLineSelectionHint(line);
+  } else if (_steps.length === 1) {
+    selectPathStep(_steps[0]);
+  } else {
+    lineSelectionHint.value = null;
+    stepPicker.value = {
+      open: true,
+      target: [ event.clientX, event.clientY ],
+      line,
+      steps: describePickerSteps(_steps)
+    };
+  }
+}
+
+// Several Path Steps with the same snapshot (the edge into a statement and the
+// edge into its condition, or an event at that spot) would show the same panel,
+// so they count as one choice.
+function pathStepsOnLine(line) {
+  const _onLine = constraintPathSteps.value.filter(step =>
+    step.line === line && step.fileId.equals(sourceFile.value?.fileId));
+
+  return _onLine.filter((step, index) => {
+    const _next = _onLine[index + 1];
+    if (!_next || snapshotKey(_next) !== snapshotKey(step)) return true;
+    // Of a run with equal snapshots the event is kept if there is one.
+    return step.kind === "event" && _next.kind !== "event";
+  });
+}
+
+function snapshotKey(step) {
+  const { symbol_ranges, variables, path_condition } = step.snapshot;
+  return JSON.stringify([ symbol_ranges, variables, path_condition ]);
+}
+
+// Picker rows are told apart by the values that actually differ between them,
+// which is what separates one loop iteration from the next.
+function describePickerSteps(steps) {
+  const _values = steps.map(step => new Map(
+    (step.snapshot.variables ?? []).map(variable => [
+      variable.name,
+      describeVariable(variable, step.snapshot)
+    ])));
+  const _names = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ]
+    .filter(name =>
+      new Set(_values.map(values => values.get(name))).size > 1)
+    .sort();
+
+  return steps.map((step, index) => ({
+    ...step,
+    values: _names
+      .filter(name => _values[index].has(name))
+      .map(name => `${name} = ${_values[index].get(name)}`)
+      .join(", ")
+  }));
+}
+
+function describeVariable(variable, snapshot) {
+  if (variable.kind !== "symbol") return variable.value;
+  return (snapshot.symbol_ranges ?? []).find(range =>
+    range.symbol === variable.value)?.range ?? "(symbolic)";
+}
+
+let lineHintTimer = null;
+
+function showLineSelectionHint(line) {
+  lineSelectionHint.value =
+    `Line ${line} is not on this Bug Path, so the selection did not change.`;
+  clearTimeout(lineHintTimer);
+  lineHintTimer = setTimeout(() => {
+    lineSelectionHint.value = null;
+  }, 4000);
+}
+
+function refreshPathStepLines() {
+  if (!editor.value || !sourceFile.value) return;
+
+  const _doc = editor.value.state.doc;
+  const _lines = showConstraints.value
+    ? new Set(constraintPathSteps.value
+      .filter(step => step.fileId.equals(sourceFile.value.fileId))
+      .map(step => step.line))
+    : new Set();
+  const _control = selectedControlStep.value;
+  const _selectedLine = showConstraints.value && _control &&
+    _control.fileId.equals(sourceFile.value.fileId) ? _control.line : null;
+
+  const _ranges = [ ..._lines ]
+    .filter(line => line <= _doc.lines)
+    .sort((a, b) => a - b)
+    .map(line => Decoration.line({
+      class: line === _selectedLine
+        ? "path-step-line path-step-line-selected" : "path-step-line"
+    }).range(_doc.line(line).from));
+
+  editor.value.dispatch({
+    effects: setPathStepLines.of(Decoration.set(_ranges))
+  });
 }
 
 function highlightReport() {
@@ -928,6 +1141,9 @@ async function drawBugPath() {
   });
 
   pathStepsById.value = new Map(_events.map(event => [ event.$id, event ]));
+  selectedControlIndex.value = null;
+  constraintPathSteps.value =
+    collectPathSteps(_events, _reportDetail.executionPath);
 
   addEvents(_events.filter(_isSameFile));
 
@@ -943,13 +1159,60 @@ async function drawBugPath() {
   }
 }
 
+// The trace's steps in Bug Path order, each with where it is shown and a label
+// that names it. Control steps sit between events, so they are told apart by
+// the event they follow.
+function collectPathSteps(events, executionPath) {
+  const _steps = (constraintTrace.value?.steps ?? []).map(step => {
+    if (step.kind === "event") {
+      const _event = events[step.index];
+      return _event && {
+        kind: "event",
+        key: `event-${step.index}`,
+        stepId: _event.$id,
+        eventIndex: _event.$index,
+        fileId: _event.fileId,
+        line: _event.startLine.toNumber(),
+        message: _event.msg,
+        label: `Step ${_event.$index}`,
+        order: step.order,
+        snapshot: step
+      };
+    }
+
+    const _point = executionPath[step.index];
+    return _point && {
+      kind: "control",
+      key: `control-${step.index}`,
+      positionIndex: step.index,
+      fileId: _point.fileId,
+      line: Number(_point.startLine),
+      message: `Reaches line ${_point.startLine}, column ${_point.startCol}`,
+      order: step.order,
+      snapshot: step
+    };
+  }).filter(Boolean).sort((a, b) => a.order - b.order);
+
+  let _lastEvent = 0;
+  _steps.forEach(step => {
+    if (step.kind === "event") {
+      _lastEvent = step.eventIndex;
+    } else {
+      step.label = _lastEvent ? `Arrow after step ${_lastEvent}` :
+        "Arrow before step 1";
+    }
+  });
+
+  return _steps;
+}
+
 // A symbol's name in the path condition, kept from the last step it had one,
 // because the variable can be gone by the time its constraint is shown.
-function constraintSymbolNames(stepIndex) {
+function constraintSymbolNames(order) {
   const _names = new Map();
   constraintTrace.value.steps
-    .filter(step => step.kind === "event" && step.index <= stepIndex)
-    .sort((a, b) => a.index - b.index)
+    .filter(step => step.order <= order)
+    .sort((a, b) => a.order - b.order)
     .forEach(step => {
       (step.variables ?? [])
         .filter(variable => variable.kind === "symbol")
@@ -1262,6 +1525,21 @@ function truncate(text, length) {
   cursor: pointer;
 }
 
+.constraints-enabled .path-step-line {
+  cursor: pointer;
+}
+
+// The arrows run over the code; a click on one still means the line under it.
+.constraints-enabled .jtk-connector,
+.constraints-enabled .jtk-connector * {
+  pointer-events: none !important;
+}
+
+.path-step-line-selected {
+  background-color: #fff6d9;
+  box-shadow: inset 3px 0 0 #e0a800;
+}
+
 .blame-gutter {
   width: 400px;
   background-color: #f7f7f7;
@@ -1275,7 +1553,25 @@ function truncate(text, length) {
 }
 
 .editor-col {
+  position: relative;
   min-width: 0;
+}
+
+// Floats over the code so the reason is seen without reflowing the source view.
+.line-selection-hint {
+  position: absolute;
+  z-index: 5;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 4px 12px;
+  border-radius: 12px;
+  color: #fff;
+  background-color: rgba(50, 54, 59, 0.92);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  pointer-events: none;
 }
 
 // Two stacked checkboxes must fit the height of the toolbar buttons, and the

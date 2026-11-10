@@ -251,6 +251,9 @@ class Parser(BaseParser):
         report_annotation = diag["report-annotation"] \
             if "report-annotation" in diag else None
 
+        bug_path_positions, control_positions = \
+            self.__get_bug_path_positions(diag, files)
+
         return Report(
             analyzer_result_file_path=analyzer_result_file_path,
             file=files[location['file']],
@@ -264,11 +267,12 @@ class Parser(BaseParser):
             category=diag.get('category'),
             source_line=None,
             bug_path_events=self.__get_bug_path_events(diag, files),
-            bug_path_positions=self.__get_bug_path_positions(diag, files),
+            bug_path_positions=bug_path_positions,
             notes=self.__get_notes(diag, files),
             macro_expansions=self.__get_macro_expansions(diag, files),
             annotations=report_annotation,
-            constraint_trace=self.__get_constraint_trace(diag))
+            constraint_trace=self.__get_constraint_trace(
+                diag, control_positions))
 
     def __get_analyzer_name(
         self,
@@ -326,19 +330,23 @@ class Parser(BaseParser):
         self,
         diag,
         files: dict[int, File]
-    ) -> list[BugPathPosition]:
-        """ Get bug path positions.
+    ) -> tuple[list[BugPathPosition], dict[int, int]]:
+        """ Get bug path positions and the position each control piece ends at.
 
         In plist file the source and target of the arrows are provided as
         starting and ending ranges of the arrow. The path A->B->C is given as
         A->B and B->C, thus range B is provided twice if multiple control event
         kinds are followed each other. So in the loop we will not store the
         start point if the previous path event was a control event.
+
+        The returned dict maps a control piece's position in the `path` array
+        to the index of its end point among the returned positions.
         """
         bug_path_positions = []
+        control_positions: dict[int, int] = {}
 
         prev_control_item = None
-        for item in diag.get('path', []):
+        for path_index, item in enumerate(diag.get('path', [])):
             if item.get('kind') != 'control':
                 continue
 
@@ -365,19 +373,27 @@ class Parser(BaseParser):
                         edges['end'][0]['line'], edges['end'][0]['col'],
                         edges['end'][1]['line'], edges['end'][1]['col'])))
 
+                control_positions[path_index] = len(bug_path_positions) - 1
                 prev_control_item = item
             except IndexError:
                 # Edges might be empty nothing can be stored.
                 continue
 
-        return bug_path_positions
+        return bug_path_positions, control_positions
 
-    def __get_constraint_trace(self, diag: dict) -> dict | None:
-        """ Get the Constraint Snapshots, keyed to the report's path events.
+    def __get_constraint_trace(
+        self,
+        diag: dict,
+        control_positions: dict[int, int]
+    ) -> dict | None:
+        """ Get the Constraint Snapshots, keyed to the report's Path Steps.
 
         The plist addresses a step by its position in the `path` array, which
-        mixes events with control pieces. Only the report's event list survives
-        storage, so the position is translated to an index in that list here.
+        mixes events with control pieces. Only the report's event list and
+        bug path positions survive storage, so the position is translated to
+        an event index, or to the position index of the piece's end point.
+        Storage also loses the interleaving of the two lists, so the original
+        position is kept as `order`, the step's place on the Bug Path.
         """
         trace = diag.get('constraint_trace')
         if trace is None:
@@ -391,13 +407,20 @@ class Parser(BaseParser):
         try:
             steps = []
             for step in trace['steps']:
-                event_index = event_indices.get(step['path_index'])
-                if event_index is not None:
-                    steps.append({
-                        **{k: v for k, v in step.items() if k != 'path_index'},
-                        'kind': 'event',
-                        'index': event_index
-                    })
+                path_index = step['path_index']
+                if path_index in event_indices:
+                    kind, index = 'event', event_indices[path_index]
+                elif path_index in control_positions:
+                    kind, index = 'control', control_positions[path_index]
+                else:
+                    continue
+
+                steps.append({
+                    **{k: v for k, v in step.items() if k != 'path_index'},
+                    'kind': kind,
+                    'index': index,
+                    'order': step.get('order', path_index)
+                })
 
             return {'version': trace['version'], 'steps': steps}
         except (KeyError, TypeError) as ex:
@@ -501,6 +524,7 @@ class Parser(BaseParser):
                 diagnostic['type'] = report.analyzer_name
 
             path = []
+            control_path_indices: dict[int, int] = {}
             if report.bug_path_positions:
                 for i in range(len(report.bug_path_positions) - 1):
                     start = report.bug_path_positions[i]
@@ -510,6 +534,7 @@ class Parser(BaseParser):
                             start.range, start.file,
                             end.range, end.file,
                             file_index_map)
+                        control_path_indices[i + 1] = len(path)
                         path.append(self._create_control_edges([edge]))
             elif len(report.bug_path_events) > 1:
                 # Create bug path positions from bug path events.
@@ -540,7 +565,8 @@ class Parser(BaseParser):
             if report.constraint_trace is not None:
                 diagnostic['constraint_trace'] = \
                     self._create_constraint_trace(
-                        report.constraint_trace, first_event_position)
+                        report.constraint_trace, first_event_position,
+                        control_path_indices)
 
             if report.notes:
                 diagnostic['notes'] = []
@@ -584,21 +610,33 @@ class Parser(BaseParser):
     def _create_constraint_trace(
         self,
         trace: dict,
-        first_event_position: int
+        first_event_position: int,
+        control_path_indices: dict[int, int]
     ) -> dict:
         """ Turn a report's trace back into the per-diagnostic plist key.
 
-        Every path event is written after the control points, which is why a
-        step's plist position is the event index shifted by their count.
+        Every path event is written after the control points, which is why an
+        event step's plist position is the event index shifted by their count.
+        A control step addresses the position its edge ends at, which is the
+        end of the control point written for it.
         """
-        return {
-            'version': trace['version'],
-            'steps': [{
+        steps = []
+        for step in trace['steps']:
+            if step['kind'] == 'event':
+                path_index = first_event_position + step['index']
+            else:
+                path_index = control_path_indices.get(step['index'])
+                # Bug path positions without a range have no control point.
+                if path_index is None:
+                    continue
+
+            steps.append({
                 **{k: v for k, v in step.items()
                    if k not in ('kind', 'index')},
-                'path_index': first_event_position + step['index']
-            } for step in trace['steps']]
-        }
+                'path_index': path_index
+            })
+
+        return {'version': trace['version'], 'steps': steps}
 
     def _create_location(
         self,

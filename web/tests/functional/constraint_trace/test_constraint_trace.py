@@ -101,19 +101,21 @@ class TestConstraintTrace(unittest.TestCase):
 
         trace = json.loads(details.constraintTrace)
         self.assertEqual(trace['version'], 1)
+        event_steps = [step for step in trace['steps']
+                       if step['kind'] == 'event']
         self.assertEqual(
-            [(step['kind'], step['index']) for step in trace['steps']],
-            [('event', i) for i in range(len(details.pathEvents))])
+            [step['index'] for step in event_steps],
+            list(range(len(details.pathEvents))))
 
         # Hand-derived from demo/two-path.c: Bug Path a == 0, b != 0.
         self.assertEqual(
             details.pathEvents[0].msg, "Assuming 'a' is equal to 0")
-        self.assertEqual(trace['steps'][0]['symbol_ranges'], [
+        self.assertEqual(event_steps[0]['symbol_ranges'], [
             {'symbol': 'reg_$1<int a>', 'range': '{ [0, 0] }'}])
 
         self.assertEqual(
             details.pathEvents[1].msg, "Assuming 'b' is not equal to 0")
-        self.assertEqual(trace['steps'][1]['symbol_ranges'], [
+        self.assertEqual(event_steps[1]['symbol_ranges'], [
             {'symbol': 'reg_$1<int a>', 'range': '{ [0, 0] }'},
             {'symbol': 'reg_$2<int b>',
              'range': '{ [-2147483648, -1], [1, 2147483647] }'}])
@@ -126,8 +128,10 @@ class TestConstraintTrace(unittest.TestCase):
         details = self._details('with_snapshots')
 
         trace = json.loads(details.constraintTrace)
+        first_event = next(step for step in trace['steps']
+                           if step['kind'] == 'event')
         variables = {variable['name']: variable
-                     for variable in trace['steps'][0]['variables']}
+                     for variable in first_event['variables']}
 
         # Hand-derived from demo/two-path.c: f's parameters and local.
         self.assertEqual(variables['a'], {
@@ -145,13 +149,63 @@ class TestConstraintTrace(unittest.TestCase):
         details = self._details('with_snapshots')
 
         trace = json.loads(details.constraintTrace)
-        last_step = trace['steps'][-1]
+        last_step = [step for step in trace['steps']
+                     if step['kind'] == 'event'][-1]
 
         self.assertEqual(last_step['symbol_ranges'], [])
         self.assertEqual(last_step['path_condition'], [
             {'symbol': 'reg_$1<int a>', 'range': '{ [0, 0] }'},
             {'symbol': 'reg_$2<int b>',
              'range': '{ [-2147483648, -1], [1, 2147483647] }'}])
+
+    def test_control_steps_survive_store(self):
+        """
+        A control-flow Path Step comes back keyed to the position its edge
+        ends at, carrying the snapshot taken there.
+        """
+        details = self._details('with_snapshots')
+
+        trace = json.loads(details.constraintTrace)
+        control_steps = [step for step in trace['steps']
+                         if step['kind'] == 'control']
+        self.assertTrue(control_steps)
+        self.assertTrue(all(
+            0 <= step['index'] < len(details.executionPath)
+            for step in control_steps))
+
+        # Hand-derived from demo/two-path.c: the edge into `p = 0` on line 14.
+        # b's range is held by the path condition, because b is dead by then.
+        into_line_14 = [step for step in control_steps if
+                        details.executionPath[step['index']].startLine == 14]
+        self.assertEqual(len(into_line_14), 1)
+        self.assertEqual(
+            {variable['name']: variable['value']
+             for variable in into_line_14[0]['variables']}['p'],
+            '0')
+        self.assertIn(
+            {'symbol': 'reg_$2<int b>',
+             'range': '{ [-2147483648, -1], [1, 2147483647] }'},
+            into_line_14[0]['path_condition'])
+
+    def test_steps_keep_their_bug_path_order(self):
+        """
+        Storage splits events from control positions; `order` keeps where a
+        step sits on the Bug Path, with event and control steps interleaved.
+        """
+        details = self._details('with_snapshots')
+
+        trace = json.loads(details.constraintTrace)
+        ordered = sorted(trace['steps'], key=lambda step: step['order'])
+
+        # Hand-derived from demo/two-path.c: the path starts with the edges
+        # into the `if` and its condition, then the "Assuming" event.
+        self.assertEqual(
+            [(step['kind'], step['order']) for step in ordered[:3]],
+            [('control', 0), ('control', 1), ('event', 2)])
+        self.assertEqual(ordered[2]['index'], 0)
+        self.assertEqual(
+            sorted(step['order'] for step in trace['steps']),
+            [step['order'] for step in ordered])
 
     def test_trace_is_not_extended_report_data(self):
         """
