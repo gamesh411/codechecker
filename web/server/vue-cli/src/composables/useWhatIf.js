@@ -6,8 +6,10 @@ import { WhatIfConstraint } from "@cc/report-server-types";
 // The What-If Constraints of the open report view, checked together. They are
 // never stored, so opening another report starts with none.
 export function useWhatIf() {
-  // Each { key, order, heading, expression }: `order` anchors it to a Path
-  // Step, `heading` names that step for the reader.
+  // Each { key, order, heading, expression, holdsThroughout }: `order`
+  // anchors it to a Path Step, `heading` names that step for the reader.
+  // A constraint that holds throughout is about every value its variables
+  // take on the path, so its anchor is only where it was typed.
   const constraints = ref([]);
   // The last check: { constraints, response }, where `constraints` is the
   // list that was checked.
@@ -35,8 +37,9 @@ export function useWhatIf() {
   }
 
   // Checks the listed constraints, plus `added` ({ order, heading,
-  // expression }) when given. `added` joins the list only if it can be read;
-  // otherwise the promise resolves to its syntax error and nothing changes.
+  // expression, holdsThroughout }) when given. `added` joins the list only
+  // if it can be read; otherwise the promise resolves to its syntax error and
+  // nothing changes.
   function check(reportId, added) {
     const _candidates = added
       ? [ ...constraints.value, { ...added, key: _nextKey++ } ]
@@ -49,7 +52,8 @@ export function useWhatIf() {
         reportId,
         _candidates.map(c => new WhatIfConstraint({
           pathStep: c.order,
-          expression: c.expression
+          expression: c.expression,
+          holdsThroughout: !!c.holdsThroughout
         })),
         handleThriftError(response => {
           if (_generationAtStart !== _generation) return resolve(null);

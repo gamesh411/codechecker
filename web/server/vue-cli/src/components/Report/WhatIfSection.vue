@@ -53,6 +53,21 @@
           </v-btn>
         </form>
 
+        <v-checkbox
+          v-model="holdsThroughout"
+          class="what-if-throughout"
+          density="compact"
+          hide-details
+          color="primary"
+          :title="THROUGHOUT_HINT"
+        >
+          <template #label>
+            <span class="what-if-throughout-label">
+              Holds throughout the path
+            </span>
+          </template>
+        </v-checkbox>
+
         <p
           v-if="syntaxError"
           :id="errorId"
@@ -72,11 +87,19 @@
               :key="constraint.key"
               class="what-if-row"
               :class="{
-                'what-if-row-here': constraint.order === step.order,
+                'what-if-row-here': !constraint.holdsThroughout &&
+                  constraint.order === step.order,
                 'what-if-row-unknown': verdict?.aboutKey === constraint.key
               }"
             >
-              <span class="what-if-row-step">{{ constraint.heading }}</span>
+              <span
+                class="what-if-row-step"
+                :title="constraint.holdsThroughout
+                  ? `Typed at ${constraint.heading}` : undefined"
+              >
+                {{ constraint.holdsThroughout
+                  ? "Throughout" : constraint.heading }}
+              </span>
               <code class="what-if-row-expression">
                 {{ constraint.expression }}
               </code>
@@ -86,8 +109,9 @@
                 variant="text"
                 size="x-small"
                 density="comfortable"
-                :aria-label="`Remove ${constraint.expression} at ` +
-                  constraint.heading"
+                :aria-label="`Remove ${constraint.expression} ` +
+                  (constraint.holdsThroughout
+                    ? 'throughout' : `at ${constraint.heading}`)"
                 title="Remove"
                 @click="whatIf.remove(constraint.key)"
               />
@@ -121,10 +145,26 @@
               <template v-if="verdict.about">
                 <code class="what-if-expression">{{
                   verdict.about.expression }}</code>
-                at {{ verdict.about.heading }}.
+                {{ verdict.about.holdsThroughout
+                  ? "throughout" : `at ${verdict.about.heading}` }}.
               </template>
               <template v-else>
                 these {{ verdict.count }} assumptions together.
+              </template>
+              <template v-if="verdict.dead">
+                <!-- Literal text at both ends keeps the spaces around it. -->
+                It dies {{ verdict.dead.beforeAnchor ? "earlier, at" : "at" }}
+                <button
+                  type="button"
+                  class="what-if-dead-step"
+                  :aria-label="`Select ${verdict.dead.label}`"
+                  @click="emit('select-step', verdict.dead.order)"
+                  v-text="verdict.dead.label"
+                />,
+                {{ verdict.dead.beforeAnchor
+                  ? "whose path condition already contradicts"
+                  : "the first step whose path condition contradicts" }}
+                {{ verdict.count > 1 ? "them" : "it" }}.
               </template>
               <code-text :text="verdict.trail" />
             </div>
@@ -183,8 +223,15 @@ const props = defineProps({
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
   // From useWhatIf: owned by the report view, so it outlives this panel.
-  whatIf: { type: Object, required: true }
+  whatIf: { type: Object, required: true },
+  // The Path Step the reader sees for an `order`: { label, order }.
+  resolveStep: { type: Function, required: true }
 });
+
+const emit = defineEmits([ "select-step" ]);
+
+const THROUGHOUT_HINT = "Apply it to every value the variable takes on " +
+  "this path, also after a call or an assignment replaces it.";
 
 // The report view keeps one useWhatIf for its lifetime, so the refs stay
 // those of the prop.
@@ -199,6 +246,7 @@ function CodeText({ text }) {
 CodeText.props = [ "text" ];
 
 const expression = ref("");
+const holdsThroughout = ref(false);
 const syntaxError = ref(null);
 const field = ref(null);
 const scroller = ref(null);
@@ -242,7 +290,8 @@ async function submit() {
   const _error = await props.whatIf.check(props.reportId, _text ? {
     order: props.step.order,
     heading: props.step.heading,
-    expression: _text
+    expression: _text,
+    holdsThroughout: holdsThroughout.value
   } : null);
 
   if (!_error) {
@@ -319,12 +368,28 @@ const verdict = computed(() => {
   case PathVerdict.INFEASIBLE:
     return { ..._common, kind: "infeasible",
       lead: "This path is infeasible with",
+      dead: deadStep(_response, _about, _checked.constraints.length),
       trail: "The bug may still be reachable through another path." };
   default:
     return { ..._common, kind: "unknown",
       lead: "No verdict for this path with", trail: _response.reason };
   }
 });
+
+// The server names the earliest dead step; the reader sees it as the step
+// that line selection would pick, which can be a later one on the same line.
+function deadStep(response, about, count) {
+  const _order = response.firstDeadStep?.toNumber();
+  const _step = _order !== undefined ? props.resolveStep(_order) : null;
+  if (!_step) return null;
+
+  return {
+    label: _step.label,
+    order: _order,
+    beforeAnchor: count === 1 && !about.holdsThroughout &&
+      _step.order < about.order
+  };
+}
 
 // Name suggestions: the variables of the selected step whose names start with
 // the word being typed where a variable name belongs. An empty input lists
@@ -510,6 +575,39 @@ onBeforeUnmount(() => {
     height: 40px;
   }
 
+  // Sits under the input, aligned with its left edge.
+  .what-if-throughout {
+    margin: 2px 0 0 -6px;
+
+    .v-selection-control {
+      min-height: 30px;
+    }
+
+    .v-selection-control__wrapper {
+      width: 30px;
+      height: 30px;
+    }
+  }
+
+  .what-if-throughout-label {
+    color: rgba(0, 0, 0, 0.75);
+    font-size: 0.8125rem;
+  }
+
+  .what-if-dead-step {
+    padding: 0;
+    color: #1565c0;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  .what-if-dead-step:hover,
+  .what-if-dead-step:focus-visible {
+    color: #0d47a1;
+  }
+
   .what-if-syntax-error {
     color: #b3261e;
     font-size: 0.8125rem;
@@ -587,14 +685,17 @@ onBeforeUnmount(() => {
     font-size: 0.8125rem;
   }
 
+  // A short expression moves to the next line whole instead of breaking at
+  // its spaces; one longer than the line still wraps inside its box.
   .what-if-expression {
+    display: inline-block;
+    max-width: 100%;
     padding: 0 3px;
     border-radius: 2px;
     background-color: rgba(0, 0, 0, 0.06);
     font-size: 0.8125rem;
+    line-height: 1.35;
     overflow-wrap: anywhere;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
   }
 
   .what-if-feasible {

@@ -188,6 +188,7 @@ enum PathVerdict {
 struct WhatIfConstraint {
   1: i64    pathStep,   // The `order` of a step in ReportDetails.constraintTrace.
   2: string expression, // `variable op value` terms joined by `&&`, e.g. `b == 0 && p != null`, on variables of that step.
+  3: optional bool holdsThroughout, // The terms hold for every value their variables take across the Bug Path, not only at pathStep.
 }
 typedef list<WhatIfConstraint> WhatIfConstraints
 
@@ -205,6 +206,7 @@ struct WhatIfResult {
   4: optional string            baselineReason,        // Why baselineVerdict is UNKNOWN.
   5: optional WhatIfSyntaxError syntaxError,           // Set when a constraint cannot be read; nothing is solved with the constraints and verdict is UNKNOWN.
   6: optional i64               reasonConstraintIndex, // The constraint that reason is about, when it is about one.
+  7: optional i64               firstDeadStep,         // When verdict is INFEASIBLE: the `order` of the earliest step whose path condition contradicts the What-If Constraints. Can come before their pathStep.
 }
 
 typedef string AnalyzerType

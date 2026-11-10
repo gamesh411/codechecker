@@ -623,6 +623,9 @@ class CCSimpleHttpServer(HTTPServer):
     daemon_threads = False
     address_family = socket.AF_INET  # IPv4
 
+    # How long a worker waits in accept() before it handles pending signals.
+    ACCEPT_TIMEOUT_S = 0.5
+
     # The size of the request queue. If it takes a long time to process
     # a single request, any requests that arrive while the server is busy are
     # placed into a queue, up to request_queue_size requests [1].
@@ -836,7 +839,15 @@ class CCSimpleHttpServer(HTTPServer):
             self.terminate()
 
         signal.signal(signal.SIGINT, _handler)
-        return self.serve_forever()
+
+        # Every worker is woken for each connection, and those that lose it
+        # to another worker block in accept(). A signal can then be delivered
+        # to another thread of the process, such as the timer thread Z3 starts
+        # for What-If checks, and Python runs the handler in the main thread
+        # only once accept() returns, at the next connection. With a timeout,
+        # accept() gives up and the loop gets back to running the handler.
+        self.socket.settimeout(self.ACCEPT_TIMEOUT_S)
+        return self.serve_forever(poll_interval=self.ACCEPT_TIMEOUT_S)
 
     def add_product(self, orm_product, init_db=False):
         """

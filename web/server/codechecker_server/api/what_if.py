@@ -16,6 +16,7 @@ reachable through another path, which would need a new analysis to find.
 
 import json
 import re
+import time
 from dataclasses import dataclass
 
 import z3
@@ -28,8 +29,11 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('server')
 
 # Per solver call. A check makes two calls, the Baseline Verdict and the one
-# with the reader's constraints, so an API worker is held at most twice this.
+# with the reader's constraints, and an Infeasible one then searches for the
+# first dead Path Step within WHAT_IF_SEARCH_BUDGET_MS. So an API worker is
+# held at most 2 * WHAT_IF_SOLVER_TIMEOUT_MS + WHAT_IF_SEARCH_BUDGET_MS.
 WHAT_IF_SOLVER_TIMEOUT_MS = 2000
+WHAT_IF_SEARCH_BUDGET_MS = 2 * WHAT_IF_SOLVER_TIMEOUT_MS
 
 NO_TRACE_REASON = \
     "This report has no Constraint Snapshots, so this path cannot be checked."
@@ -56,6 +60,13 @@ class Term:
     variable: str
     op: str
     value: int
+
+
+@dataclass(frozen=True)
+class _Applied:
+    """ A term on one value of its variable, from Path Step `since` on. """
+    formula: object
+    since: int
 
 
 @dataclass(frozen=True)
@@ -175,9 +186,10 @@ def _bitvector_term(term: Term, smt: str, signed: bool,
 
 
 def _solve(ctx: z3.Context, declarations: list[str], assertions: list[str],
-           extra) -> tuple[int, str | None]:
+           extra, timeout_ms: int = WHAT_IF_SOLVER_TIMEOUT_MS
+           ) -> tuple[int, str | None]:
     solver = z3.Solver(ctx=ctx)
-    solver.set('timeout', WHAT_IF_SOLVER_TIMEOUT_MS)
+    solver.set('timeout', timeout_ms)
     solver.add(z3.parse_smt2_string(
         "\n".join(declarations + assertions), ctx=ctx))
     solver.add(*extra)
@@ -205,7 +217,8 @@ def check_what_if(trace_json: str | None, constraints) -> WhatIfResult:
     """
     Check the Bug Path whose Constraint Snapshots are in `trace_json` (the
     stored constraint trace) against What-If Constraints, a list of objects
-    with `pathStep` and `expression`, which must all hold together.
+    with `pathStep`, `expression` and `holdsThroughout`, which must all hold
+    together.
 
     A constraint that cannot be read is reported as a syntax error, with the
     Baseline Verdict, and nothing is solved with the constraints.
@@ -214,7 +227,8 @@ def check_what_if(trace_json: str | None, constraints) -> WhatIfResult:
     for index, constraint in enumerate(constraints):
         try:
             parsed.append((constraint.pathStep,
-                           parse_constraint(constraint.expression)))
+                           parse_constraint(constraint.expression),
+                           bool(constraint.holdsThroughout)))
         except ConstraintSyntaxError as ex:
             result = _check_path(trace_json, [])
             result.verdict = PathVerdict.UNKNOWN
@@ -226,19 +240,21 @@ def check_what_if(trace_json: str | None, constraints) -> WhatIfResult:
 
 
 def _check_path(trace_json: str | None,
-                constraints: list[tuple[int, list[Term]]]) -> WhatIfResult:
+                constraints: list[tuple[int, list[Term], bool]]
+                ) -> WhatIfResult:
     """
     The path condition accumulated at the last Path Step holds every
     constraint of the path, so it is what both verdicts are solved over. A
-    constraint's anchor only decides which value its variables stand for.
+    constraint's anchor only decides which value its variables stand for,
+    unless it holds throughout, when every value they take counts.
     """
     trace = json.loads(trace_json) if trace_json else None
     if not trace or not trace.get('steps'):
         return WhatIfResult(PathVerdict.UNKNOWN, NO_TRACE_REASON,
                             PathVerdict.UNKNOWN, NO_TRACE_REASON)
 
-    steps = {step['order']: step for step in trace['steps']}
-    last = steps[max(steps)]
+    path = _Path(sorted(trace['steps'], key=lambda step: step['order']))
+    last = path.steps[-1]
     if 'smt_assertions' not in last:
         return WhatIfResult(PathVerdict.UNKNOWN, NO_SMTLIB_REASON,
                             PathVerdict.UNKNOWN, NO_SMTLIB_REASON)
@@ -246,32 +262,34 @@ def _check_path(trace_json: str | None,
     ctx = z3.Context()
     try:
         baseline, baseline_reason = _solve(
-            ctx, last['smt_declarations'], last['smt_assertions'], [])
+            ctx, path.declarations, last['smt_assertions'], [])
     except z3.Z3Exception as ex:
         LOG.error("Unreadable SMT-LIB in a constraint trace: %s", ex)
         reason = "The solver input recorded for this path is unreadable."
         return WhatIfResult(PathVerdict.UNKNOWN, reason,
                             PathVerdict.UNKNOWN, reason)
 
-    declarations = last['smt_declarations']
-    formulas = []
+    applied = []
     try:
-        for index, (order, terms) in enumerate(constraints):
+        for index, (order, terms, throughout) in enumerate(constraints):
             try:
-                step = steps.get(order)
-                if step is None:
+                if order not in path.by_order:
                     raise _Unanswerable(f"This path has no Path Step {order}.")
-                declarations = _union(declarations,
-                                      step.get('smt_declarations', []))
-                formulas.extend(_step_terms(terms, step, declarations, ctx))
+                for term in terms:
+                    applied.extend(path.throughout(term, ctx) if throughout
+                                   else path.anchored(term, order, ctx))
             except _Unanswerable as ex:
                 return WhatIfResult(PathVerdict.UNKNOWN, str(ex), baseline,
                                     baseline_reason,
                                     reasonConstraintIndex=index)
 
-        return WhatIfResult(*_solve(ctx, declarations, last['smt_assertions'],
-                                    formulas),
-                            baseline, baseline_reason)
+        result = WhatIfResult(
+            *_solve(ctx, path.declarations, last['smt_assertions'],
+                    [a.formula for a in applied]),
+            baseline, baseline_reason)
+        if result.verdict == PathVerdict.INFEASIBLE:
+            result.firstDeadStep = _first_dead_step(ctx, path, applied)
+        return result
     except z3.Z3Exception as ex:
         LOG.error("Unreadable SMT-LIB in a constraint trace: %s", ex)
         return WhatIfResult(
@@ -280,24 +298,115 @@ def _check_path(trace_json: str | None,
             baseline, baseline_reason)
 
 
-def _step_terms(terms: list[Term], step: dict, declarations: list[str],
-                ctx: z3.Context) -> list:
-    """ Z3 formulas for terms on the variables of one Path Step. """
-    variables = {variable['name']: variable for variable in step['variables']}
-    formulas = []
-    for term in terms:
-        variable = variables.get(term.variable)
+def _first_dead_step(ctx: z3.Context, path: '_Path',
+                     applied: list[_Applied]) -> int:
+    """
+    The `order` of the earliest Path Step whose accumulated path condition,
+    with the terms applied by then, is unsatisfiable. The last step is known
+    to be.
+
+    Ranges only narrow along a path and applied terms are never taken back,
+    so once the path is dead it stays dead, and a binary search finds the
+    step. A step the solver gives up on counts as alive, so the named step is
+    always one proven dead; when the search budget runs out it is the
+    earliest step proven dead so far.
+    """
+    alive, dead = -1, len(path.steps) - 1
+    deadline = time.monotonic() + WHAT_IF_SEARCH_BUDGET_MS / 1000
+    while dead - alive > 1:
+        remaining_ms = int((deadline - time.monotonic()) * 1000)
+        if remaining_ms <= 0:
+            break
+        middle = (alive + dead) // 2
+        step = path.steps[middle]
+        verdict, _ = _solve(
+            ctx, path.declarations, step['smt_assertions'],
+            [a.formula for a in applied if a.since <= step['order']],
+            min(WHAT_IF_SOLVER_TIMEOUT_MS, remaining_ms))
+        if verdict == PathVerdict.INFEASIBLE:
+            dead = middle
+        else:
+            alive = middle
+    return path.steps[dead]['order']
+
+
+_DECLARED = re.compile(r'\(declare-fun\s+(\S+)')
+_SMT_SYMBOL = re.compile(r'[^\s()]+')
+
+
+class _Path:
+    """ The Path Steps of a Bug Path in order, and the values they hold. """
+
+    def __init__(self, steps: list[dict]):
+        self.steps = steps
+        self.by_order = {step['order']: index
+                         for index, step in enumerate(steps)}
+        # Symbol IDs are unique within a report, so declaring every symbol of
+        # the path lets any step's assertions be read with any term.
+        self.declarations = _union(
+            *(step.get('smt_declarations', []) for step in steps))
+        self._declared = [
+            {_DECLARED.match(line).group(1)
+             for line in step.get('smt_declarations', [])
+             if _DECLARED.match(line)}
+            for step in steps]
+
+    def anchored(self, term: Term, order: int,
+                 ctx: z3.Context) -> list[_Applied]:
+        """ The term on the variable's value at the anchor step. """
+        index = self.by_order[order]
+        variable = self._variable(index, term.variable)
         if variable is None:
             raise _Unanswerable(
                 f"`{term.variable}` has no tracked value at this Path Step.")
+        return [_Applied(self._formula(term, variable, ctx),
+                         self.steps[self._since(index, variable)]['order'])]
+
+    def throughout(self, term: Term, ctx: z3.Context) -> list[_Applied]:
+        """ The term on every value the variable takes along the path. """
+        applied = {}
+        for index in range(len(self.steps)):
+            variable = self._variable(index, term.variable)
+            if variable is None:
+                continue
+            key = (variable['kind'], variable['value'])
+            if key not in applied:
+                applied[key] = _Applied(
+                    self._formula(term, variable, ctx),
+                    self.steps[self._since(index, variable)]['order'])
+        if not applied:
+            raise _Unanswerable(
+                f"`{term.variable}` has no tracked value at any Path Step.")
+        return list(applied.values())
+
+    def _variable(self, index: int, name: str) -> dict | None:
+        return next((variable for variable in self.steps[index]['variables']
+                     if variable['name'] == name), None)
+
+    def _since(self, index: int, variable: dict) -> int:
+        """
+        Where the value the variable holds at step `index` appears: a symbol
+        at the first step that declares all of its term's symbols, since a
+        symbol never changes value; a concrete value at the start of the run
+        of steps up to `index` where the variable holds it.
+        """
+        if variable['kind'] == 'symbol' and 'smt' in variable:
+            names = set(_SMT_SYMBOL.findall(variable['smt'])) & \
+                self._declared[index]
+            return next(earlier for earlier in range(index + 1)
+                        if names <= self._declared[earlier])
+
+        while index > 0 and self._variable(index - 1, variable['name']) \
+                == variable:
+            index -= 1
+        return index
+
+    def _formula(self, term: Term, variable: dict, ctx: z3.Context):
         if variable['kind'] != 'symbol':
-            formulas.append(_concrete_term(term, variable, ctx))
-        elif 'smt' not in variable:
+            return _concrete_term(term, variable, ctx)
+        if 'smt' not in variable:
             raise _Unanswerable(
                 f"`{term.variable}` holds {variable['value']}, whose type "
                 "the check cannot reason about.")
-        else:
-            formulas.append(_bitvector_term(
-                term, variable['smt'], variable['smt_signed'],
-                declarations, ctx))
-    return formulas
+        return _bitvector_term(term, variable['smt'], variable['smt_signed'],
+                               self.declarations, ctx)

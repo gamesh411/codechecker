@@ -10,6 +10,7 @@
 
 
 import json
+import math
 import unittest
 from unittest import mock
 
@@ -56,9 +57,49 @@ POINTERS = json.dumps({'version': 1, 'steps': [_step(
     ['(assert (= reg_$1 #x0000000000000000))'])]})
 
 
+# `g` holds reg_$1, assumed non-null, until an opaque call at step 3 replaces
+# it with reg_$2, which the path assumes null from step 6.
+G_NOT_NULL = '(assert (not (= reg_$1 #x00000000)))'
+G_NULL = '(assert (= reg_$2 #x00000000))'
+OPAQUE_CALL = json.dumps({'version': 1, 'steps': [
+    _step(1, [_symbol('g', 'reg_$1')], [DECLARE_1], [G_NOT_NULL]),
+    _step(3, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2], [G_NOT_NULL]),
+    _step(6, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2],
+          [G_NULL, G_NOT_NULL]),
+    _step(8, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2],
+          [G_NULL, G_NOT_NULL]),
+]})
+
+# `p` is first an unconstrained symbol, then holds 0, then &x.
+CONCRETE_LATER = json.dumps({'version': 1, 'steps': [
+    _step(1, [_symbol('p', 'reg_$1', False)], [DECLARE_1], []),
+    _step(2, [{'name': 'p', 'value': '0', 'kind': 'integer'}], [], []),
+    _step(4, [{'name': 'p', 'value': '0', 'kind': 'integer'}], [], []),
+    _step(5, [{'name': 'p', 'value': '&x', 'kind': 'address'}], [], []),
+]})
+
+
+def _long_trace(length, dies_at):
+    """ `n` has one symbol, which the path assumes 0 from step `dies_at`. """
+    return json.dumps({'version': 1, 'steps': [
+        _step(order, [_symbol('n', 'reg_$1')], [DECLARE_1],
+              [V_IS_ZERO] if order >= dies_at else [])
+        for order in range(length)]})
+
+
 def check(trace, *constraints):
     return what_if.check_what_if(
-        trace, [WhatIfConstraint(step, text) for step, text in constraints])
+        trace, [WhatIfConstraint(*constraint) for constraint in constraints])
+
+
+class _RecordingSolver(z3.Solver):
+    """ Records the timeout of every solver call. """
+    timeouts = []
+
+    def set(self, *args, **kwargs):
+        if args[:1] == ('timeout',):
+            _RecordingSolver.timeouts.append(args[1])
+        super().set(*args, **kwargs)
 
 
 class WhatIfTest(unittest.TestCase):
@@ -228,3 +269,140 @@ class WhatIfTest(unittest.TestCase):
 
     def test_timeout_is_short(self):
         self.assertLessEqual(what_if.WHAT_IF_SOLVER_TIMEOUT_MS, 5000)
+
+
+class HoldsThroughoutTest(unittest.TestCase):
+
+    def test_off_constrains_only_the_anchored_value(self):
+        self.assertEqual(check(OPAQUE_CALL, (1, 'g != 0')).verdict,
+                         PathVerdict.FEASIBLE)
+        self.assertEqual(check(OPAQUE_CALL, (1, 'g != 0', False)).verdict,
+                         PathVerdict.FEASIBLE)
+
+    def test_on_constrains_every_value_of_the_variable(self):
+        result = check(OPAQUE_CALL, (1, 'g != 0', True))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_on_ignores_which_step_it_was_typed_at(self):
+        for step in (1, 3, 8):
+            self.assertEqual(
+                check(OPAQUE_CALL, (step, 'g != 0', True)).firstDeadStep, 6,
+                step)
+
+    def test_on_holds_where_the_variable_matches_it(self):
+        self.assertEqual(check(REASSIGNED, (5, 'v == 0', True)).verdict,
+                         PathVerdict.FEASIBLE)
+
+    def test_variable_missing_at_the_anchor_is_found_elsewhere(self):
+        """ `u` exists only at step 7 and is the same value `v` had. """
+        self.assertEqual(
+            check(REASSIGNED, (1, 'u > 3', True), (5, 'v < 2')).verdict,
+            PathVerdict.INFEASIBLE)
+
+    def test_variable_without_a_value_anywhere_is_unknown(self):
+        result = check(REASSIGNED, (1, 'v == 0'), (1, 'w == 0', True))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(result.reason,
+                         '`w` has no tracked value at any Path Step.')
+        self.assertEqual(result.reasonConstraintIndex, 1)
+
+    def test_concrete_values_are_decided_where_the_variable_holds_them(self):
+        """ A symbol at one step and concrete values at others all count. """
+        for text, verdict, dead in [('p != null', PathVerdict.INFEASIBLE, 2),
+                                    ('p == null', PathVerdict.INFEASIBLE, 5),
+                                    ('p >= 0', PathVerdict.FEASIBLE, None)]:
+            result = check(CONCRETE_LATER, (1, text, True))
+            self.assertEqual(result.verdict, verdict, text)
+            self.assertEqual(result.firstDeadStep, dead, text)
+
+    def test_address_against_a_number_throughout_is_unknown(self):
+        result = check(CONCRETE_LATER, (1, 'p == 4096', True))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('`p` holds &x', result.reason)
+
+
+class FirstDeadStepTest(unittest.TestCase):
+
+    def test_only_an_infeasible_verdict_names_a_step(self):
+        self.assertIsNone(check(OPAQUE_CALL, (1, 'g != 0')).firstDeadStep)
+        self.assertIsNone(check(OPAQUE_CALL, (1, 'w == 0')).firstDeadStep)
+        self.assertIsNone(check(OPAQUE_CALL, (1, 'g ==')).firstDeadStep)
+
+    def test_dead_step_can_come_before_the_anchor(self):
+        """ reg_$2 is assumed null from step 6, before the anchor at 8. """
+        result = check(OPAQUE_CALL, (8, 'g != 0'))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.firstDeadStep, 6)
+
+    def test_anchored_term_applies_from_where_its_symbol_appears(self):
+        """
+        A term that contradicts itself kills the path where its value first
+        appears, not at the start of the path and not at the anchor.
+        """
+        self.assertEqual(
+            check(OPAQUE_CALL, (8, 'g > 3 && g < 2')).firstDeadStep, 3)
+        self.assertEqual(
+            check(OPAQUE_CALL, (1, 'g > 3 && g < 2')).firstDeadStep, 1)
+
+    def test_anchored_concrete_value_applies_from_where_it_is_held(self):
+        """ `p` holds 0 from step 2 up to the anchor at step 4. """
+        self.assertEqual(
+            check(CONCRETE_LATER, (4, 'p != 0')).firstDeadStep, 2)
+        self.assertEqual(
+            check(CONCRETE_LATER, (5, 'p == 0')).firstDeadStep, 5)
+
+    def test_path_condition_decides_where_the_path_dies(self):
+        self.assertEqual(
+            check(_long_trace(40, 25), (39, 'n != 0')).firstDeadStep, 25)
+        self.assertEqual(
+            check(_long_trace(40, 0), (39, 'n != 0')).firstDeadStep, 0)
+        self.assertEqual(
+            check(_long_trace(40, 39), (0, 'n != 0')).firstDeadStep, 39)
+
+    def test_search_takes_logarithmically_many_solver_calls(self):
+        _RecordingSolver.timeouts = []
+        with mock.patch.object(what_if.z3, 'Solver', _RecordingSolver):
+            result = check(_long_trace(100, 61), (99, 'n != 0'))
+
+        self.assertEqual(result.firstDeadStep, 61)
+        # Baseline, verdict, then a binary search over the other 99 steps.
+        self.assertLessEqual(len(_RecordingSolver.timeouts),
+                             2 + math.ceil(math.log2(100)))
+        self.assertTrue(all(timeout <= what_if.WHAT_IF_SOLVER_TIMEOUT_MS
+                            for timeout in _RecordingSolver.timeouts))
+
+    def test_search_stops_when_its_budget_is_spent(self):
+        """
+        Each search call may use only what is left of the budget, and once it
+        is spent the latest step proven dead is named.
+        """
+        clock = iter(range(0, 10 ** 6, 1500))
+        _RecordingSolver.timeouts = []
+        with mock.patch.object(what_if.z3, 'Solver', _RecordingSolver), \
+                mock.patch.object(what_if.time, 'monotonic',
+                                  lambda: next(clock) / 1000):
+            result = check(_long_trace(100, 61), (99, 'n != 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        search = _RecordingSolver.timeouts[2:]
+        self.assertTrue(search)
+        self.assertLessEqual(sum(search), what_if.WHAT_IF_SEARCH_BUDGET_MS)
+        self.assertGreaterEqual(result.firstDeadStep, 61)
+
+    def test_solver_giving_up_in_the_search_counts_as_alive(self):
+        """ The named step is always one the solver proved dead. """
+        calls = []
+
+        class GivesUpInTheSearch(z3.Solver):
+            def check(self, *args):
+                calls.append(None)
+                # The baseline and verdict calls come first.
+                return super().check(*args) if len(calls) <= 2 \
+                    else z3.unknown
+
+        with mock.patch.object(what_if.z3, 'Solver', GivesUpInTheSearch):
+            result = check(_long_trace(10, 3), (9, 'n != 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.firstDeadStep, 9)

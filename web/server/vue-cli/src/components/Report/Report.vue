@@ -278,7 +278,9 @@
                       :step="selectedConstraintStep"
                       :report-id="report.reportId"
                       :what-if="whatIf"
+                      :resolve-step="displayedStep"
                       @close="clearStepSelection"
+                      @select-step="selectStepByOrder"
                     />
                   </v-col>
                 </v-row>
@@ -921,9 +923,9 @@ function selectStepsOnLine(line, event) {
 // Several Path Steps with the same snapshot (the edge into a statement and the
 // edge into its condition, or an event at that spot) would show the same panel,
 // so they count as one choice.
-function pathStepsOnLine(line) {
+function pathStepsOnLine(line, fileId = sourceFile.value?.fileId) {
   const _onLine = constraintPathSteps.value.filter(step =>
-    step.line === line && step.fileId.equals(sourceFile.value?.fileId));
+    step.line === line && step.fileId.equals(fileId));
 
   return _onLine.filter((step, index) => {
     const _next = _onLine[index + 1];
@@ -931,6 +933,31 @@ function pathStepsOnLine(line) {
     // Of a run with equal snapshots the event is kept if there is one.
     return step.kind === "event" && _next.kind !== "event";
   });
+}
+
+// The step a reader sees for `order`, with the label it goes by: of the steps
+// line selection counts as one choice, the one it would pick.
+function displayedStep(order) {
+  const _step = constraintPathSteps.value.find(step => step.order === order);
+  if (!_step) return null;
+
+  const _key = snapshotKey(_step);
+  return pathStepsOnLine(_step.line, _step.fileId).find(choice =>
+    choice.order >= order && snapshotKey(choice) === _key) ?? _step;
+}
+
+function selectStepByOrder(order) {
+  const _step = displayedStep(order);
+  if (!_step) return;
+
+  selectPathStep(_step);
+  if (editor.value && _step.fileId.equals(sourceFile.value?.fileId) &&
+      _step.line <= editor.value.state.doc.lines) {
+    editor.value.dispatch({
+      effects: EditorView.scrollIntoView(
+        editor.value.state.doc.line(_step.line).from, { y: "nearest" })
+    });
+  }
 }
 
 function snapshotKey(step) {

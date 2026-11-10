@@ -1,0 +1,927 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>clang_version</key>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 47998effce943b5d8dcbee4a0d0b7fe49e7a3519)</string>
+ <key>diagnostics</key>
+ <array>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>7</integer>
+      <key>col</key><integer>7</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>7</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>7</integer>
+         <key>col</key><integer>8</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Assuming &apos;g&apos; is non-null</string>
+     <key>message</key>
+     <string>Assuming &apos;g&apos; is non-null</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>10</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>10</integer>
+           <key>col</key><integer>9</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>10</integer>
+      <key>col</key><integer>3</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>10</integer>
+         <key>col</key><integer>3</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>10</integer>
+         <key>col</key><integer>11</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Value assigned to &apos;g&apos;</string>
+     <key>message</key>
+     <string>Value assigned to &apos;g&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>10</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>10</integer>
+           <key>col</key><integer>9</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>11</integer>
+      <key>col</key><integer>7</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>11</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Assuming &apos;g&apos; is null</string>
+     <key>message</key>
+     <string>Assuming &apos;g&apos; is null</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>11</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>19</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>19</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>13</integer>
+      <key>col</key><integer>19</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>20</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>20</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Dereference of null pointer (loaded from variable &apos;g&apos;)</string>
+     <key>message</key>
+     <string>Dereference of null pointer (loaded from variable &apos;g&apos;)</string>
+    </dict>
+   </array>
+   <key>constraint_trace</key>
+   <dict>
+    <key>version</key><integer>1</integer>
+    <key>steps</key>
+    <array>
+     <dict>
+      <key>path_index</key><integer>0</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>1</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>2</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>3</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>4</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>5</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>6</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>7</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>8</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>9</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>10</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>before</string>
+        <key>value</key><string>reg_$4&lt;int Element{SymRegion{reg_$1&lt;int * g&gt;},0 S64b,int}&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$4</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>g</string>
+        <key>value</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>derived_$9</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>derived_$9{conj_$7{int, LC1, S2159, #1},g}</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$1&lt;int * g&gt;</string>
+        <key>range</key><string>{ [1, 18446744073709551615] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$4 () (_ BitVec 32))</string>
+       <string>(declare-fun derived_$9 () (_ BitVec 64))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= derived_$9 #x0000000000000000))</string>
+       <string>(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))</string>
+      </array>
+     </dict>
+    </array>
+   </dict>
+   <key>description</key><string>Dereference of null pointer (loaded from variable &apos;g&apos;)</string>
+   <key>category</key><string>Logic error</string>
+   <key>type</key><string>Dereference of null pointer</string>
+   <key>check_name</key><string>core.NullDereference</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>57f68ac36196d593b5dc41f2f2c2a605</string>
+  <key>issue_context_kind</key><string>function</string>
+  <key>issue_context</key><string>f</string>
+  <key>issue_hash_function_offset</key><string>7</string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>13</integer>
+   <key>col</key><integer>19</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  <key>ExecutedLines</key>
+  <dict>
+   <key>0</key>
+   <array>
+    <integer>6</integer>
+    <integer>7</integer>
+    <integer>9</integer>
+    <integer>10</integer>
+    <integer>11</integer>
+    <integer>13</integer>
+   </array>
+  </dict>
+  </dict>
+ </array>
+ <key>files</key>
+ <array>
+  <string>$FILE_PATH$/opaque_call.c</string>
+ </array>
+</dict>
+</plist>

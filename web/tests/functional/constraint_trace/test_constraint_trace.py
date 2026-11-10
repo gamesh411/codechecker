@@ -52,7 +52,7 @@ class TestConstraintTrace(unittest.TestCase):
         codechecker_cfg.update(server_access)
 
         for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                         'z3_refuted', 'concrete_value']:
+                         'z3_refuted', 'concrete_value', 'opaque_call']:
             report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
             shutil.copytree(
                 os.path.join(project.path('constraint_trace'), run_name),
@@ -111,7 +111,14 @@ class TestConstraintTrace(unittest.TestCase):
     def _check(self, run_name, *constraints):
         return self._cc_client.checkWhatIf(
             self._report_id(run_name),
-            [WhatIfConstraint(step, text) for step, text in constraints])
+            [WhatIfConstraint(*constraint) for constraint in constraints])
+
+    def _first_step_constraining(self, run_name, symbol_prefix):
+        """ The `order` of the first step whose path condition has it. """
+        trace = json.loads(self._details(run_name).constraintTrace)
+        return min(step['order'] for step in trace['steps']
+                   if any(entry['symbol'].startswith(symbol_prefix)
+                          for entry in step['path_condition']))
 
     def test_every_event_carries_symbol_ranges(self):
         """
@@ -437,6 +444,84 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
         self.assertEqual(result.reasonConstraintIndex, 1)
         self.assertIsNone(result.syntaxError)
+
+    def test_holds_throughout_constrains_both_values_of_a_global(self):
+        """
+        Hand-derived from demo/opaque-call.c: `g` holds one symbol, assumed
+        non-null, until `refresh()` replaces it with another, which the path
+        assumes null. Anchored, `g != null` is about the first value only;
+        holding throughout, it is about both.
+        """
+        step = self._event_step('opaque_call', "Assuming 'g' is non-null")
+
+        for holds_throughout in (None, False):
+            result = self._check('opaque_call',
+                                 (step, 'g != null', holds_throughout))
+            self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+            self.assertIsNone(result.firstDeadStep)
+
+        result = self._check('opaque_call', (step, 'g != null', True))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+        # The second value is assumed null from the edge into `if (g)` on,
+        # which comes before the "Assuming 'g' is null" event.
+        dies = self._first_step_constraining('opaque_call', 'derived_')
+        self.assertEqual(result.firstDeadStep, dies)
+        self.assertLess(
+            dies, self._event_step('opaque_call', "Assuming 'g' is null"))
+
+    def test_anchored_after_the_call_constrains_the_second_value(self):
+        step = self._event_step('opaque_call', "Value assigned to 'g'")
+
+        result = self._check('opaque_call', (step, 'g != null'))
+
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.firstDeadStep,
+                         self._first_step_constraining('opaque_call',
+                                                       'derived_'))
+
+    def test_first_dead_step_can_come_before_the_anchor(self):
+        """
+        `b == 0` anchored at the dereference contradicts `b != 0`, which the
+        path assumed at its second branch.
+        """
+        anchor = self._event_step(
+            'with_snapshots',
+            "Dereference of null pointer (loaded from variable 'p')")
+
+        result = self._check('with_snapshots', (anchor, 'b == 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        dies = self._first_step_constraining('with_snapshots', 'reg_$2')
+        self.assertEqual(result.firstDeadStep, dies)
+        self.assertLess(dies, anchor)
+        self.assertLessEqual(
+            dies, self._event_step('with_snapshots',
+                                   "Assuming 'b' is not equal to 0"))
+
+    def test_holds_throughout_on_concrete_values(self):
+        """
+        `p` holds &x and later null, both concrete, and each is decided where
+        `p` holds it.
+        """
+        step = self._event_step('concrete_value', "Assuming 'q' is null")
+        stored = self._event_step('concrete_value',
+                                  "Null pointer value stored to 'p'")
+
+        result = self._check('concrete_value', (step, 'p != null', True))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertLessEqual(result.firstDeadStep, stored)
+        self.assertGreater(result.firstDeadStep, step)
+
+    def test_holds_throughout_without_a_value_anywhere_is_unknown(self):
+        step = self._event_step('opaque_call', "Assuming 'g' is non-null")
+
+        result = self._check('opaque_call', (step, 'q == 0', True))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('any Path Step', result.reason)
+        self.assertEqual(result.reasonConstraintIndex, 0)
 
     def test_check_writes_nothing_to_the_database(self):
         """

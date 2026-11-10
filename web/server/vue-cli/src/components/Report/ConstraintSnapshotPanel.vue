@@ -26,6 +26,14 @@
         {{ step.heading }}
       </span>
       {{ step.message }}
+      <span
+        v-if="diesHere"
+        class="panel-dies-here text-caption ml-1"
+        title="The first step whose path condition contradicts the What-If
+          Constraints that were checked"
+      >
+        Path dies here
+      </span>
     </div>
 
     <v-divider />
@@ -148,6 +156,8 @@
       :step="step"
       :report-id="reportId"
       :what-if="whatIf"
+      :resolve-step="resolveStep"
+      @select-step="emit('select-step', $event)"
     />
   </v-card>
 </template>
@@ -163,10 +173,19 @@ const props = defineProps({
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
   // From useWhatIf, owned by the report view.
-  whatIf: { type: Object, required: true }
+  whatIf: { type: Object, required: true },
+  // The Path Step the reader sees for an `order`: { label, order }.
+  resolveStep: { type: Function, required: true }
 });
 
-const emit = defineEmits([ "close" ]);
+const emit = defineEmits([ "close", "select-step" ]);
+
+const diesHere = computed(() => {
+  const _response = props.whatIf.result.value?.response;
+  const _dead = _response?.firstDeadStep?.toNumber();
+  return _dead !== undefined &&
+    props.resolveStep(_dead)?.order === props.step.order;
+});
 
 const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
 
@@ -227,6 +246,17 @@ const accumulatedRows = computed(() =>
 
   .panel-step-index {
     font-weight: 500;
+  }
+
+  .panel-dies-here {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 3px;
+    color: #8e1c1c;
+    background-color: #fbeeee;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
   }
 
   .panel-body {
@@ -311,8 +341,11 @@ const accumulatedRows = computed(() =>
     column-gap: 0.5rem;
   }
 
+  // Each interval is a flex item, so a set wraps between intervals, and an
+  // interval breaks inside only when it alone is wider than the column.
   .panel-interval {
-    white-space: nowrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .panel-symbol {
