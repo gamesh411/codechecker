@@ -886,6 +886,7 @@ def get_report_details(
     bug_events_list = defaultdict(list)
     bug_point_list = defaultdict(list)
     extended_data_list = defaultdict(list)
+    constraint_traces = {}
 
     report_path_data = session.query(ReportPathData) \
         .filter(ReportPathData.report_id.in_(report_ids))
@@ -906,6 +907,8 @@ def get_report_details(
                 bug_point = bugreportpoint_db_to_api(pd)
                 bug_point.filePath = files[pd.file_id]
                 bug_point_list[rpd.report_id].append(bug_point)
+            elif pd.type == "constraint_trace":
+                constraint_traces[rpd.report_id] = pd.msg
             else:
                 extended_data = extended_data_db_to_api(pd)
                 extended_data.filePath = files[pd.file_id]
@@ -927,7 +930,8 @@ def get_report_details(
             ReportDetails(pathEvents=bug_events_list[report_id],
                           executionPath=bug_point_list[report_id],
                           extendedData=extended_data_list[report_id],
-                          comments=comment_data_list[report_id])
+                          comments=comment_data_list[report_id],
+                          constraintTrace=constraint_traces.get(report_id))
 
     return details
 

@@ -8,6 +8,7 @@
     :type="type"
     :style="{ 'margin-left': marginLeft, color: textColor }"
     rounded="xs"
+    @click="selectStep"
   >
     <v-card-text class="pa-0 d-flex align-center">
       <report-step-enum-icon
@@ -123,6 +124,12 @@ const textColor = computed(() => {
     return getCssColor("color-report-step-message-default");
   }
 });
+
+// Clicks on the step's own buttons and links must not count as selecting it.
+function selectStep(event) {
+  if (props.bus && !event.target.closest("button, a"))
+    props.bus.emit("stepClicked", props.id);
+}
 
 function showPrevReport() {
   if (props.prevStep && props.bus)

@@ -320,7 +320,8 @@ class Report:
         macro_expansions: list[MacroExpansion] | None = None,
         annotations: dict[str, str] | None = None,
         static_message: str | None = None,
-        review_status: SourceReviewStatus | None = SourceReviewStatus()
+        review_status: SourceReviewStatus | None = SourceReviewStatus(),
+        constraint_trace: dict | None = None
     ):
         """
         This constructor populates the members of the Report object.
@@ -361,6 +362,13 @@ class Report:
             if macro_expansions is not None else []
 
         self.review_status = review_status
+
+        # Optional Constraint Snapshots per Path Step: {"version": int,
+        # "steps": [{"kind": "event", "index": int, "symbol_ranges": [...]}]},
+        # keyed to `bug_path_events` by "index". Debug data only, so it is left
+        # out of to_json(), equality and the hashes. Every plist round trip
+        # (CodeChecker store rewrites them) must keep this attribute.
+        self.constraint_trace = constraint_trace
 
         self.__source_line: str | None = source_line
         self.__files: set[File] | None = None

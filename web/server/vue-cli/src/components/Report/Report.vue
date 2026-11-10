@@ -16,7 +16,7 @@
           class="pa-0 mb-2"
         >
           <v-row
-            class="ma-0"
+            :class="['ma-0', editorCols === 12 ? 'flex-nowrap' : undefined]"
           >
             <v-col
               cols="auto"
@@ -87,11 +87,37 @@
               />
             </v-col>
 
+            <v-col
+              cols="auto"
+              class="pa-0 ml-1"
+              align-self="center"
+            >
+              <v-tooltip location="bottom" max-width="320">
+                <template v-slot:activator="{ props: tooltipProps }">
+                  <div v-bind="tooltipProps">
+                    <v-btn
+                      class="show-constraints-btn"
+                      :active="showConstraints"
+                      :color="showConstraints ? 'primary' : undefined"
+                      :disabled="!hasConstraintTrace"
+                      icon="mdi-variable"
+                      variant="text"
+                      size="small"
+                      density="compact"
+                      aria-label="Show constraints"
+                      @click="showConstraints = !showConstraints"
+                    />
+                  </div>
+                </template>
+                {{ constraintToggleHint }}
+              </v-tooltip>
+            </v-col>
+
             <v-spacer />
 
             <v-col
               cols="auto"
-              class="py-0 pr-0"
+              class="pa-0"
               align-self="center"
             >
               <toggle-blame-view-btn
@@ -229,7 +255,8 @@
                   :class="[
                     'editor',
                     'ma-0',
-                    enableBlameView ? 'blame' : undefined
+                    enableBlameView ? 'blame' : undefined,
+                    showConstraints ? 'constraints-enabled' : undefined
                   ]"
                 >
                   <div ref="editorContainer" class="editor-container" />
@@ -238,6 +265,17 @@
             </v-col>
           </v-row>
         </v-container>
+      </v-col>
+      <v-col
+        v-if="selectedConstraintStep"
+        class="pa-0"
+        :cols="constraintCols"
+      >
+        <constraint-snapshot-panel
+          v-fill-height
+          :step="selectedConstraintStep"
+          @close="selectedStepId = null"
+        />
       </v-col>
       <v-col
         v-if="showComments"
@@ -326,6 +364,7 @@ import { ShowReportInfoDialog } from "./ReportInfo";
 import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
+import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import ReportStepMessage from "./ReportStepMessage";
 
 import { useReviewStatus } from "@/composables/useReviewStatus";
@@ -355,6 +394,11 @@ const numOfComments = ref(0);
 const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
+const showConstraints = ref(false);
+const constraintCols = ref(3);
+const constraintTrace = ref(null);
+const pathStepsById = ref(new Map());
+const selectedStepId = ref(null);
 const loading = ref(true);
 const bus = mitt();
 const selectedChecker = ref(null);
@@ -438,9 +482,37 @@ const lineWidgetField = context => {
 
 const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
+const hasConstraintTrace = computed(() =>
+  (constraintTrace.value?.steps?.length ?? 0) > 0
+);
+const constraintToggleHint = computed(() =>
+  hasConstraintTrace.value
+    ? "Show constraints: click a bug path step to see what the analyzer " +
+      "knew there."
+    : "This report has no constraint data. Analyze with the analyzer config " +
+      "option emit-constraint-snapshots=true to see what the analyzer knew " +
+      "at each step."
+);
+const selectedConstraintStep = computed(() => {
+  if (!showConstraints.value || !hasConstraintTrace.value) return null;
+
+  const _event = pathStepsById.value.get(selectedStepId.value);
+  if (!_event) return null;
+
+  const _snapshot = constraintTrace.value.steps.find(step =>
+    step.kind === "event" && step.index === _event.$index - 1);
+
+  return {
+    index: _event.$index,
+    message: _event.msg,
+    symbolRanges: _snapshot?.symbol_ranges ?? []
+  };
+});
 const editorCols = computed(() => {
   const maxCols = 12;
-  return showComments.value ? maxCols - commentCols.value : maxCols;
+  const commentsCols = showComments.value ? commentCols.value : 0;
+  const panelCols = selectedConstraintStep.value ? constraintCols.value : 0;
+  return maxCols - commentsCols - panelCols;
 });
 const reviewData = computed(() =>
   report.value?.reviewData || new ReviewData()
@@ -502,6 +574,13 @@ watch(showArrows, async () => {
 
 watch(report, () => {
   updateCommentCount(report.value);
+});
+
+// A narrower editor can re-wrap step bubbles, which moves the arrow endpoints.
+watch(editorCols, async () => {
+  if (!showArrows.value) return;
+  await nextTick();
+  addArrowLines();
 });
 
 class AdvancedLineWidget extends WidgetType {
@@ -599,6 +678,11 @@ onMounted(() => {
     });
   });
 
+  bus.on("stepClicked", stepId => {
+    selectedStepId.value = stepId;
+    highlightReportStep(stepId);
+  });
+
   bus.on("showDocumentation", () => {
     selectedChecker.value = new Checker({
       analyzerName: report.value.analyzerName,
@@ -654,6 +738,7 @@ async function loadReportStep(_report, { stepId, fileId, startLine }) {
   const _line = startLine.toNumber();
   jumpTo(_line, 0);
   highlightReportStep(stepId);
+  selectedStepId.value = stepId;
 
   loading.value = false;
 }
@@ -791,6 +876,11 @@ async function drawBugPath() {
     );
   });
 
+  constraintTrace.value = parseConstraintTrace(_reportDetail.constraintTrace);
+  if (!hasConstraintTrace.value) {
+    showConstraints.value = false;
+  }
+
   const _isSameFile = path => path.fileId.equals(sourceFile.value.fileId);
 
   // Add extra path events (macro expansions, notes).
@@ -834,14 +924,27 @@ async function drawBugPath() {
     _prevStep = _currentStep;
 
     return _currentStep;
-  }).filter(_isSameFile);
+  });
 
-  addEvents(_events);
+  pathStepsById.value = new Map(_events.map(event => [ event.$id, event ]));
+
+  addEvents(_events.filter(_isSameFile));
 
   // Add lines.
   if (showArrows.value) {
     const _points = _reportDetail.executionPath.filter(_isSameFile);
     createArrowConnection(_points);
+  }
+}
+
+function parseConstraintTrace(trace) {
+  if (!trace) return null;
+
+  try {
+    return JSON.parse(trace);
+  } catch (error) {
+    console.warn("Malformed constraint trace: ", error);
+    return null;
   }
 }
 
@@ -1122,6 +1225,10 @@ function truncate(text, length) {
   background-color: #eeb;
 }
 
+.constraints-enabled .report-step-msg {
+  cursor: pointer;
+}
+
 .blame-gutter {
   width: 400px;
   background-color: #f7f7f7;
@@ -1129,6 +1236,17 @@ function truncate(text, length) {
 </style>
 
 <style lang="scss" scoped>
+.show-constraints-btn {
+  width: 16px;
+  height: 20px;
+  min-width: 0;
+  padding: 0;
+
+  :deep(.v-icon) {
+    font-size: 16px;
+  }
+}
+
 :deep(.show-arrows .v-input__control .v-selection-control) {
   min-height: 0;
   max-height: 30px;

@@ -172,6 +172,7 @@ struct ReportDetails {
   2: BugPath       executionPath,
   3: optional ExtendedReportDataList extendedData,
   4: optional CommentDataList comments,
+  5: optional string constraintTrace, // JSON Constraint Snapshots per Path Step, absent when the report was analyzed without them.
 }
 
 typedef string AnalyzerType

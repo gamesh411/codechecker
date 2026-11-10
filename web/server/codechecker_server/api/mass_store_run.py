@@ -1407,6 +1407,15 @@ class MassStoreRun:
                 ))
                 used_file_ids.add(file_path_to_id[macro.file.path])
 
+            if report.constraint_trace is not None:
+                LOG.debug("Storing constraint trace.")
+                path_data.append(ReportPathData.Item(
+                    0, 0, 0, 0,
+                    file_path_to_id[report.file.path],
+                    "constraint_trace",
+                    json.dumps(report.constraint_trace)
+                ))
+
             report_path_data = ReportPathData(db_report.id, path_data)
             session.add(report_path_data)
             session.flush()

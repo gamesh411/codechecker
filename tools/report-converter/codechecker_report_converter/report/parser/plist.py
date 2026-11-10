@@ -267,7 +267,8 @@ class Parser(BaseParser):
             bug_path_positions=self.__get_bug_path_positions(diag, files),
             notes=self.__get_notes(diag, files),
             macro_expansions=self.__get_macro_expansions(diag, files),
-            annotations=report_annotation)
+            annotations=report_annotation,
+            constraint_trace=self.__get_constraint_trace(diag))
 
     def __get_analyzer_name(
         self,
@@ -370,6 +371,39 @@ class Parser(BaseParser):
                 continue
 
         return bug_path_positions
+
+    def __get_constraint_trace(self, diag: dict) -> dict | None:
+        """ Get the Constraint Snapshots, keyed to the report's path events.
+
+        The plist addresses a step by its position in the `path` array, which
+        mixes events with control pieces. Only the report's event list survives
+        storage, so the position is translated to an index in that list here.
+        """
+        trace = diag.get('constraint_trace')
+        if trace is None:
+            return None
+
+        event_indices: dict[int, int] = {}
+        for path_index, item in enumerate(diag.get('path', [])):
+            if item.get('kind') == 'event':
+                event_indices[path_index] = len(event_indices)
+
+        try:
+            steps = []
+            for step in trace['steps']:
+                event_index = event_indices.get(step['path_index'])
+                if event_index is not None:
+                    steps.append({
+                        **{k: v for k, v in step.items() if k != 'path_index'},
+                        'kind': 'event',
+                        'index': event_index
+                    })
+
+            return {'version': trace['version'], 'steps': steps}
+        except (KeyError, TypeError) as ex:
+            LOG.warning("Ignoring malformed constraint trace in '%s': %s",
+                        diag.get('check_name'), ex)
+            return None
 
     def __get_notes(
         self,
@@ -496,11 +530,17 @@ class Parser(BaseParser):
                     path.append(self._create_control_edges([edge]))
 
             # Add bug path events after control points.
+            first_event_position = len(path)
             if report.bug_path_events:
                 for event in report.bug_path_events:
                     path.append(self._create_event(event, file_index_map))
 
             diagnostic['path'] = path
+
+            if report.constraint_trace is not None:
+                diagnostic['constraint_trace'] = \
+                    self._create_constraint_trace(
+                        report.constraint_trace, first_event_position)
 
             if report.notes:
                 diagnostic['notes'] = []
@@ -540,6 +580,25 @@ class Parser(BaseParser):
             return event.range
 
         return Range(event.line, event.column, event.line, event.column)
+
+    def _create_constraint_trace(
+        self,
+        trace: dict,
+        first_event_position: int
+    ) -> dict:
+        """ Turn a report's trace back into the per-diagnostic plist key.
+
+        Every path event is written after the control points, which is why a
+        step's plist position is the event index shifted by their count.
+        """
+        return {
+            'version': trace['version'],
+            'steps': [{
+                **{k: v for k, v in step.items()
+                   if k not in ('kind', 'index')},
+                'path_index': first_event_position + step['index']
+            } for step in trace['steps']]
+        }
 
     def _create_location(
         self,
