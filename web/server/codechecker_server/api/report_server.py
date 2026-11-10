@@ -78,6 +78,7 @@ from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
 from .report_annotations import report_annotation_types
+from .what_if import check_what_if
 
 # These names are inherited from Thrift stubs.
 # pylint: disable=invalid-name
@@ -2642,6 +2643,26 @@ class ThriftRequestHandler:
         self.__require_view()
         with DBSession(self._Session) as session:
             return get_report_details(session, [reportId])[reportId]
+
+    @exc_to_thrift_reqfail
+    @timeit
+    def checkWhatIf(self, reportId, constraints):
+        """
+        Parameters:
+         - reportId
+         - constraints
+        """
+        self.__require_view()
+        # Only reads: What-If Constraints are never stored.
+        with DBSession(self._Session) as session:
+            if session.get(Report, reportId) is None:
+                raise codechecker_api_shared.ttypes.RequestFailed(
+                    codechecker_api_shared.ttypes.ErrorCode.DATABASE,
+                    f"Report {reportId} not found!")
+            trace = get_report_details(
+                session, [reportId])[reportId].constraintTrace
+
+        return check_what_if(trace, constraints)
 
     def _setReviewStatus(self, session, report_hash, status,
                          message, date=None):

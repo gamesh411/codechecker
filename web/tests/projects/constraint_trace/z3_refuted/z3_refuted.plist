@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>clang_version</key>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 8521dcce025f7b83bfd4f0129fc677fcdae65c3b)</string>
+ <key>diagnostics</key>
+ <array>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>5</integer>
+      <key>col</key><integer>3</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>3</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>8</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>&apos;p&apos; initialized to a null pointer value</string>
+     <key>message</key>
+     <string>&apos;p&apos; initialized to a null pointer value</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>6</integer>
+      <key>col</key><integer>7</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>6</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>6</integer>
+         <key>col</key><integer>17</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Assuming the condition is true</string>
+     <key>message</key>
+     <string>Assuming the condition is true</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>12</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>12</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>7</integer>
+      <key>col</key><integer>12</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>7</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>7</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+     <key>message</key>
+     <string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+    </dict>
+   </array>
+   <key>constraint_trace</key>
+   <dict>
+    <key>version</key><integer>1</integer>
+    <key>steps</key>
+    <array>
+     <dict>
+      <key>path_index</key><integer>0</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>1</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>2</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>3</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>4</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>5</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>6</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+       <dict>
+        <key>name</key><string>x</string>
+        <key>value</key><string>reg_$1&lt;int x&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><true/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>(reg_$1&lt;int x&gt;) * (reg_$1&lt;int x&gt;)</string>
+        <key>range</key><string>{ [-1, -1] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+     </dict>
+    </array>
+   </dict>
+   <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>
+   <key>category</key><string>Logic error</string>
+   <key>type</key><string>Dereference of null pointer</string>
+   <key>check_name</key><string>core.NullDereference</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>bf96dc2a693c8cf04671d58c42bae04d</string>
+  <key>issue_context_kind</key><string>function</string>
+  <key>issue_context</key><string>square_is_minus_one</string>
+  <key>issue_hash_function_offset</key><string>3</string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>7</integer>
+   <key>col</key><integer>12</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  <key>ExecutedLines</key>
+  <dict>
+   <key>0</key>
+   <array>
+    <integer>4</integer>
+    <integer>5</integer>
+    <integer>6</integer>
+    <integer>7</integer>
+   </array>
+  </dict>
+  </dict>
+ </array>
+ <key>files</key>
+ <array>
+  <string>$FILE_PATH$/z3_refuted.c</string>
+ </array>
+</dict>
+</plist>

@@ -14,7 +14,8 @@ import json
 import os
 import unittest
 
-from codechecker_api.python.shared.ttypes import Permission
+from codechecker_api.python.shared.ttypes import ErrorCode, Permission, \
+    RequestFailed
 
 from libtest import codechecker, env
 
@@ -50,6 +51,7 @@ class PermissionManagement(unittest.TestCase):
 
         temp_auth_client = env.setup_auth_client(self._test_workspace,
                                                  session_token='_PROHIBIT')
+        self._temp_auth_client = temp_auth_client
 
         # A non-authenticated session should return an empty user.
         user_name = temp_auth_client.getLoggedInUser()
@@ -248,3 +250,35 @@ class PermissionManagement(unittest.TestCase):
             expected_permission, self._extra_params)
         for group in authorized_names.groups:
             self.assertNotEqual(stored_group_name.lower(), group.lower())
+
+    def __viewer_client_as(self, username, password):
+        session_token = self._temp_auth_client.performLogin(
+            "Username:Password", f"{username}:{password}")
+        return env.setup_viewer_client(self._test_workspace,
+                                       session_token=session_token)
+
+    def test_what_if_needs_only_product_view(self):
+        """
+        checkWhatIf needs PRODUCT_VIEW and nothing more. A missing report
+        tells the two apart: a viewer gets past the permission check to the
+        lookup, a user without permissions on the product does not.
+        """
+        viewer = "permission_view_user"
+        self.assertTrue(self._root_auth_client.addPermission(
+            Permission.PRODUCT_VIEW, viewer, False, self._extra_params))
+        try:
+            client = self.__viewer_client_as(viewer, "pvu")
+            with self.assertRaises(RequestFailed) as viewer_error:
+                client.checkWhatIf(-1, [])
+            self.assertEqual(viewer_error.exception.errorCode,
+                             ErrorCode.DATABASE)
+            self.assertIn("not found", viewer_error.exception.message)
+        finally:
+            self.assertTrue(self._root_auth_client.removePermission(
+                Permission.PRODUCT_VIEW, viewer, False, self._extra_params))
+
+        client = self.__viewer_client_as(viewer, "pvu")
+        with self.assertRaises(RequestFailed) as outsider_error:
+            client.checkWhatIf(-1, [])
+        self.assertEqual(outsider_error.exception.errorCode,
+                         ErrorCode.UNAUTHORIZED)

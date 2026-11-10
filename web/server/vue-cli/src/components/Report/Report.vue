@@ -276,6 +276,7 @@
                     <constraint-snapshot-panel
                       v-fill-height
                       :step="selectedConstraintStep"
+                      :report-id="report.reportId"
                       @close="clearStepSelection"
                     />
                   </v-col>
@@ -550,7 +551,8 @@ const selectedConstraintStep = computed(() => {
       symbolRanges: _control.snapshot.symbol_ranges ?? [],
       variables: _control.snapshot.variables ?? [],
       pathCondition: _control.snapshot.path_condition ?? [],
-      symbolNames: constraintSymbolNames(_control.order)
+      symbolNames: constraintSymbolNames(_control.order),
+      order: _control.order
     };
   }
 
@@ -566,7 +568,8 @@ const selectedConstraintStep = computed(() => {
     symbolRanges: _snapshot?.symbol_ranges ?? [],
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
-    symbolNames: constraintSymbolNames(_snapshot?.order ?? -1)
+    symbolNames: constraintSymbolNames(_snapshot?.order ?? -1),
+    order: _snapshot?.order ?? -1
   };
 });
 const editorCols = computed(() => {

@@ -175,6 +175,29 @@ struct ReportDetails {
   5: optional string constraintTrace, // JSON Constraint Snapshots per Path Step, absent when the report was analyzed without them.
 }
 
+// The result of checking a Bug Path. Every verdict is about this Bug Path
+// only: the bug may still be reachable through a path that was not reported.
+enum PathVerdict {
+  FEASIBLE,   // The recorded constraints are satisfiable together.
+  INFEASIBLE, // They contradict each other.
+  UNKNOWN     // No answer; the result's reason says why.
+}
+
+// A temporary assumption a report reader adds to a Bug Path. It is never
+// stored.
+struct WhatIfConstraint {
+  1: i64    pathStep,   // The `order` of a step in ReportDetails.constraintTrace.
+  2: string expression, // `variable op value`, e.g. `b == 0`, on a variable of that step.
+}
+typedef list<WhatIfConstraint> WhatIfConstraints
+
+struct WhatIfResult {
+  1: PathVerdict     verdict,         // Of the Bug Path with the What-If Constraints.
+  2: optional string reason,          // Why verdict is UNKNOWN.
+  3: PathVerdict     baselineVerdict, // Of the Bug Path without them.
+  4: optional string baselineReason,  // Why baselineVerdict is UNKNOWN.
+}
+
 typedef string AnalyzerType
 
 struct AnalyzerStatistics {
@@ -741,6 +764,14 @@ service codeCheckerDBAccess {
   // PERMISSION: PRODUCT_VIEW
   ReportDetails getReportDetails(1: i64 reportId)
                                  throws (1: shared.RequestFailed requestError),
+
+  // Checks whether the report's Bug Path stays feasible when the given
+  // What-If Constraints are added, and whether it is feasible without them.
+  // Nothing is written to the database.
+  // PERMISSION: PRODUCT_VIEW
+  WhatIfResult checkWhatIf(1: i64               reportId,
+                           2: WhatIfConstraints constraints)
+                           throws (1: shared.RequestFailed requestError),
 
   // get file information, if fileContent is true the content of the source
   // file will be also returned

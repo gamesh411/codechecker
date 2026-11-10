@@ -13,9 +13,11 @@ Colorful Day Clang; they are the contract between the two repositories.
 """
 
 
+import glob
 import json
 import os
 import shutil
+import sqlite3
 import sys
 import unittest
 
@@ -23,7 +25,8 @@ from libtest import codechecker
 from libtest import env
 from libtest import project
 
-from codechecker_api.python.DBAccess_v6.ttypes import ReportFilter, RunFilter
+from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
+    ReportFilter, RunFilter, WhatIfConstraint
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
 
@@ -48,18 +51,20 @@ class TestConstraintTrace(unittest.TestCase):
         codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
         codechecker_cfg.update(server_access)
 
-        for run_name in ['with_snapshots', 'no_snapshots']:
+        for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
+                         'z3_refuted']:
             report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
             shutil.copytree(
                 os.path.join(project.path('constraint_trace'), run_name),
                 report_dir)
 
-            plist = os.path.join(report_dir, 'two_path.plist')
-            with open(plist, 'r+', encoding="utf-8") as plist_file:
-                content = plist_file.read()
-                plist_file.seek(0)
-                plist_file.truncate()
-                plist_file.write(content.replace("$FILE_PATH$", report_dir))
+            for plist in glob.glob(os.path.join(report_dir, '*.plist')):
+                with open(plist, 'r+', encoding="utf-8") as plist_file:
+                    content = plist_file.read()
+                    plist_file.seek(0)
+                    plist_file.truncate()
+                    plist_file.write(
+                        content.replace("$FILE_PATH$", report_dir))
 
             codechecker_cfg['reportdir'] = report_dir
             if codechecker.store(codechecker_cfg, run_name):
@@ -81,7 +86,7 @@ class TestConstraintTrace(unittest.TestCase):
         self._cc_client = env.setup_viewer_client(self._test_workspace)
         self.assertIsNotNone(self._cc_client)
 
-    def _details(self, run_name):
+    def _report_id(self, run_name):
         run_filter = RunFilter(names=[run_name], exactMatch=True)
         run_id = self._cc_client.getRunData(
             run_filter, MAX_QUERY_SIZE, 0, None)[0].runId
@@ -90,7 +95,23 @@ class TestConstraintTrace(unittest.TestCase):
             [run_id], MAX_QUERY_SIZE, 0, [], ReportFilter(), None, False)
         self.assertEqual(len(reports), 1)
 
-        return self._cc_client.getReportDetails(reports[0].reportId)
+        return reports[0].reportId
+
+    def _details(self, run_name):
+        return self._cc_client.getReportDetails(self._report_id(run_name))
+
+    def _event_step(self, run_name, message):
+        """ The `order` of the event Path Step with the given message. """
+        details = self._details(run_name)
+        index = [event.msg for event in details.pathEvents].index(message)
+        return next(step['order']
+                    for step in json.loads(details.constraintTrace)['steps']
+                    if step['kind'] == 'event' and step['index'] == index)
+
+    def _check(self, run_name, *constraints):
+        return self._cc_client.checkWhatIf(
+            self._report_id(run_name),
+            [WhatIfConstraint(step, text) for step, text in constraints])
 
     def test_every_event_carries_symbol_ranges(self):
         """
@@ -133,11 +154,14 @@ class TestConstraintTrace(unittest.TestCase):
         variables = {variable['name']: variable
                      for variable in first_event['variables']}
 
-        # Hand-derived from demo/two-path.c: f's parameters and local.
+        # Hand-derived from demo/two-path.c: f's parameters and local. A
+        # symbol also has its SMT-LIB term, named like the symbol's dump.
         self.assertEqual(variables['a'], {
-            'name': 'a', 'value': 'reg_$1<int a>', 'kind': 'symbol'})
+            'name': 'a', 'value': 'reg_$1<int a>', 'kind': 'symbol',
+            'smt': 'reg_$1', 'smt_signed': True})
         self.assertEqual(variables['b'], {
-            'name': 'b', 'value': 'reg_$2<int b>', 'kind': 'symbol'})
+            'name': 'b', 'value': 'reg_$2<int b>', 'kind': 'symbol',
+            'smt': 'reg_$2', 'smt_signed': True})
         self.assertEqual(variables['p'], {
             'name': 'p', 'value': '0', 'kind': 'integer'})
 
@@ -224,3 +248,129 @@ class TestConstraintTrace(unittest.TestCase):
 
         self.assertIsNone(details.constraintTrace)
         self.assertTrue(details.pathEvents)
+
+    def test_bug_path_is_feasible_without_what_if_constraints(self):
+        """
+        Z3 agrees with the analyzer that the reported Bug Path is possible.
+        """
+        result = self._check('with_snapshots')
+
+        self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+        self.assertIsNone(result.reason)
+        self.assertIsNone(result.baselineReason)
+
+    def test_b_equal_to_zero_makes_this_path_infeasible(self):
+        """
+        The demo's Bug Path assumes `b` is not 0, so `b == 0` rules this path
+        out, while the bug stays reachable through `a`.
+        """
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+
+        result = self._check('with_snapshots', (step, 'b == 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_consistent_constraint_keeps_this_path_feasible(self):
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+
+        for text in ['b == 5', 'b < 0', 'a <= 0']:
+            result = self._check('with_snapshots', (step, text))
+            self.assertEqual(result.verdict, PathVerdict.FEASIBLE, text)
+
+    def test_variable_resolves_to_its_symbol_at_the_step(self):
+        """
+        `a` is constrained to 0 at the first step already, and dead by the
+        last one; a term on it is still checked against that constraint.
+        """
+        first = self._event_step('with_snapshots',
+                                 "Assuming 'a' is equal to 0")
+
+        self.assertEqual(
+            self._check('with_snapshots', (first, 'a > 0')).verdict,
+            PathVerdict.INFEASIBLE)
+        self.assertEqual(
+            self._check('with_snapshots', (first, 'a == 0')).verdict,
+            PathVerdict.FEASIBLE)
+
+    def test_unknown_variable_gives_unknown(self):
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+
+        result = self._check('with_snapshots', (step, 'q == 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('`q`', result.reason)
+        self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_baseline_refuted_by_z3_is_reported_separately(self):
+        """
+        The range-based solver accepted `x * x == -1`, which no 32-bit square
+        satisfies, so this path is infeasible before any What-If Constraint.
+        """
+        self.assertEqual(self._check('z3_refuted').baselineVerdict,
+                         PathVerdict.INFEASIBLE)
+
+        step = self._event_step('z3_refuted', "Assuming the condition is true")
+        result = self._check('z3_refuted', (step, 'x == 3'))
+
+        self.assertEqual(result.baselineVerdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+
+    def test_without_smtlib_check_is_unknown(self):
+        """
+        A Clang without Z3 records readable ranges only, and the check says
+        why it has no answer instead of failing.
+        """
+        details = self._details('no_smtlib')
+        self.assertTrue(json.loads(details.constraintTrace)['steps'])
+
+        step = self._event_step('no_smtlib', "Assuming 'b' is not equal to 0")
+        result = self._check('no_smtlib', (step, 'b == 0'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(result.baselineVerdict, PathVerdict.UNKNOWN)
+        self.assertIn('Clang built with Z3', result.reason)
+        self.assertIn('this path', result.baselineReason)
+
+    def test_without_snapshots_check_is_unknown(self):
+        result = self._check('no_snapshots')
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('this path', result.reason)
+
+    def test_check_writes_nothing_to_the_database(self):
+        """
+        What-If Constraints stay temporary: the product database is the same,
+        row for row, before and after checks of every outcome.
+        """
+        if env.get_postgresql_cfg():
+            self.skipTest("Compares the SQLite product database file.")
+
+        # Where add_test_package_product puts it.
+        database = os.path.join(
+            env.get_workspace(None), 'global_simple_server',
+            os.path.basename(self._test_workspace) + '.sqlite')
+        self.assertTrue(os.path.isfile(database), database)
+
+        def dump():
+            connection = sqlite3.connect(f'file:{database}?mode=ro',
+                                         uri=True)
+            try:
+                return list(connection.iterdump())
+            finally:
+                connection.close()
+
+        before = dump()
+        step = self._event_step('with_snapshots',
+                                "Assuming 'b' is not equal to 0")
+        self._check('with_snapshots', (step, 'b == 0'))
+        self._check('with_snapshots', (step, 'b == 5'))
+        self._check('with_snapshots', (step, 'b = 5'))
+        self._check('z3_refuted')
+        self._check('no_smtlib')
+
+        self.assertEqual(dump(), before)

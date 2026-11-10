@@ -134,14 +134,84 @@
         </p>
       </section>
     </div>
+
+    <section class="panel-what-if px-3 pt-2 pb-3">
+      <h4 class="panel-section-title text-overline">
+        What if
+      </h4>
+      <p class="panel-section-hint text-caption text-medium-emphasis">
+        Assume something at this step and check whether this path survives
+        it.
+      </p>
+
+      <form class="d-flex align-start" @submit.prevent="check">
+        <v-text-field
+          v-model="expression"
+          class="what-if-input"
+          density="compact"
+          variant="outlined"
+          hide-details
+          placeholder="b == 0"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="What-If Constraint at this step"
+        />
+        <v-btn
+          class="what-if-check ml-2"
+          type="submit"
+          color="primary"
+          variant="flat"
+          :loading="checking"
+          :disabled="!expression.trim()"
+        >
+          Check
+        </v-btn>
+      </form>
+
+      <div
+        v-if="result"
+        class="what-if-result mt-2"
+        role="status"
+      >
+        <div
+          v-if="result.baseline"
+          class="what-if-verdict what-if-baseline"
+        >
+          <div class="what-if-verdict-label">
+            Without your constraint: {{ result.baseline.label }}
+          </div>
+          <div class="what-if-verdict-text">
+            {{ result.baseline.text }}
+          </div>
+        </div>
+        <div
+          v-if="result.verdict"
+          class="what-if-verdict"
+          :class="`what-if-${result.verdict.kind}`"
+        >
+          <div class="what-if-verdict-label">
+            {{ result.verdict.label }}
+          </div>
+          <div class="what-if-verdict-text">
+            {{ result.verdict.lead }}
+            <code class="what-if-expression">{{ result.expression }}</code>
+            {{ result.verdict.trail }}
+          </div>
+        </div>
+      </div>
+    </section>
   </v-card>
 </template>
 
 <script setup>
-import { computed, h } from "vue";
+import { computed, h, ref, watch } from "vue";
+
+import { ccService, handleThriftError } from "@cc-api";
+import { PathVerdict, WhatIfConstraint } from "@cc/report-server-types";
 
 const props = defineProps({
-  step: { type: Object, required: true }
+  step: { type: Object, required: true },
+  reportId: { type: Object, required: true }
 });
 
 const emit = defineEmits([ "close" ]);
@@ -177,6 +247,96 @@ const otherSymbols = computed(() => {
   const _named = new Set(props.step.variables.map(variable => variable.value));
   return props.step.symbolRanges.filter(range => !_named.has(range.symbol));
 });
+
+const expression = ref("");
+const checking = ref(false);
+const result = ref(null);
+
+// A verdict belongs to the step it was checked at.
+watch(() => props.step.order, () => { result.value = null; });
+
+const VERDICT_LABELS = {
+  [PathVerdict.FEASIBLE]: "Feasible",
+  [PathVerdict.INFEASIBLE]: "Infeasible",
+  [PathVerdict.UNKNOWN]: "Unknown"
+};
+
+// Every verdict is about this path: the bug may still be reachable through
+// another path the analyzer did not report.
+// The text reads `lead`, the checked expression, then `trail`.
+function describeVerdict(checked, verdict, reason) {
+  const _at = `at ${checked.heading}.`;
+  switch (verdict) {
+  case PathVerdict.FEASIBLE:
+    return {
+      kind: "feasible",
+      lead: "This path stays feasible with",
+      trail: _at
+    };
+  case PathVerdict.INFEASIBLE:
+    return {
+      kind: "infeasible",
+      lead: "This path is infeasible with",
+      trail: `${_at} The bug may still be reachable through another path.`
+    };
+  default:
+    return {
+      kind: "unknown",
+      lead: "No verdict for this path with",
+      trail: `${_at} ${reason}`
+    };
+  }
+}
+
+function describeBaseline(verdict, reason) {
+  if (verdict === PathVerdict.INFEASIBLE) {
+    return "Z3 finds this path infeasible even with nothing added, although " +
+      "the analyzer's own solver accepted it. Your constraint is not what " +
+      "rules it out.";
+  }
+  return `There is no verdict for this path even with nothing added. ${reason}`;
+}
+
+function check() {
+  const _checked = {
+    expression: expression.value.trim(),
+    heading: props.step.heading,
+    order: props.step.order
+  };
+  if (!_checked.expression || checking.value) return;
+
+  checking.value = true;
+  ccService.getClient().checkWhatIf(
+    props.reportId,
+    [ new WhatIfConstraint({
+      pathStep: _checked.order,
+      expression: _checked.expression
+    }) ],
+    handleThriftError(res => {
+      checking.value = false;
+      if (props.step.order !== _checked.order) return;
+
+      const _baselineFeasible = res.baselineVerdict === PathVerdict.FEASIBLE;
+      // The same reason twice says nothing new, e.g. a report without
+      // solver input, so it is shown once as the baseline.
+      const _repeatsBaseline = !_baselineFeasible &&
+        res.verdict === PathVerdict.UNKNOWN &&
+        res.reason === res.baselineReason;
+      result.value = {
+        expression: _checked.expression,
+        baseline: _baselineFeasible ? null : {
+          label: VERDICT_LABELS[res.baselineVerdict],
+          text: describeBaseline(res.baselineVerdict, res.baselineReason)
+        },
+        verdict: _repeatsBaseline ? null : {
+          label: VERDICT_LABELS[res.verdict],
+          ...describeVerdict(_checked, res.verdict, res.reason)
+        }
+      };
+    }, () => {
+      checking.value = false;
+    }));
+}
 
 const accumulatedRows = computed(() =>
   props.step.pathCondition.map(range => ({
@@ -304,6 +464,59 @@ const accumulatedRows = computed(() =>
 
   .panel-empty {
     line-height: 1.35;
+  }
+
+  .panel-what-if {
+    border-top: 2px solid #c6ccd4;
+  }
+
+  .what-if-input input {
+    font-family: monospace;
+    font-size: 0.875rem;
+  }
+
+  .what-if-check {
+    height: 40px;
+  }
+
+  .what-if-verdict {
+    padding: 6px 10px;
+    border-left: 4px solid #9aa3ad;
+    border-radius: 3px;
+    background-color: #f1f3f5;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .what-if-verdict + .what-if-verdict {
+    margin-top: 6px;
+  }
+
+  .what-if-verdict-label {
+    font-weight: 600;
+  }
+
+  .what-if-expression {
+    padding: 0 3px;
+    border-radius: 2px;
+    background-color: rgba(0, 0, 0, 0.06);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .what-if-feasible {
+    border-left-color: #2e7d32;
+    background-color: #edf6ee;
+  }
+
+  .what-if-infeasible {
+    border-left-color: #c62828;
+    background-color: #fbeeee;
+  }
+
+  .what-if-baseline {
+    border-left-color: #b26a00;
+    background-color: #fdf4e3;
   }
 }
 </style>
