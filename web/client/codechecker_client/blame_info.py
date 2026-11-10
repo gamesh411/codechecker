@@ -23,7 +23,11 @@ def __get_tracking_branch(repo: Repo) -> str | None:
     try:
         # If a commit is checked out, accessing the active_branch member will
         # throw an error.
-        return str(repo.active_branch.tracking_branch())
+        tracking_branch = repo.active_branch.tracking_branch()
+        # No upstream is configured: fall back to the commit hash rather than
+        # storing the string "None".
+        if tracking_branch is not None:
+            return str(tracking_branch)
     except Exception:
         pass
 
