@@ -15,15 +15,26 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
     def setUp(self) -> None:
         """ Set up the test. """
         self.analyzer_result = analyzer_result.AnalyzerResult()
+        # The samples need absolute paths written into them, see
+        # make_report_valid(), so the tests must not touch the originals.
+        self.work_dir = tempfile.mkdtemp()
         self.test_files = os.path.join(
-            os.path.dirname(__file__),
+            self.work_dir,
             'pvs_studio_output_test_files'
+        )
+        shutil.copytree(
+            os.path.join(
+                os.path.dirname(__file__),
+                'pvs_studio_output_test_files'
+            ),
+            self.test_files
         )
         self.result_dir = tempfile.mkdtemp()
 
     def tearDown(self) -> None:
         """Clean temporary directory. """
         shutil.rmtree(self.result_dir)
+        shutil.rmtree(self.work_dir)
 
     def test_no_report_output_file(self) -> None:
         """ Test transforming single cpp file. """
@@ -91,15 +102,11 @@ class PvsStudioAnalyzerResultTestCase(unittest.TestCase):
             exp["diagnostics"][0]["issue_hash_content_of_line_in_context"]
         )
 
-    @staticmethod
-    def make_report_valid() -> None:
+    def make_report_valid(self) -> None:
         """ The method sets absolute paths in PVS-Studio report
         and .plist sample. """
 
-        samples_path = os.path.join(
-            os.path.dirname(__file__),
-            "pvs_studio_output_test_files"
-        )
+        samples_path = self.test_files
 
         path_to_file = os.path.join(
             samples_path,
