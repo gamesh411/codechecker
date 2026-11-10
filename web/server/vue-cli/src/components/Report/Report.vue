@@ -1493,6 +1493,13 @@ function truncate(text, length) {
     font-size: initial;
     line-height: initial;
 
+    // The source is read-only, so focus marks nothing a reader can type into.
+    // CodeMirror's default dotted outline traced the editor, which is only as
+    // wide and tall as the code, once a click on a line focused it.
+    .cm-editor.cm-focused {
+      outline: none;
+    }
+
     :deep(.cm-line:hover) {
       background-color: #f5f5f5;
     }
