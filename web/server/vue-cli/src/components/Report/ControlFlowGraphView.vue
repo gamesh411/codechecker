@@ -312,7 +312,9 @@ const selectedRowKey = computed(() => {
 
 // Edges to the next block down are short arrows between the two; every other
 // edge runs in a lane of the left gutter, shorter spans closer to the blocks,
-// so lanes cross as little as possible.
+// so lanes cross as little as possible. Edges into one block from the same
+// side share a lane and join before they enter it, the way many early
+// returns reach the exit, so that the gutter does not grow with their count.
 const routedEdges = computed(() => {
   const _rowOf = new Map(blocks.value.map((block, row) => [ block.id, row ]));
   const _pathEdges = new Set((cfg.value.path_edges ?? [])
@@ -337,21 +339,31 @@ const routedEdges = computed(() => {
     });
   });
 
+  const _groups = new Map();
+  _edges.filter(edge => !edge.fallThrough).forEach(edge => {
+    edge.group = `${edge.to}-${edge.toRow > edge.fromRow ? "down" : "up"}`;
+    const _group = _groups.get(edge.group) ??
+      { low: Infinity, high: -Infinity, edges: [] };
+    _group.low = Math.min(_group.low, edge.fromRow, edge.toRow);
+    _group.high = Math.max(_group.high, edge.fromRow, edge.toRow);
+    _group.edges.push(edge);
+    _groups.set(edge.group, _group);
+  });
+
   const _lanes = [];
-  _edges.filter(edge => !edge.fallThrough)
-    .sort((a, b) =>
-      Math.abs(a.toRow - a.fromRow) - Math.abs(b.toRow - b.fromRow))
-    .forEach(edge => {
-      const _low = Math.min(edge.fromRow, edge.toRow);
-      const _high = Math.max(edge.fromRow, edge.toRow);
+  [ ..._groups.values() ]
+    .sort((a, b) => (a.high - a.low) - (b.high - b.low))
+    .forEach(group => {
       let _lane = _lanes.findIndex(spans =>
-        spans.every(([ low, high ]) => _high < low || _low > high));
+        spans.every(([ low, high ]) => group.high < low || group.low > high));
       if (_lane < 0) {
         _lane = _lanes.length;
         _lanes.push([]);
       }
-      _lanes[_lane].push([ _low, _high ]);
-      edge.lane = _lane;
+      _lanes[_lane].push([ group.low, group.high ]);
+      group.edges.forEach(edge => {
+        edge.lane = _lane;
+      });
     });
 
   return { edges: _edges, laneCount: _lanes.length };
@@ -373,6 +385,8 @@ const drawnEdges = computed(() => {
     slots.set(id, _next + 1);
     return _next;
   };
+  // The edges of one group enter their block at one point.
+  const _entries = new Map();
 
   const _drawn = routedEdges.value.edges.map(edge => {
     const _from = _boxes.get(edge.from);
@@ -395,7 +409,10 @@ const drawnEdges = computed(() => {
 
     const _laneX = _left - 6 - edge.lane * LANE_GAP;
     const _y1 = _from.bottom - 8 - _slot(_outSlots, edge.from) * 6;
-    const _y2 = _to.top + 10 + _slot(_inSlots, edge.to) * 6;
+    if (!_entries.has(edge.group)) {
+      _entries.set(edge.group, _to.top + 10 + _slot(_inSlots, edge.to) * 6);
+    }
+    const _y2 = _entries.get(edge.group);
     return {
       ...edge,
       title: _title,
