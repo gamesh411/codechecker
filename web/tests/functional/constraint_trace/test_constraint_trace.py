@@ -28,6 +28,9 @@ from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
     ReportFilter, RunFilter, WhatIfConstraint
 from codechecker_api.python.DBAccess_v6.constants import MAX_QUERY_SIZE
 
+from codechecker_report_converter.report.constraint_trace import \
+    ConstraintTrace
+
 
 class TestConstraintTrace(unittest.TestCase):
 
@@ -59,7 +62,7 @@ class TestConstraintTrace(unittest.TestCase):
             codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
             for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                             'no_cfgs', 'no_exploded_nodes', 'z3_refuted',
+                             'v1_trace', 'z3_refuted',
                              'concrete_value', 'opaque_call',
                              'several_contexts']:
                 report_dir = os.path.join(
@@ -121,6 +124,18 @@ class TestConstraintTrace(unittest.TestCase):
     def _details(self, run_name):
         return self._cc_client.getReportDetails(self._report_id(run_name))
 
+    @staticmethod
+    def _trace_of(details):
+        """ The stored trace with each step's whole snapshot in the step. """
+        raw = json.loads(details.constraintTrace)
+        trace = ConstraintTrace(raw)
+        return {**raw, 'cfgs': trace.cfgs(),
+                'steps': [{**step, **trace.snapshot(step['exploded_node'])}
+                          for step in raw['steps']]}
+
+    def _trace(self, run_name):
+        return self._trace_of(self._details(run_name))
+
     def _event_step(self, run_name, message):
         """ The `order` of the event Path Step with the given message. """
         details = self._details(run_name)
@@ -136,7 +151,7 @@ class TestConstraintTrace(unittest.TestCase):
 
     def _first_step_constraining(self, run_name, symbol_prefix):
         """ The `order` of the first step whose path condition has it. """
-        trace = json.loads(self._details(run_name).constraintTrace)
+        trace = self._trace(run_name)
         return min(step['order'] for step in trace['steps']
                    if any(entry['symbol'].startswith(symbol_prefix)
                           for entry in step['path_condition']))
@@ -148,8 +163,9 @@ class TestConstraintTrace(unittest.TestCase):
         """
         details = self._details('with_snapshots')
 
-        trace = json.loads(details.constraintTrace)
-        self.assertEqual(trace['version'], 1)
+        raw = json.loads(details.constraintTrace)
+        self.assertEqual(raw['version'], 2)
+        trace = self._trace_of(details)
         event_steps = [step for step in trace['steps']
                        if step['kind'] == 'event']
         self.assertEqual(
@@ -176,7 +192,7 @@ class TestConstraintTrace(unittest.TestCase):
         """
         details = self._details('with_snapshots')
 
-        trace = json.loads(details.constraintTrace)
+        trace = self._trace_of(details)
         first_event = next(step for step in trace['steps']
                            if step['kind'] == 'event')
         variables = {variable['name']: variable
@@ -200,7 +216,7 @@ class TestConstraintTrace(unittest.TestCase):
         """
         details = self._details('with_snapshots')
 
-        trace = json.loads(details.constraintTrace)
+        trace = self._trace_of(details)
         last_step = [step for step in trace['steps']
                      if step['kind'] == 'event'][-1]
 
@@ -217,7 +233,7 @@ class TestConstraintTrace(unittest.TestCase):
         """
         details = self._details('with_snapshots')
 
-        trace = json.loads(details.constraintTrace)
+        trace = self._trace_of(details)
         control_steps = [step for step in trace['steps']
                          if step['kind'] == 'control']
         self.assertTrue(control_steps)
@@ -284,7 +300,7 @@ class TestConstraintTrace(unittest.TestCase):
         """
         details = self._details('with_snapshots')
 
-        trace = json.loads(details.constraintTrace)
+        trace = self._trace_of(details)
         self.assertEqual([cfg['function'] for cfg in trace['cfgs']], ['f'])
         cfg = trace['cfgs'][0]
         blocks = {block['id']: block for block in cfg['blocks']}
@@ -319,18 +335,6 @@ class TestConstraintTrace(unittest.TestCase):
         _, element = element_of("Null pointer value stored to 'p'")
         self.assertEqual((element['text'], element['line']), ('p = 0', 14))
         self.assertNotIn('parent', element)
-
-    def test_report_stored_without_control_flow_graph(self):
-        """
-        A plist from a Clang that predates CFG emission still stores and
-        shows its snapshots, with no graph and no step positions.
-        """
-        trace = json.loads(self._details('no_cfgs').constraintTrace)
-
-        self.assertTrue(trace['steps'])
-        self.assertNotIn('cfgs', trace)
-        self.assertFalse(any('cfg_position' in step
-                             for step in trace['steps']))
 
     def test_exploded_nodes_tell_calling_contexts_apart(self):
         """
@@ -410,18 +414,39 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertTrue(all(event.filePath == trimmed
                             for event in details.pathEvents))
 
-    def test_report_stored_without_exploded_nodes(self):
+    def test_trace_is_stored_one_snapshot_per_node(self):
         """
-        A plist from a Clang that predates exploded node emission still
-        stores its snapshots and graphs, with no nodes and no step links.
+        The stored trace keeps the version 2 encoding: each node's snapshot
+        as the change from the node before it and each string once, so its
+        size grows with the Bug Path, and nothing expands it on the way.
         """
-        trace = json.loads(self._details('no_exploded_nodes').constraintTrace)
+        raw = json.loads(self._details('with_snapshots').constraintTrace)
 
-        self.assertTrue(trace['cfgs'])
-        self.assertNotIn('exploded_nodes', trace)
-        self.assertNotIn('stack_frames', trace)
-        self.assertFalse(any('exploded_node' in step
-                             for step in trace['steps']))
+        self.assertEqual(len(raw['strings']), len(set(raw['strings'])))
+        self.assertTrue(all(set(step) == {'kind', 'index', 'order',
+                                          'exploded_node'}
+                            for step in raw['steps']))
+        # Hand-derived from demo/two-path.c: a == 0 and then b != 0 are
+        # assumed, so the path condition gains one entry at a time.
+        added = [len(node['path_condition'].get('insert', []))
+                 for node in raw['exploded_nodes']
+                 if 'path_condition' in node]
+        self.assertEqual(added, [1, 1])
+        self.assertFalse(any('remove' in node.get('path_condition', {})
+                             for node in raw['exploded_nodes']))
+
+    def test_report_stored_in_an_older_format(self):
+        """
+        A trace from a Clang before version 2 keeps only its version, so the
+        reader is told why there is nothing to show, and nothing is checked.
+        """
+        details = self._details('v1_trace')
+
+        self.assertEqual(json.loads(details.constraintTrace), {'version': 1})
+        self.assertTrue(details.pathEvents)
+        result = self._check('v1_trace', (0, 'a == 0'))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertIn('older format', result.reason)
 
     def test_bug_path_is_feasible_without_what_if_constraints(self):
         """
@@ -500,7 +525,7 @@ class TestConstraintTrace(unittest.TestCase):
         why it has no answer instead of failing.
         """
         details = self._details('no_smtlib')
-        self.assertTrue(json.loads(details.constraintTrace)['steps'])
+        self.assertTrue(self._trace_of(details)['steps'])
 
         step = self._event_step('no_smtlib', "Assuming 'b' is not equal to 0")
         result = self._check('no_smtlib', (step, 'b == 0'))

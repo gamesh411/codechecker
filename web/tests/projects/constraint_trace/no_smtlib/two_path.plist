@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>clang_version</key>
-	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2cc992b87afe2fad4513d408669b2527c6305eff)</string>
+	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2ea8cfaee13f9a0fa346936b4158d87111f4dd63)</string>
 	<key>diagnostics</key>
 	<array>
 		<dict>
@@ -33,435 +33,305 @@
 					<dict>
 						<key>blocks</key>
 						<array>
-							<dict>
-								<key>elements</key>
-								<array/>
-								<key>id</key>
+							<array>
 								<integer>10</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>9</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
-								<array>
-									<dict>
-										<key>line</key>
-										<integer>6</integer>
-										<key>parent</key>
-										<integer>1</integer>
-										<key>text</key>
-										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>6</integer>
-										<key>parent</key>
-										<integer>2</integer>
-										<key>text</key>
-										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>6</integer>
-										<key>text</key>
-										<string>int *p = 0;</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>7</integer>
-										<key>parent</key>
-										<integer>4</integer>
-										<key>text</key>
-										<string>a</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>7</integer>
-										<key>parent</key>
-										<integer>6</integer>
-										<key>text</key>
-										<string>a (ImplicitCastExpr, LValueToRValue, int)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>7</integer>
-										<key>parent</key>
-										<integer>6</integer>
-										<key>text</key>
-										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>7</integer>
-										<key>text</key>
-										<string>a != 0</string>
-									</dict>
-								</array>
-								<key>id</key>
+								<array/>
+							</array>
+							<array>
 								<integer>9</integer>
-								<key>successors</key>
+								<string>if a != 0</string>
 								<array>
 									<integer>8</integer>
 									<integer>7</integer>
 								</array>
-								<key>terminator</key>
-								<string>if a != 0</string>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>8</integer>
-										<key>parent</key>
+									<array>
+										<string>0</string>
+										<integer>6</integer>
 										<integer>1</integer>
-										<key>text</key>
-										<string>x</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>8</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
-										<string>&amp;x</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>8</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
-										<string>p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>8</integer>
-										<key>text</key>
-										<string>p = &amp;x</string>
-									</dict>
+									</array>
+									<array>
+										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+										<integer>6</integer>
+										<integer>2</integer>
+									</array>
+									<array>
+										<string>int *p = 0;</string>
+										<integer>6</integer>
+										<integer>-1</integer>
+									</array>
+									<array>
+										<string>a</string>
+										<integer>7</integer>
+										<integer>4</integer>
+									</array>
+									<array>
+										<string>a (ImplicitCastExpr, LValueToRValue, int)</string>
+										<integer>7</integer>
+										<integer>6</integer>
+									</array>
+									<array>
+										<string>0</string>
+										<integer>7</integer>
+										<integer>6</integer>
+									</array>
+									<array>
+										<string>a != 0</string>
+										<integer>7</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>8</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>7</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>9</integer>
-										<key>parent</key>
+									<array>
+										<string>x</string>
+										<integer>8</integer>
 										<integer>1</integer>
-										<key>text</key>
-										<string>b</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>9</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>&amp;x</string>
+										<integer>8</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>b (ImplicitCastExpr, LValueToRValue, int)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>9</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>p</string>
+										<integer>8</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>9</integer>
-										<key>text</key>
-										<string>b == 0</string>
-									</dict>
+									</array>
+									<array>
+										<string>p = &amp;x</string>
+										<integer>8</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>7</integer>
-								<key>successors</key>
+								<string>if b == 0</string>
 								<array>
 									<integer>6</integer>
 									<integer>5</integer>
 								</array>
-								<key>terminator</key>
-								<string>if b == 0</string>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>10</integer>
-										<key>parent</key>
+									<array>
+										<string>b</string>
+										<integer>9</integer>
 										<integer>1</integer>
-										<key>text</key>
-										<string>x</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>10</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>b (ImplicitCastExpr, LValueToRValue, int)</string>
+										<integer>9</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>&amp;x</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>10</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>0</string>
+										<integer>9</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>10</integer>
-										<key>text</key>
-										<string>p = &amp;x</string>
-									</dict>
+									</array>
+									<array>
+										<string>b == 0</string>
+										<integer>9</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>6</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>5</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>11</integer>
-										<key>parent</key>
+									<array>
+										<string>x</string>
+										<integer>10</integer>
 										<integer>1</integer>
-										<key>text</key>
-										<string>a</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>11</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>&amp;x</string>
+										<integer>10</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>a (ImplicitCastExpr, LValueToRValue, int)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>11</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>p</string>
+										<integer>10</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>11</integer>
-										<key>text</key>
-										<string>a == 0</string>
-									</dict>
+									</array>
+									<array>
+										<string>p = &amp;x</string>
+										<integer>10</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>5</integer>
-								<key>successors</key>
+								<string>if a == 0</string>
 								<array>
 									<integer>4</integer>
 									<integer>3</integer>
 								</array>
-								<key>terminator</key>
-								<string>if a == 0</string>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>12</integer>
-										<key>parent</key>
+									<array>
+										<string>a</string>
+										<integer>11</integer>
 										<integer>1</integer>
-										<key>text</key>
+									</array>
+									<array>
+										<string>a (ImplicitCastExpr, LValueToRValue, int)</string>
+										<integer>11</integer>
+										<integer>3</integer>
+									</array>
+									<array>
 										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>12</integer>
-										<key>parent</key>
+										<integer>11</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>12</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
-										<string>p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>12</integer>
-										<key>text</key>
-										<string>p = 0</string>
-									</dict>
+									</array>
+									<array>
+										<string>a == 0</string>
+										<integer>11</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>4</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>3</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>13</integer>
-										<key>parent</key>
-										<integer>1</integer>
-										<key>text</key>
-										<string>b</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>13</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
-										<string>b (ImplicitCastExpr, LValueToRValue, int)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>13</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
+									<array>
 										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>13</integer>
-										<key>text</key>
-										<string>b != 0</string>
-									</dict>
+										<integer>12</integer>
+										<integer>1</integer>
+									</array>
+									<array>
+										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+										<integer>12</integer>
+										<integer>3</integer>
+									</array>
+									<array>
+										<string>p</string>
+										<integer>12</integer>
+										<integer>3</integer>
+									</array>
+									<array>
+										<string>p = 0</string>
+										<integer>12</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>3</integer>
-								<key>successors</key>
+								<string>if b != 0</string>
 								<array>
 									<integer>2</integer>
 									<integer>1</integer>
 								</array>
-								<key>terminator</key>
-								<string>if b != 0</string>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>14</integer>
-										<key>parent</key>
+									<array>
+										<string>b</string>
+										<integer>13</integer>
 										<integer>1</integer>
-										<key>text</key>
+									</array>
+									<array>
+										<string>b (ImplicitCastExpr, LValueToRValue, int)</string>
+										<integer>13</integer>
+										<integer>3</integer>
+									</array>
+									<array>
 										<string>0</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>14</integer>
-										<key>parent</key>
+										<integer>13</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>14</integer>
-										<key>parent</key>
-										<integer>3</integer>
-										<key>text</key>
-										<string>p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>14</integer>
-										<key>text</key>
-										<string>p = 0</string>
-									</dict>
+									</array>
+									<array>
+										<string>b != 0</string>
+										<integer>13</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>2</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>1</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
 								<array>
-									<dict>
-										<key>line</key>
-										<integer>15</integer>
-										<key>parent</key>
+									<array>
+										<string>0</string>
+										<integer>14</integer>
 										<integer>1</integer>
-										<key>text</key>
-										<string>p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>15</integer>
-										<key>parent</key>
-										<integer>2</integer>
-										<key>text</key>
-										<string>p (ImplicitCastExpr, LValueToRValue, int *)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>15</integer>
-										<key>parent</key>
+									</array>
+									<array>
+										<string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+										<integer>14</integer>
 										<integer>3</integer>
-										<key>text</key>
-										<string>*p</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>15</integer>
-										<key>parent</key>
-										<integer>4</integer>
-										<key>text</key>
-										<string>*p (ImplicitCastExpr, LValueToRValue, int)</string>
-									</dict>
-									<dict>
-										<key>line</key>
-										<integer>15</integer>
-										<key>text</key>
-										<string>return *p;</string>
-									</dict>
+									</array>
+									<array>
+										<string>p</string>
+										<integer>14</integer>
+										<integer>3</integer>
+									</array>
+									<array>
+										<string>p = 0</string>
+										<integer>14</integer>
+										<integer>-1</integer>
+									</array>
 								</array>
-								<key>id</key>
+							</array>
+							<array>
 								<integer>1</integer>
-								<key>successors</key>
+								<string></string>
 								<array>
 									<integer>0</integer>
 								</array>
-							</dict>
-							<dict>
-								<key>elements</key>
-								<array/>
-								<key>id</key>
+								<array>
+									<array>
+										<string>p</string>
+										<integer>15</integer>
+										<integer>1</integer>
+									</array>
+									<array>
+										<string>p (ImplicitCastExpr, LValueToRValue, int *)</string>
+										<integer>15</integer>
+										<integer>2</integer>
+									</array>
+									<array>
+										<string>*p</string>
+										<integer>15</integer>
+										<integer>3</integer>
+									</array>
+									<array>
+										<string>*p (ImplicitCastExpr, LValueToRValue, int)</string>
+										<integer>15</integer>
+										<integer>4</integer>
+									</array>
+									<array>
+										<string>return *p;</string>
+										<integer>15</integer>
+										<integer>-1</integer>
+									</array>
+								</array>
+							</array>
+							<array>
 								<integer>0</integer>
-								<key>successors</key>
+								<string></string>
 								<array/>
-							</dict>
+								<array/>
+							</array>
 						</array>
 						<key>entry</key>
 						<integer>10</integer>
@@ -482,54 +352,35 @@
 						</array>
 						<key>path_edges</key>
 						<array>
-							<dict>
-								<key>from</key>
-								<integer>2</integer>
-								<key>to</key>
-								<integer>1</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>3</integer>
-								<key>to</key>
-								<integer>2</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>4</integer>
-								<key>to</key>
-								<integer>3</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>5</integer>
-								<key>to</key>
-								<integer>4</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>7</integer>
-								<key>to</key>
-								<integer>5</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>9</integer>
-								<key>to</key>
-								<integer>7</integer>
-							</dict>
-							<dict>
-								<key>from</key>
-								<integer>10</integer>
-								<key>to</key>
-								<integer>9</integer>
-							</dict>
+							<integer>2</integer>
+							<integer>1</integer>
+							<integer>3</integer>
+							<integer>2</integer>
+							<integer>4</integer>
+							<integer>3</integer>
+							<integer>5</integer>
+							<integer>4</integer>
+							<integer>7</integer>
+							<integer>5</integer>
+							<integer>9</integer>
+							<integer>7</integer>
+							<integer>10</integer>
+							<integer>9</integer>
 						</array>
 					</dict>
 				</array>
 				<key>exploded_nodes</key>
 				<array>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>9</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>6</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -545,12 +396,73 @@
 							<key>line</key>
 							<integer>7</integer>
 						</dict>
+						<key>path_condition</key>
+						<dict>
+							<key>insert</key>
+							<array>
+								<array>
+									<integer>0</integer>
+									<integer>0</integer>
+									<integer>1</integer>
+								</array>
+							</array>
+						</dict>
 						<key>path_position</key>
 						<integer>15</integer>
 						<key>state_id</key>
 						<integer>700</integer>
+						<key>symbol_ranges</key>
+						<dict>
+							<key>insert</key>
+							<array>
+								<array>
+									<integer>0</integer>
+									<integer>0</integer>
+									<integer>1</integer>
+								</array>
+							</array>
+						</dict>
+						<key>variables</key>
+						<dict>
+							<key>insert</key>
+							<array>
+								<array>
+									<integer>0</integer>
+									<integer>2</integer>
+									<integer>0</integer>
+									<integer>3</integer>
+								</array>
+								<array>
+									<integer>1</integer>
+									<integer>4</integer>
+									<integer>5</integer>
+									<integer>3</integer>
+								</array>
+								<array>
+									<integer>2</integer>
+									<integer>6</integer>
+									<integer>7</integer>
+									<integer>8</integer>
+								</array>
+								<array>
+									<integer>3</integer>
+									<integer>9</integer>
+									<integer>10</integer>
+									<integer>3</integer>
+								</array>
+							</array>
+						</dict>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>7</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -566,12 +478,43 @@
 							<key>line</key>
 							<integer>9</integer>
 						</dict>
+						<key>path_condition</key>
+						<dict>
+							<key>insert</key>
+							<array>
+								<array>
+									<integer>1</integer>
+									<integer>5</integer>
+									<integer>11</integer>
+								</array>
+							</array>
+						</dict>
 						<key>path_position</key>
 						<integer>25</integer>
 						<key>state_id</key>
 						<integer>1111</integer>
+						<key>symbol_ranges</key>
+						<dict>
+							<key>insert</key>
+							<array>
+								<array>
+									<integer>1</integer>
+									<integer>5</integer>
+									<integer>11</integer>
+								</array>
+							</array>
+						</dict>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>5</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -593,6 +536,15 @@
 						<integer>1402</integer>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>5</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>terminator</key>
+							<true/>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -614,6 +566,15 @@
 						<integer>1402</integer>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>4</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -633,8 +594,24 @@
 						<integer>45</integer>
 						<key>state_id</key>
 						<integer>1641</integer>
+						<key>symbol_ranges</key>
+						<dict>
+							<key>remove</key>
+							<array>
+								<integer>0</integer>
+							</array>
+						</dict>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>3</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -656,6 +633,15 @@
 						<integer>1899</integer>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>3</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -677,6 +663,15 @@
 						<integer>1964</integer>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>2</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -696,8 +691,24 @@
 						<integer>65</integer>
 						<key>state_id</key>
 						<integer>2239</integer>
+						<key>symbol_ranges</key>
+						<dict>
+							<key>remove</key>
+							<array>
+								<integer>0</integer>
+							</array>
+						</dict>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>2</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -719,6 +730,15 @@
 						<integer>2239</integer>
 					</dict>
 					<dict>
+						<key>cfg_position</key>
+						<dict>
+							<key>block</key>
+							<integer>1</integer>
+							<key>cfg</key>
+							<integer>0</integer>
+							<key>element</key>
+							<integer>3</integer>
+						</dict>
 						<key>frame</key>
 						<integer>0</integer>
 						<key>id</key>
@@ -750,1169 +770,119 @@
 				<key>steps</key>
 				<array>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>9</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>6</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>0</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>0</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>9</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>6</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>0</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>1</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>9</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>6</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>0</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>2</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>7</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>1</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>3</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>7</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>1</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>4</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>7</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>1</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>5</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>5</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>2</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>6</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>5</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>terminator</key>
-							<true/>
-						</dict>
 						<key>exploded_node</key>
 						<integer>3</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>7</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>4</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>4</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>9</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>3</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>5</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>10</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>3</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>6</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>11</integer>
-						<key>symbol_ranges</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>2</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>8</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>13</integer>
-						<key>symbol_ranges</key>
-						<array/>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>2</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>7</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>14</integer>
-						<key>symbol_ranges</key>
-						<array/>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>1</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>9</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>15</integer>
-						<key>symbol_ranges</key>
-						<array/>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>1</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>9</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>16</integer>
-						<key>symbol_ranges</key>
-						<array/>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 					<dict>
-						<key>cfg_position</key>
-						<dict>
-							<key>block</key>
-							<integer>1</integer>
-							<key>cfg</key>
-							<integer>0</integer>
-							<key>element</key>
-							<integer>3</integer>
-						</dict>
 						<key>exploded_node</key>
 						<integer>9</integer>
-						<key>path_condition</key>
-						<array>
-							<dict>
-								<key>range</key>
-								<string>{ [0, 0] }</string>
-								<key>symbol</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>range</key>
-								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
-								<key>symbol</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-						</array>
 						<key>path_index</key>
 						<integer>17</integer>
-						<key>symbol_ranges</key>
-						<array/>
-						<key>variables</key>
-						<array>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>a</string>
-								<key>value</key>
-								<string>reg_$1&lt;int a&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>b</string>
-								<key>value</key>
-								<string>reg_$2&lt;int b&gt;</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>integer</string>
-								<key>name</key>
-								<string>p</string>
-								<key>value</key>
-								<string>0</string>
-							</dict>
-							<dict>
-								<key>kind</key>
-								<string>symbol</string>
-								<key>name</key>
-								<string>x</string>
-								<key>value</key>
-								<string>reg_$9&lt;int x&gt;</string>
-							</dict>
-						</array>
 					</dict>
 				</array>
+				<key>strings</key>
+				<array>
+					<string>reg_$1&lt;int a&gt;</string>
+					<string>{ [0, 0] }</string>
+					<string>a</string>
+					<string>symbol</string>
+					<string>b</string>
+					<string>reg_$2&lt;int b&gt;</string>
+					<string>p</string>
+					<string>0</string>
+					<string>integer</string>
+					<string>x</string>
+					<string>reg_$9&lt;int x&gt;</string>
+					<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+				</array>
 				<key>version</key>
-				<integer>1</integer>
+				<integer>2</integer>
 			</dict>
 			<key>description</key>
 			<string>Dereference of null pointer (loaded from variable 'p')</string>
