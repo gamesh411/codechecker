@@ -387,6 +387,10 @@ const accumulatedRows = computed(() =>
     background-color: #f4f6f9;
   }
 
+  // A long path shows hundreds of rows, and laying them all out took a third
+  // of a step change at 1205 steps. Rows out of view are skipped until
+  // scrolled to; the sizes are a row's usual content height, kept exact once
+  // seen.
   .panel-row {
     display: grid;
     grid-template-columns: minmax(3.5rem, 26%) minmax(0, 1fr);
@@ -394,10 +398,13 @@ const accumulatedRows = computed(() =>
     padding: 3px 0;
     font-size: 0.8125rem;
     border-bottom: 1px solid #edf0f3;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 38px;
   }
 
   .panel-row-raw {
     grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    contain-intrinsic-size: auto 17px;
   }
 
   .panel-accumulated .panel-row {
