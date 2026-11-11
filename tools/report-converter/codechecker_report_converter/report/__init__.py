@@ -381,11 +381,14 @@ class Report:
 
         self.review_status = review_status
 
-        # Optional Constraint Snapshots per Path Step: {"version": int,
-        # "steps": [{"kind": "event", "index": int, "symbol_ranges": [...]}]},
-        # keyed to `bug_path_events` by "index". Debug data only, so it is left
-        # out of to_json(), equality and the hashes. Every plist round trip
-        # (CodeChecker store rewrites them) must keep this attribute.
+        # Optional Constraint Snapshots: {"version": 2, "steps": [{"kind":
+        # "event", "index": int, "order": int, "exploded_node": int}], ...},
+        # keyed to `bug_path_events` by "index", with each step's snapshot
+        # read through `report.constraint_trace.ConstraintTrace`. A trace of
+        # another version is kept as {"version": int} alone. Debug data only,
+        # so it is left out of to_json(), equality and the hashes. Every plist
+        # round trip (CodeChecker store rewrites them) must keep this
+        # attribute.
         self.constraint_trace = constraint_trace
 
         self.__source_line: str | None = source_line

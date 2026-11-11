@@ -30,6 +30,7 @@ from codechecker_report_converter.report import \
     TRACE_LOCATIONS, UnknownChecker, \
     get_or_create_file, \
     map_trace_locations
+from codechecker_report_converter.report import constraint_trace
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
     BaseParser, get_tool_info
@@ -409,6 +410,22 @@ class Parser(BaseParser):
         if trace is None:
             return None
 
+        # Only the current version can be read. An older trace keeps its
+        # version alone, so that a reader can tell why there is nothing to
+        # show, instead of the report seeming to have been analyzed without
+        # emission.
+        if trace.get('version') != constraint_trace.VERSION:
+            LOG.info("Constraint trace version %s of '%s' is not supported, "
+                     "only its version is kept.", trace.get('version'),
+                     diag.get('check_name'))
+            return {'version': trace.get('version')}
+        try:
+            constraint_trace.ConstraintTrace(trace).check()
+        except constraint_trace.MalformedTrace as ex:
+            LOG.warning("Ignoring malformed constraint trace in '%s': %s",
+                        diag.get('check_name'), ex)
+            return None
+
         event_indices: dict[int, int] = {}
         for path_index, item in enumerate(diag.get('path', [])):
             if item.get('kind') == 'event':
@@ -638,6 +655,10 @@ class Parser(BaseParser):
         A control step addresses the position its edge ends at, which is the
         end of the control point written for it.
         """
+        if 'steps' not in trace:
+            # Only the version of an unsupported trace is kept.
+            return trace
+
         steps = []
         for step in trace['steps']:
             if step['kind'] == 'event':

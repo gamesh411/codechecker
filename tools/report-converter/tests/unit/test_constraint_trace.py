@@ -1,0 +1,125 @@
+# -------------------------------------------------------------------------
+#
+#  Part of the CodeChecker project, under the Apache License v2.0 with
+#  LLVM Exceptions. See LICENSE for license information.
+#  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# -------------------------------------------------------------------------
+
+""" Reading version 2 constraint traces, and keeping them through a plist. """
+
+import unittest
+from copy import deepcopy
+
+from codechecker_report_converter.report import constraint_trace
+
+
+def _range(symbol, value):
+    return {'symbol': symbol, 'range': value}
+
+
+def _variable(name, value, kind='symbol', smt=None, signed=True):
+    variable = {'name': name, 'value': value, 'kind': kind}
+    if smt:
+        variable.update(smt=smt, smt_signed=signed)
+    return variable
+
+
+def make_snapshot(index):
+    """ A long path where one more symbol is narrowed at every node, and a
+    variable changes value now and then. """
+    symbols = [f'reg_${i}<int a{i}>' for i in range(index + 1)]
+    return {
+        'symbol_ranges': [_range(symbols[-1], f'{{ [{index}, {index}] }}')],
+        'variables': [_variable('i', str(index % 3), 'integer'),
+                      _variable(f'a{index}', symbols[-1],
+                                smt=f'reg_${index}')],
+        'path_condition': [_range(s, f'{{ [{i}, {i}] }}')
+                           for i, s in enumerate(symbols)],
+        'smt_declarations': [f'(declare-fun reg_${i} () (_ BitVec 32))'
+                             for i in (index - 1, index) if i >= 0],
+        'smt_assertions': [f'(assert (= reg_${i} #x{i:08x}))'
+                           for i in range(index + 1)],
+        'cfg_position': {'cfg': 0, 'block': index, 'element': 0}}
+
+
+class ConstraintTraceTest(unittest.TestCase):
+
+    def setUp(self):
+        self.snapshots = [make_snapshot(i) for i in range(150)]
+        self.trace = constraint_trace.encode(
+            deepcopy(self.snapshots),
+            [{'path_index': i, 'exploded_node': i} for i in range(150)])
+
+    def test_every_node_reads_back_whole(self):
+        """ Also out of order and across checkpoints. """
+        trace = constraint_trace.ConstraintTrace(self.trace)
+        trace.check()
+        for node in [149, 3, 64, 63, 128, 0, 100]:
+            self.assertEqual(trace.snapshot(node), self.snapshots[node])
+
+    def test_path_condition_is_only_added_to(self):
+        for node in self.trace['exploded_nodes'][1:]:
+            self.assertEqual(set(node['path_condition']), {'insert'})
+            self.assertEqual(len(node['path_condition']['insert']), 1)
+
+    def test_each_string_once(self):
+        strings = self.trace['strings']
+        self.assertEqual(len(strings), len(set(strings)))
+
+    def test_lifetimes_cover_every_node(self):
+        trace = constraint_trace.ConstraintTrace(self.trace)
+        for field in ('variables', 'path_condition', 'smt_declarations'):
+            lifetimes = trace.lifetimes(field)
+            for node, snapshot in enumerate(self.snapshots):
+                live = sorted(
+                    (trace.entry(field, life.entry) for life in lifetimes
+                     if life.start <= node < life.end), key=str)
+                self.assertEqual(live, sorted(snapshot[field], key=str),
+                                 (field, node))
+
+    def test_unordered_lists_are_written_whole(self):
+        """ Entries that change order between nodes still read back. """
+        snapshots = [
+            {'variables': [_variable('a', '1', 'integer'),
+                           _variable('b', '2', 'integer')]},
+            {'variables': [_variable('b', '2', 'integer'),
+                           _variable('a', '1', 'integer')]}]
+        trace = constraint_trace.ConstraintTrace(constraint_trace.encode(
+            snapshots, []))
+        self.assertEqual(trace.snapshot(1)['variables'],
+                         snapshots[1]['variables'])
+
+    def test_bad_traces_are_rejected(self):
+        with self.assertRaises(constraint_trace.MalformedTrace):
+            constraint_trace.ConstraintTrace({'version': 1, 'steps': []})
+        bad_string = deepcopy(self.trace)
+        bad_string['exploded_nodes'][0]['variables']['insert'][0][1] = 10 ** 6
+        bad_node = deepcopy(self.trace)
+        bad_node['steps'][0]['exploded_node'] = 150
+        bad_position = deepcopy(self.trace)
+        bad_position['exploded_nodes'][5]['path_condition']['insert'][0][0] \
+            = 99
+        for trace in (bad_string, bad_node, bad_position):
+            with self.assertRaises(constraint_trace.MalformedTrace):
+                constraint_trace.ConstraintTrace(trace).check()
+
+    def test_cfgs_read_back_as_dicts(self):
+        trace = constraint_trace.ConstraintTrace({
+            **self.trace,
+            'cfgs': [{'function': 'f', 'entry': 2, 'exit': 0,
+                      'blocks': [[2, '', [1], []],
+                                 [1, 'if a', [0, -1],
+                                  [['a', 3, -1], ['a (cast)', 3, 0]]],
+                                 [0, '', [], []]],
+                      'path_blocks': [1, 2], 'path_edges': [2, 1, 1, 0]}]})
+        self.assertEqual(trace.cfgs(), [{
+            'function': 'f', 'entry': 2, 'exit': 0,
+            'blocks': [
+                {'id': 2, 'elements': [], 'successors': [1]},
+                {'id': 1, 'successors': [0, -1], 'terminator': 'if a',
+                 'elements': [{'text': 'a', 'line': 3},
+                              {'text': 'a (cast)', 'line': 3, 'parent': 0}]},
+                {'id': 0, 'elements': [], 'successors': []}],
+            'path_blocks': [1, 2],
+            'path_edges': [{'from': 2, 'to': 1}, {'from': 1, 'to': 0}]}])

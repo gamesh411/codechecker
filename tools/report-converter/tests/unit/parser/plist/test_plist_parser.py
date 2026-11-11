@@ -33,7 +33,7 @@ import unittest
 from copy import deepcopy
 
 from codechecker_report_converter.report import BugPathEvent, \
-    BugPathPosition, File, Range, Report, report_file
+    BugPathPosition, File, Range, Report, constraint_trace, report_file
 from codechecker_report_converter.report.parser import plist
 from codechecker_report_converter.report.reports import \
     get_mentioned_original_files
@@ -306,7 +306,8 @@ class PlistParserTestCase(unittest.TestCase):
         only_in_trace = os.path.join(gen_plist_dir_path, 'only_in_trace.c')
         report = deepcopy(div_zero_skel)
         report.constraint_trace = {
-            'version': 1,
+            'version': 2,
+            'strings': [],
             'steps': [{'kind': 'event', 'index': 0, 'order': 0,
                        'exploded_node': 0}],
             'exploded_nodes': [
@@ -341,3 +342,39 @@ class PlistParserTestCase(unittest.TestCase):
                          report.constraint_trace['exploded_nodes'])
         self.assertEqual(parsed.constraint_trace['stack_frames'],
                          report.constraint_trace['stack_frames'])
+
+    def _round_trip_trace(self, trace):
+        report = deepcopy(div_zero_skel)
+        report.constraint_trace = trace
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_path = os.path.join(tmp_dir, 'trace.plist')
+            parser = plist.Parser()
+            parser.write(parser.convert([report]), plist_path)
+            parsed, = report_file.get_reports(plist_path)
+        return parsed.constraint_trace
+
+    def test_trace_is_stored_as_written(self):
+        """ The deltas of a version 2 trace are kept, not expanded. """
+        snapshot = {'symbol_ranges': [{'symbol': 'reg_$0<int a>',
+                                       'range': '{ [0, 0] }'}],
+                    'variables': [{'name': 'a', 'value': 'reg_$0<int a>',
+                                   'kind': 'symbol'}],
+                    'path_condition': [{'symbol': 'reg_$0<int a>',
+                                        'range': '{ [0, 0] }'}]}
+        trace = constraint_trace.encode(
+            [snapshot, {**snapshot, 'symbol_ranges': []}],
+            [{'kind': 'event', 'index': 0, 'order': 0, 'exploded_node': 1}])
+        self.assertEqual(self._round_trip_trace(deepcopy(trace)), trace)
+
+    def test_older_trace_keeps_only_its_version(self):
+        old = {'version': 1, 'steps': [
+            {'kind': 'event', 'index': 0, 'order': 0, 'symbol_ranges': []}]}
+        self.assertEqual(self._round_trip_trace(old), {'version': 1})
+        self.assertEqual(self._round_trip_trace({'version': 1}),
+                         {'version': 1})
+
+    def test_malformed_trace_is_dropped(self):
+        trace = constraint_trace.encode(
+            [{'symbol_ranges': []}],
+            [{'kind': 'event', 'index': 0, 'order': 0, 'exploded_node': 3}])
+        self.assertIsNone(self._round_trip_trace(trace))
