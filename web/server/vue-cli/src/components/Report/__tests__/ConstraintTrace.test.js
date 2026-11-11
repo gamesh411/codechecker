@@ -1,5 +1,5 @@
 import {
-  ConstraintTrace, readConstraintTrace
+  ConstraintTrace, compareNames, readConstraintTrace
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -112,5 +112,12 @@ describe("ConstraintTrace", () => {
     expect(readConstraintTrace(JSON.stringify({ version: 2 }))).toBe(null);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe("compareNames", () => {
+  it("orders the numbers in names by value", () => {
+    expect([ "a100", "a10", "b", "a2", "a1", "a0" ].sort(compareNames))
+      .toEqual([ "a0", "a1", "a2", "a10", "a100", "b" ]);
   });
 });

@@ -229,6 +229,7 @@ import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
+import { compareNames } from "./ConstraintTrace";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
@@ -292,16 +293,18 @@ const knownRanges = computed(() =>
 );
 
 const variableRows = computed(() =>
-  props.step.variables.map(variable => {
-    const _isSymbol = variable.kind === "symbol";
-    return {
-      name: variable.name,
-      range: _isSymbol ? knownRanges.value.get(variable.value) : undefined,
-      display: _isSymbol ? "no known range" : variable.value,
-      symbol: _isSymbol ? variable.value : null,
-      muted: _isSymbol && !knownRanges.value.has(variable.value)
-    };
-  })
+  [ ...props.step.variables ]
+    .sort((a, b) => compareNames(a.name, b.name))
+    .map(variable => {
+      const _isSymbol = variable.kind === "symbol";
+      return {
+        name: variable.name,
+        range: _isSymbol ? knownRanges.value.get(variable.value) : undefined,
+        display: _isSymbol ? "no known range" : variable.value,
+        symbol: _isSymbol ? variable.value : null,
+        muted: _isSymbol && !knownRanges.value.has(variable.value)
+      };
+    })
 );
 
 const otherSymbols = computed(() => {

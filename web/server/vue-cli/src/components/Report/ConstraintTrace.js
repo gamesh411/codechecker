@@ -250,6 +250,14 @@ export class ConstraintTrace {
   }
 }
 
+const NAME_COLLATOR = new Intl.Collator("en", { numeric: true });
+
+// Orders variable names as a reader counts, a2 before a10, and the same in
+// every browser locale.
+export function compareNames(a, b) {
+  return NAME_COLLATOR.compare(a, b);
+}
+
 // A CFG with blocks and elements as objects, as the graph view reads them.
 function expandCfg(cfg) {
   const _edges = cfg.path_edges ?? [];

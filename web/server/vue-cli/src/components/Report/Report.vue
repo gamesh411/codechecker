@@ -422,7 +422,11 @@ import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
 import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
-import { ConstraintTrace, readConstraintTrace } from "./ConstraintTrace";
+import {
+  ConstraintTrace,
+  compareNames,
+  readConstraintTrace
+} from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
 import PathStepPicker from "./PathStepPicker";
@@ -1109,7 +1113,7 @@ function describePickerSteps(steps) {
   const _names = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ]
     .filter(name =>
       new Set(_values.map(values => values.get(name))).size > 1)
-    .sort();
+    .sort(compareNames);
 
   return steps.map((step, index) => ({
     ...step,
