@@ -359,6 +359,7 @@ import {
   onUnmounted,
   ref,
   render,
+  shallowRef,
   watch
 } from "vue";
 
@@ -457,9 +458,11 @@ const showComments = ref(false);
 const commentCols = ref(3);
 const showConstraints = ref(false);
 const constraintCols = ref(4);
-const constraintTrace = ref(null);
+// A trace can hold tens of megabytes of snapshots that never change once
+// loaded, so it and the steps built from it stay out of deep reactivity.
+const constraintTrace = shallowRef(null);
 const pathStepsById = ref(new Map());
-const constraintPathSteps = ref([]);
+const constraintPathSteps = shallowRef([]);
 const selectedStepId = ref(null);
 const selectedControlIndex = ref(null);
 const stepPicker = ref({
@@ -1079,9 +1082,18 @@ function revealPathStep(step) {
   }
 }
 
+// Every line, graph and state choice compares snapshots, which grow with the
+// path, so each snapshot's key is computed once.
+const snapshotKeys = new WeakMap();
+
 function snapshotKey(step) {
-  const { symbol_ranges, variables, path_condition } = step.snapshot;
-  return JSON.stringify([ symbol_ranges, variables, path_condition ]);
+  let _key = snapshotKeys.get(step.snapshot);
+  if (_key === undefined) {
+    const { symbol_ranges, variables, path_condition } = step.snapshot;
+    _key = JSON.stringify([ symbol_ranges, variables, path_condition ]);
+    snapshotKeys.set(step.snapshot, _key);
+  }
+  return _key;
 }
 
 // Picker rows are told apart by the values that actually differ between them,
