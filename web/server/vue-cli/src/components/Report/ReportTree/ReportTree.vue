@@ -93,6 +93,38 @@ watch(() => props.reviewStatus, function() {
   }
 });
 
+// Activating an item re-renders every item of the tree, which takes about
+// 200 ms on a path of 400 steps. Done after the next paint, so the source
+// view and the constraint panel show the step first, and only the last of
+// several quick selections is applied.
+let pendingActivation = null;
+
+// Shows the item of the step selected in the source view, or none for null.
+// A method, not a prop: a changed prop would re-render the whole tree at once.
+function activateItem(id) {
+  if (pendingActivation === null) {
+    requestAnimationFrame(() => setTimeout(applyActivation));
+  }
+  pendingActivation = { id };
+}
+
+defineExpose({ activateItem });
+
+function applyActivation() {
+  const { id } = pendingActivation;
+  pendingActivation = null;
+  if ((activeItems.value[0]?.id ?? null) === id) return;
+
+  const _item = id === null ? null : findItem(items.value, id);
+  activeItems.value = _item ? [ _item ] : [];
+  if (!_item) return;
+
+  nextTick(() => {
+    document.querySelector(`[data-id='${id}']`)
+      ?.scrollIntoView({ block: "nearest" });
+  });
+}
+
 onMounted(function() {
   if (props.report) {
     fetchReports();
@@ -208,6 +240,15 @@ function fetchReports() {
 
       removeEmptyRootElements();
     }));
+}
+
+function findItem(nodes, id) {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const _found = node.children && findItem(node.children, id);
+    if (_found) return _found;
+  }
+  return null;
 }
 
 function getChildren(item) {

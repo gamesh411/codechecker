@@ -80,6 +80,7 @@
         >
           <v-col>
             <report-tree
+              ref="reportTreeView"
               v-fill-height
               :report="report"
               :review-status="reviewStatus"
@@ -93,6 +94,7 @@
     <pane>
       <Report
         :tree-item="treeItem"
+        @select-step="reportTreeView.activateItem($event)"
         @toggle:comments="showComments = !showComments"
         @update:report="loadReport"
         @update-review-data="updateReviewData"
@@ -129,6 +131,7 @@ const store = useStore();
 
 const report = ref(null);
 const treeItem = ref(null);
+const reportTreeView = ref(null);
 const showComments = ref(true);
 const reportNotFound = ref(false);
 const reviewStatus = ref(null);
@@ -239,7 +242,9 @@ function onReportTreeClick(item) {
     updateUrl();
   }
 
-  treeItem.value = item;
+  // A new object each time, so that clicking the item of a step selected
+  // since, in the source, still navigates to it.
+  treeItem.value = { ...item };
 }
 
 function updateReviewData(newReviewData, reportId) {

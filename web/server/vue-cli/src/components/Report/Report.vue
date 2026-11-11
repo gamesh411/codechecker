@@ -441,6 +441,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+  "select-step",
   "update-review-data",
   "update:report"
 ]);
@@ -939,10 +940,12 @@ function highlightReportStep(stepId) {
   highlightCurrentBubble(stepId);
 }
 
+// The report tree shows the same step, whichever way it was selected.
 function selectEventStep(stepId) {
   selectedControlIndex.value = null;
   selectedStepId.value = stepId;
   highlightReportStep(stepId);
+  emit("select-step", stepId);
 }
 
 function clearStepSelection() {
@@ -958,6 +961,8 @@ function selectPathStep(step) {
     selectedStepId.value = null;
     selectedControlIndex.value = step.positionIndex;
     highlightCurrentBubble(null);
+    // An arrow has no item in the tree.
+    emit("select-step", null);
   }
 }
 
