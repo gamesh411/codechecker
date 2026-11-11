@@ -52,8 +52,9 @@ class TestConstraintTrace(unittest.TestCase):
         codechecker_cfg.update(server_access)
 
         for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                         'no_cfgs', 'z3_refuted', 'concrete_value',
-                         'opaque_call']:
+                         'no_cfgs', 'no_exploded_nodes', 'z3_refuted',
+                         'concrete_value', 'opaque_call',
+                         'several_contexts']:
             report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
             shutil.copytree(
                 os.path.join(project.path('constraint_trace'), run_name),
@@ -310,6 +311,76 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertTrue(trace['steps'])
         self.assertNotIn('cfgs', trace)
         self.assertFalse(any('cfg_position' in step
+                             for step in trace['steps']))
+
+    def test_exploded_nodes_tell_calling_contexts_apart(self):
+        """
+        Each Path Step names the analyzer node it came from, with that node's
+        stack of call sites and location, so one statement reached through
+        two calls reads as two states. Locations name their file by path,
+        since the plist's file indices do not survive storage.
+        """
+        details = self._details('several_contexts')
+        trace = json.loads(details.constraintTrace)
+        nodes = trace['exploded_nodes']
+        frames = trace['stack_frames']
+
+        self.assertEqual(
+            [node['path_position'] for node in nodes],
+            sorted(node['path_position'] for node in nodes))
+        self.assertTrue(all(0 <= step['exploded_node'] < len(nodes)
+                            for step in trace['steps']))
+
+        def node_of(message, occurrence):
+            indices = [i for i, event in enumerate(details.pathEvents)
+                       if event.msg == message]
+            step = next(step for step in trace['steps']
+                        if step['kind'] == 'event' and
+                        step['index'] == indices[occurrence])
+            return nodes[step['exploded_node']]
+
+        def stack_of(node):
+            stack = []
+            index = node['frame']
+            while index is not None:
+                frame = frames[index]
+                call_site = frame.get('call_site')
+                stack.append((frame['function'],
+                              call_site and call_site['line']))
+                index = frame.get('parent')
+            return stack
+
+        # Hand-derived from demo/several-contexts.c: `take` is called on
+        # lines 13 and 14, and both calls assume on `if (flag)`, line 5.
+        first = node_of("Assuming 'flag' is not equal to 0", 0)
+        second = node_of("Assuming 'flag' is 0", 0)
+        self.assertEqual(first['location']['line'], 5)
+        self.assertEqual(second['location']['line'], 5)
+        self.assertTrue(first['location']['file'].endswith(
+            os.path.join('several_contexts', 'several_contexts.c')))
+        self.assertEqual(stack_of(first),
+                         [('take', 13), ('several_contexts', None)])
+        self.assertEqual(stack_of(second),
+                         [('take', 14), ('several_contexts', None)])
+        self.assertTrue(frames[first['frame']]['call_site']['file'].endswith(
+            'several_contexts.c'))
+
+        # A call's two events share the call's node, in the caller.
+        self.assertEqual(node_of("Calling 'take'", 1),
+                         node_of("Entered call from 'several_contexts'", 1))
+        self.assertEqual(node_of("Calling 'take'", 1)['kind'], 'CallEnter')
+
+    def test_report_stored_without_exploded_nodes(self):
+        """
+        A plist from a Clang that predates exploded node emission still
+        stores its snapshots and graphs, with no nodes and no step links.
+        """
+        trace = json.loads(self._details('no_exploded_nodes').constraintTrace)
+
+        self.assertTrue(trace['cfgs'])
+        self.assertNotIn('exploded_nodes', trace)
+        self.assertNotIn('stack_frames', trace)
+        self.assertFalse(any('exploded_node' in step
                              for step in trace['steps']))
 
     def test_bug_path_is_feasible_without_what_if_constraints(self):

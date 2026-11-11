@@ -268,6 +268,19 @@
                       @close="cfgView.open = false"
                     />
 
+                    <exploded-graph-view
+                      v-if="showConstraints && hasExplodedNodes &&
+                        statesView.open"
+                      class="cfg-side-view"
+                      :nodes="constraintTrace.exploded_nodes"
+                      :frames="constraintTrace.stack_frames ?? []"
+                      :steps="constraintPathSteps"
+                      :selected-order="selectedConstraintStep?.order ?? null"
+                      :one-choice-per-snapshot="oneChoicePerSnapshot"
+                      @select="selectStateSteps"
+                      @close="statesView.open = false"
+                    />
+
                     <v-row
                       v-fill-height
                       :class="[
@@ -293,9 +306,11 @@
                       :what-if="whatIf"
                       :resolve-step="displayedStep"
                       :can-show-graph="hasControlFlowGraphs"
+                      :can-show-states="hasExplodedNodes"
                       @close="clearStepSelection"
                       @select-step="selectStepByOrder"
                       @open-graph="openGraphAt(selectedConstraintStep.order)"
+                      @open-states="openStates"
                     />
                   </v-col>
                 </v-row>
@@ -308,8 +323,10 @@
                   :can-show-graph="stepPicker.fromLine &&
                     hasControlFlowGraphs &&
                     stepPicker.steps.some(step => step.snapshot.cfg_position)"
+                  :can-show-states="stepPicker.fromLine && hasExplodedNodes"
                   @select="selectPickedStep"
                   @open-graph="openGraphAt(stepPicker.steps[0].order)"
+                  @open-states="openStates"
                 />
               </v-container>
             </v-col>
@@ -405,6 +422,7 @@ import SelectSameReport from "./SelectSameReport";
 
 import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import ControlFlowGraphView from "./ControlFlowGraphView";
+import ExplodedGraphView from "./ExplodedGraphView";
 import PathStepPicker from "./PathStepPicker";
 import ReportStepMessage from "./ReportStepMessage";
 
@@ -447,6 +465,7 @@ const stepPicker = ref({
   open: false, target: null, title: "", steps: [], fromLine: false
 });
 const cfgView = ref({ open: false, cfgIndex: 0 });
+const statesView = ref({ open: false });
 const lineSelectionHint = ref(null);
 const loading = ref(true);
 const bus = mitt();
@@ -557,6 +576,10 @@ const hasConstraintTrace = computed(() =>
 // Traces from a Clang before the CFG side view have no graphs.
 const hasControlFlowGraphs = computed(() =>
   (constraintTrace.value?.cfgs?.length ?? 0) > 0
+);
+// Nor exploded graph nodes, which came after the graphs.
+const hasExplodedNodes = computed(() =>
+  (constraintTrace.value?.exploded_nodes?.length ?? 0) > 0
 );
 const constraintToggleHint = computed(() =>
   hasConstraintTrace.value
@@ -674,6 +697,7 @@ watch(report, () => {
 watch(() => report.value?.reportId?.toString(), whatIf.reset);
 watch(() => report.value?.reportId?.toString(), () => {
   cfgView.value = { open: false, cfgIndex: 0 };
+  statesView.value = { open: false };
 });
 
 watch(
@@ -978,15 +1002,34 @@ function selectGraphSteps(choices, event) {
   }
 }
 
-// Opens the graph of the function the step at `order` is in.
+// Opens the graph of the function the step at `order` is in. The side views
+// take the same place, so one opening closes the other.
 function openGraphAt(order) {
   const _position = constraintPathSteps.value
     .find(step => step.order === order)?.snapshot.cfg_position;
   stepPicker.value.open = false;
+  statesView.value.open = false;
   cfgView.value = {
     open: true,
     cfgIndex: _position?.cfg ?? cfgView.value.cfgIndex
   };
+}
+
+function openStates() {
+  stepPicker.value.open = false;
+  cfgView.value.open = false;
+  statesView.value.open = true;
+}
+
+// The choices of an analyzer state, each one as a line offers it.
+function selectStateSteps(choices, event) {
+  if (choices.length === 1) {
+    revealPathStep(choices[0]);
+  } else {
+    const _node = constraintTrace.value.exploded_nodes[
+      choices[0].snapshot.exploded_node];
+    openStepPicker(choices, event, `State #${_node.id}`, false);
+  }
 }
 
 function pathStepsOnLine(line, fileId = sourceFile.value?.fileId) {

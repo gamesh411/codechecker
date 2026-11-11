@@ -1,0 +1,1982 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+ <key>clang_version</key>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2cc992b87afe2fad4513d408669b2527c6305eff)</string>
+ <key>diagnostics</key>
+ <array>
+  <dict>
+   <key>path</key>
+   <array>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>13</integer>
+      <key>col</key><integer>3</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>3</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Calling &apos;take&apos;</string>
+     <key>message</key>
+     <string>Calling &apos;take&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>4</integer>
+      <key>col</key><integer>1</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Entered call from &apos;several_contexts&apos;</string>
+     <key>message</key>
+     <string>Entered call from &apos;several_contexts&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>4</integer>
+           <key>col</key><integer>1</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>4</integer>
+           <key>col</key><integer>6</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>5</integer>
+      <key>col</key><integer>7</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Assuming &apos;flag&apos; is not equal to 0</string>
+     <key>message</key>
+     <string>Assuming &apos;flag&apos; is not equal to 0</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>6</integer>
+      <key>col</key><integer>5</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>6</integer>
+         <key>col</key><integer>5</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>6</integer>
+         <key>col</key><integer>11</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Null pointer value stored to &apos;p&apos;</string>
+     <key>message</key>
+     <string>Null pointer value stored to &apos;p&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>6</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>5</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>7</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>13</integer>
+      <key>col</key><integer>3</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>3</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>13</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Returning from &apos;take&apos;</string>
+     <key>message</key>
+     <string>Returning from &apos;take&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>13</integer>
+           <key>col</key><integer>6</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>14</integer>
+           <key>col</key><integer>13</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>14</integer>
+      <key>col</key><integer>10</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>14</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>14</integer>
+         <key>col</key><integer>20</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>0</integer>
+     <key>extended_message</key>
+     <string>Calling &apos;take&apos;</string>
+     <key>message</key>
+     <string>Calling &apos;take&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>4</integer>
+      <key>col</key><integer>1</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Entered call from &apos;several_contexts&apos;</string>
+     <key>message</key>
+     <string>Entered call from &apos;several_contexts&apos;</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>4</integer>
+           <key>col</key><integer>1</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>4</integer>
+           <key>col</key><integer>6</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>4</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>5</integer>
+      <key>col</key><integer>7</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>7</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>5</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Assuming &apos;flag&apos; is 0</string>
+     <key>message</key>
+     <string>Assuming &apos;flag&apos; is 0</string>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>7</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>5</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>control</string>
+     <key>edges</key>
+      <array>
+       <dict>
+        <key>start</key>
+         <array>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>3</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>8</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+        <key>end</key>
+         <array>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+          <dict>
+           <key>line</key><integer>9</integer>
+           <key>col</key><integer>10</integer>
+           <key>file</key><integer>0</integer>
+          </dict>
+         </array>
+       </dict>
+      </array>
+    </dict>
+    <dict>
+     <key>kind</key><string>event</string>
+     <key>location</key>
+     <dict>
+      <key>line</key><integer>9</integer>
+      <key>col</key><integer>10</integer>
+      <key>file</key><integer>0</integer>
+     </dict>
+     <key>ranges</key>
+     <array>
+       <array>
+        <dict>
+         <key>line</key><integer>9</integer>
+         <key>col</key><integer>10</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+        <dict>
+         <key>line</key><integer>9</integer>
+         <key>col</key><integer>13</integer>
+         <key>file</key><integer>0</integer>
+        </dict>
+       </array>
+     </array>
+     <key>depth</key><integer>1</integer>
+     <key>extended_message</key>
+     <string>Dereference of null pointer</string>
+     <key>message</key>
+     <string>Dereference of null pointer</string>
+    </dict>
+   </array>
+   <key>constraint_trace</key>
+   <dict>
+    <key>version</key><integer>1</integer>
+    <key>steps</key>
+    <array>
+     <dict>
+      <key>path_index</key><integer>0</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>reg_$1&lt;int * p&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
+      <key>exploded_node</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>1</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>reg_$1&lt;int * p&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$1</string>
+        <key>smt_signed</key><false/>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$1 () (_ BitVec 64))</string>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
+      <key>exploded_node</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>2</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>3</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>4</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>5</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>5</integer>
+      </dict>
+      <key>exploded_node</key><integer>3</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>6</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>5</integer>
+      </dict>
+      <key>exploded_node</key><integer>2</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>7</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>7</integer>
+      </dict>
+      <key>exploded_node</key><integer>4</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>8</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
+      <key>exploded_node</key><integer>5</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>9</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>13</integer>
+      </dict>
+      <key>exploded_node</key><integer>6</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>10</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>13</integer>
+      </dict>
+      <key>exploded_node</key><integer>6</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>11</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>13</integer>
+      </dict>
+      <key>exploded_node</key><integer>6</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>12</integer>
+      <key>symbol_ranges</key>
+      <array>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>a</string>
+        <key>value</key><string>reg_$2&lt;int a&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$2</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>b</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>p</string>
+        <key>value</key><string>0</string>
+        <key>kind</key><string>integer</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>13</integer>
+      </dict>
+      <key>exploded_node</key><integer>6</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>13</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>7</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>14</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>7</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>15</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>flag</string>
+        <key>value</key><string>reg_$3&lt;int b&gt;</string>
+        <key>kind</key><string>symbol</string>
+        <key>smt</key><string>reg_$3</string>
+        <key>smt_signed</key><true/>
+       </dict>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>3</integer>
+       <key>terminator</key><true/>
+      </dict>
+      <key>exploded_node</key><integer>7</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>16</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>5</integer>
+      </dict>
+      <key>exploded_node</key><integer>8</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>17</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>5</integer>
+      </dict>
+      <key>exploded_node</key><integer>8</integer>
+     </dict>
+     <dict>
+      <key>path_index</key><integer>18</integer>
+      <key>symbol_ranges</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>variables</key>
+      <array>
+       <dict>
+        <key>name</key><string>pp</string>
+        <key>value</key><string>&amp;p</string>
+        <key>kind</key><string>address</string>
+       </dict>
+      </array>
+      <key>path_condition</key>
+      <array>
+       <dict>
+        <key>symbol</key><string>reg_$2&lt;int a&gt;</string>
+        <key>range</key><string>{ [-2147483648, -1], [1, 2147483647] }</string>
+       </dict>
+       <dict>
+        <key>symbol</key><string>reg_$3&lt;int b&gt;</string>
+        <key>range</key><string>{ [0, 0] }</string>
+       </dict>
+      </array>
+      <key>smt_declarations</key>
+      <array>
+       <string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+       <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
+      </array>
+      <key>smt_assertions</key>
+      <array>
+       <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+       <string>(assert (= reg_$3 #x00000000))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>1</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>5</integer>
+      </dict>
+      <key>exploded_node</key><integer>8</integer>
+     </dict>
+    </array>
+    <key>cfgs</key>
+    <array>
+     <dict>
+      <key>function</key><string>several_contexts</string>
+      <key>entry</key><integer>2</integer>
+      <key>exit</key><integer>0</integer>
+      <key>blocks</key>
+      <array>
+       <dict>
+        <key>id</key><integer>2</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>1</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>1</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>take</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>&amp;p</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>5</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>take(&amp;p, a)</string>
+          <key>line</key><integer>13</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>take</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>8</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>13</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>10</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>&amp;p</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>13</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>12</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>13</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>take(&amp;p, b)</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>14</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return take(&amp;p, b);</string>
+          <key>line</key><integer>14</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>0</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+        </array>
+       </dict>
+      </array>
+      <key>path_blocks</key>
+      <array>
+       <integer>1</integer>
+       <integer>2</integer>
+      </array>
+      <key>path_edges</key>
+      <array>
+       <dict>
+        <key>from</key><integer>2</integer>
+        <key>to</key><integer>1</integer>
+       </dict>
+      </array>
+     </dict>
+     <dict>
+      <key>function</key><string>take</string>
+      <key>entry</key><integer>4</integer>
+      <key>exit</key><integer>0</integer>
+      <key>blocks</key>
+      <array>
+       <dict>
+        <key>id</key><integer>4</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>3</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>3</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>flag</string>
+          <key>line</key><integer>5</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>flag (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>5</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if flag</string>
+        <key>successors</key>
+        <array>
+         <integer>2</integer>
+         <integer>1</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>2</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>5</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>pp</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*pp</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>5</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*pp = 0</string>
+          <key>line</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>7</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return 0;</string>
+          <key>line</key><integer>7</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>1</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>pp</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>2</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*pp</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*pp (ImplicitCastExpr, LValueToRValue, int *)</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>**pp</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>5</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>**pp (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return **pp;</string>
+          <key>line</key><integer>9</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>0</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+        </array>
+       </dict>
+      </array>
+      <key>path_blocks</key>
+      <array>
+       <integer>0</integer>
+       <integer>1</integer>
+       <integer>2</integer>
+       <integer>3</integer>
+       <integer>4</integer>
+      </array>
+      <key>path_edges</key>
+      <array>
+       <dict>
+        <key>from</key><integer>2</integer>
+        <key>to</key><integer>0</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>3</integer>
+        <key>to</key><integer>1</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>3</integer>
+        <key>to</key><integer>2</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>4</integer>
+        <key>to</key><integer>3</integer>
+       </dict>
+      </array>
+     </dict>
+    </array>
+    <key>exploded_nodes</key>
+    <array>
+     <dict>
+      <key>id</key><integer>16</integer>
+      <key>state_id</key><integer>759</integer>
+      <key>path_position</key><integer>15</integer>
+      <key>kind</key><string>CallEnter</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>13</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>24</integer>
+      <key>state_id</key><integer>952</integer>
+      <key>path_position</key><integer>23</integer>
+      <key>kind</key><string>BlockEdge</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>5</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>127</integer>
+      <key>state_id</key><integer>4913</integer>
+      <key>path_position</key><integer>35</integer>
+      <key>kind</key><string>PostStore</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>6</integer>
+       <key>col</key><integer>5</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>128</integer>
+      <key>state_id</key><integer>4913</integer>
+      <key>path_position</key><integer>36</integer>
+      <key>kind</key><string>PostStmt</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>6</integer>
+       <key>col</key><integer>5</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>134</integer>
+      <key>state_id</key><integer>5057</integer>
+      <key>path_position</key><integer>42</integer>
+      <key>kind</key><string>PostStmt</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>7</integer>
+       <key>col</key><integer>5</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>1</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>136</integer>
+      <key>state_id</key><integer>5057</integer>
+      <key>path_position</key><integer>44</integer>
+      <key>kind</key><string>CallExitEnd</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>13</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>148</integer>
+      <key>state_id</key><integer>5574</integer>
+      <key>path_position</key><integer>56</integer>
+      <key>kind</key><string>CallEnter</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>14</integer>
+       <key>col</key><integer>10</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>157</integer>
+      <key>state_id</key><integer>5826</integer>
+      <key>path_position</key><integer>64</integer>
+      <key>kind</key><string>BlockEdge</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>5</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>2</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>189</integer>
+      <key>state_id</key><integer>6469</integer>
+      <key>path_position</key><integer>75</integer>
+      <key>kind</key><string>PreLoad</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>9</integer>
+       <key>col</key><integer>10</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>2</integer>
+     </dict>
+    </array>
+    <key>stack_frames</key>
+    <array>
+     <dict>
+      <key>function</key><string>several_contexts</string>
+     </dict>
+     <dict>
+      <key>function</key><string>take</string>
+      <key>parent</key><integer>0</integer>
+      <key>call_site</key>
+      <dict>
+       <key>line</key><integer>13</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+     </dict>
+     <dict>
+      <key>function</key><string>take</string>
+      <key>parent</key><integer>0</integer>
+      <key>call_site</key>
+      <dict>
+       <key>line</key><integer>14</integer>
+       <key>col</key><integer>10</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+     </dict>
+    </array>
+   </dict>
+   <key>description</key><string>Dereference of null pointer</string>
+   <key>category</key><string>Logic error</string>
+   <key>type</key><string>Dereference of null pointer</string>
+   <key>check_name</key><string>core.NullDereference</string>
+   <!-- This hash is experimental and going to change! -->
+   <key>issue_hash_content_of_line_in_context</key><string>7363a5a12bce4b322647c1c219c34fa2</string>
+  <key>issue_context_kind</key><string>function</string>
+  <key>issue_context</key><string>take</string>
+  <key>issue_hash_function_offset</key><string>5</string>
+  <key>location</key>
+  <dict>
+   <key>line</key><integer>9</integer>
+   <key>col</key><integer>10</integer>
+   <key>file</key><integer>0</integer>
+  </dict>
+  <key>ExecutedLines</key>
+  <dict>
+   <key>0</key>
+   <array>
+    <integer>4</integer>
+    <integer>5</integer>
+    <integer>6</integer>
+    <integer>7</integer>
+    <integer>9</integer>
+    <integer>12</integer>
+    <integer>13</integer>
+    <integer>14</integer>
+   </array>
+  </dict>
+  </dict>
+ </array>
+ <key>files</key>
+ <array>
+  <string>$FILE_PATH$/several_contexts.c</string>
+ </array>
+</dict>
+</plist>

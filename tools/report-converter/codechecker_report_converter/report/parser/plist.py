@@ -184,6 +184,32 @@ def get_file_index_map(
     return file_index_map
 
 
+# The tables of a constraint trace that hold locations, and their key there.
+_TRACE_LOCATIONS = (('exploded_nodes', 'location'),
+                    ('stack_frames', 'call_site'))
+
+
+def _map_trace_locations(trace: dict, map_file: Callable) -> dict:
+    """ A copy of the trace whose locations have their `file` mapped. """
+    result = dict(trace)
+    for table, key in _TRACE_LOCATIONS:
+        if table in trace:
+            result[table] = [
+                {**item, key: {**item[key],
+                               'file': map_file(item[key]['file'])}}
+                if key in item else item
+                for item in trace[table]]
+    return result
+
+
+def _trace_location_files(trace: dict) -> set[str]:
+    """ The file paths that a stored constraint trace's locations name. """
+    return {item[key]['file']
+            for table, key in _TRACE_LOCATIONS
+            for item in trace.get(table, [])
+            if key in item}
+
+
 class Parser(BaseParser):
     def get_reports(
         self,
@@ -272,7 +298,7 @@ class Parser(BaseParser):
             macro_expansions=self.__get_macro_expansions(diag, files),
             annotations=report_annotation,
             constraint_trace=self.__get_constraint_trace(
-                diag, control_positions))
+                diag, files, control_positions))
 
     def __get_analyzer_name(
         self,
@@ -384,6 +410,7 @@ class Parser(BaseParser):
     def __get_constraint_trace(
         self,
         diag: dict,
+        files: dict[int, File],
         control_positions: dict[int, int]
     ) -> dict | None:
         """ Get the Constraint Snapshots, keyed to the report's Path Steps.
@@ -422,8 +449,12 @@ class Parser(BaseParser):
                     'order': step.get('order', path_index)
                 })
 
-            # Keys beside `steps`, such as `cfgs`, need no translation.
-            return {**trace, 'steps': steps}
+            # Keys beside `steps`, such as `cfgs`, need no translation, except
+            # for locations: they name their file by path, since storage does
+            # not keep the plist's file indices.
+            return _map_trace_locations(
+                {**trace, 'steps': steps},
+                lambda file_index: files[file_index].original_path)
         except (KeyError, TypeError) as ex:
             LOG.warning("Ignoring malformed constraint trace in '%s': %s",
                         diag.get('check_name'), ex)
@@ -504,6 +535,8 @@ class Parser(BaseParser):
         files = set()
         for report in reports:
             files.update(report.original_files)
+            if report.constraint_trace is not None:
+                files.update(_trace_location_files(report.constraint_trace))
 
         file_index_map: dict[str, int] = {}
         for idx, file_path in enumerate(sorted(files)):
@@ -567,7 +600,7 @@ class Parser(BaseParser):
                 diagnostic['constraint_trace'] = \
                     self._create_constraint_trace(
                         report.constraint_trace, first_event_position,
-                        control_path_indices)
+                        control_path_indices, file_index_map)
 
             if report.notes:
                 diagnostic['notes'] = []
@@ -612,7 +645,8 @@ class Parser(BaseParser):
         self,
         trace: dict,
         first_event_position: int,
-        control_path_indices: dict[int, int]
+        control_path_indices: dict[int, int],
+        file_index_map: dict[str, int]
     ) -> dict:
         """ Turn a report's trace back into the per-diagnostic plist key.
 
@@ -637,7 +671,9 @@ class Parser(BaseParser):
                 'path_index': path_index
             })
 
-        return {**trace, 'steps': steps}
+        return _map_trace_locations(
+            {**trace, 'steps': steps},
+            lambda file_path: file_index_map[file_path])
 
     def _create_location(
         self,

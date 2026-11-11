@@ -27,12 +27,14 @@ With the newer clang releases more information is available in the plist files.
 
 
 import os
+import tempfile
 import unittest
 
 from copy import deepcopy
 
 from codechecker_report_converter.report import BugPathEvent, \
     BugPathPosition, File, Range, Report, report_file
+from codechecker_report_converter.report.parser import plist
 from codechecker_report_converter.report.reports import \
     get_mentioned_original_files
 
@@ -294,3 +296,48 @@ class PlistParserTestCase(unittest.TestCase):
                     report.bug_path_events, skel.bug_path_events)
                 self.assertEqual(
                     report.bug_path_positions, skel.bug_path_positions)
+
+    def test_trace_locations_survive_conversion(self):
+        """
+        Exploded graph locations of a constraint trace name their file by
+        path once parsed, and by an index of the written plist's files again
+        once converted, even for a file only a call site mentions.
+        """
+        only_in_trace = os.path.join(gen_plist_dir_path, 'only_in_trace.c')
+        report = deepcopy(div_zero_skel)
+        report.constraint_trace = {
+            'version': 1,
+            'steps': [{'kind': 'event', 'index': 0, 'order': 0,
+                       'exploded_node': 0}],
+            'exploded_nodes': [
+                {'id': 7, 'kind': 'PostStmt', 'frame': 1,
+                 'location': {'line': 20, 'col': 5,
+                              'file': SRC_FILES[0].original_path}},
+                {'id': 9, 'kind': 'BlockEdge', 'frame': 0}],
+            'stack_frames': [
+                {'function': 'main'},
+                {'function': 'test_func', 'parent': 0,
+                 'call_site': {'line': 3, 'col': 1, 'file': only_in_trace}}]}
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_path = os.path.join(tmp_dir, 'trace.plist')
+            parser = plist.Parser()
+            data = parser.convert([report])
+            parser.write(data, plist_path)
+
+            trace = data['diagnostics'][0]['constraint_trace']
+            files = data['files']
+            self.assertEqual(
+                files[trace['exploded_nodes'][0]['location']['file']],
+                SRC_FILES[0].original_path)
+            self.assertEqual(
+                files[trace['stack_frames'][1]['call_site']['file']],
+                only_in_trace)
+            self.assertNotIn('location', trace['exploded_nodes'][1])
+
+            parsed, = report_file.get_reports(plist_path)
+
+        self.assertEqual(parsed.constraint_trace['exploded_nodes'],
+                         report.constraint_trace['exploded_nodes'])
+        self.assertEqual(parsed.constraint_trace['stack_frames'],
+                         report.constraint_trace['stack_frames'])

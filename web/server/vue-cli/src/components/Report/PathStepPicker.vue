@@ -42,6 +42,19 @@
           Choose in the control flow graph
         </v-btn>
       </template>
+      <template v-if="canShowStates">
+        <v-divider v-if="!canShowGraph" />
+        <v-btn
+          class="picker-graph-btn"
+          variant="text"
+          size="small"
+          block
+          prepend-icon="mdi-layers-outline"
+          @click="emit('open-states')"
+        >
+          Choose by analyzer state
+        </v-btn>
+      </template>
     </v-card>
   </v-menu>
 </template>
@@ -52,10 +65,13 @@ defineProps({
   target: { type: Array, default: null },
   title: { type: String, default: "" },
   steps: { type: Array, required: true },
-  canShowGraph: { type: Boolean, default: false }
+  canShowGraph: { type: Boolean, default: false },
+  canShowStates: { type: Boolean, default: false }
 });
 
-const emit = defineEmits([ "update:modelValue", "select", "open-graph" ]);
+const emit = defineEmits([
+  "update:modelValue", "select", "open-graph", "open-states"
+]);
 </script>
 
 <style lang="scss">

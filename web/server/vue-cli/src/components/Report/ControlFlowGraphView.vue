@@ -1,18 +1,12 @@
 <template>
-  <v-card
-    class="cfg-view d-flex flex-column"
-    variant="flat"
-    rounded="0"
-    role="region"
-    aria-label="Control flow graph"
+  <report-side-view
+    ref="sideView"
+    class="cfg-view"
+    title="Control flow graph"
+    short-title="CFG"
+    @close="emit('close')"
   >
-    <div class="cfg-header d-flex align-center px-3 py-1">
-      <span
-        class="text-subtitle-2 text-no-wrap"
-        title="Control flow graph"
-      >
-        {{ compactHeader ? "CFG" : "Control flow graph" }}
-      </span>
+    <template #header>
       <select
         v-if="cfgs.length > 1"
         class="cfg-function-select ml-2"
@@ -35,24 +29,16 @@
       >
         {{ cfg.function }}
       </span>
-      <v-spacer />
-      <v-btn
-        icon="mdi-close"
-        variant="text"
-        size="small"
-        density="compact"
-        aria-label="Close control flow graph"
-        title="Close"
-        @click="emit('close')"
-      />
-    </div>
+    </template>
 
-    <v-divider />
-
-    <div class="cfg-toolbar d-flex align-center px-3 text-caption">
-      <span class="cfg-legend">
-        <span class="cfg-legend-swatch cfg-legend-path" />Bug Path
-        <span class="cfg-legend-swatch cfg-legend-step ml-2" />Path Step
+    <template #toolbar>
+      <span class="side-view-legend">
+        <span
+          class="side-view-legend-swatch side-view-legend-path"
+        />Bug Path
+        <span
+          class="side-view-legend-swatch side-view-legend-step ml-2"
+        />Path Step
       </span>
       <v-spacer />
       <label
@@ -62,108 +48,105 @@
         <input v-model="showSubexpressions" type="checkbox">
         Subexpressions
       </label>
-    </div>
+    </template>
 
-    <v-divider />
-
-    <div ref="scroller" class="cfg-scroller">
-      <div
-        ref="graph"
-        class="cfg-graph"
-        :style="{ paddingLeft: `${gutterWidth}px` }"
+    <div
+      ref="graph"
+      class="cfg-graph"
+      :style="{ paddingLeft: `${gutterWidth}px` }"
+    >
+      <svg
+        class="cfg-edges"
+        :width="gutterWidth + 40"
+        :height="graphHeight"
+        aria-hidden="true"
       >
-        <svg
-          class="cfg-edges"
-          :width="gutterWidth + 40"
-          :height="graphHeight"
-          aria-hidden="true"
-        >
-          <defs>
-            <marker
-              v-for="kind in [ 'path', 'other' ]"
-              :id="`cfg-arrow-${kind}`"
-              :key="kind"
-              viewBox="0 0 8 8"
-              refX="7"
-              refY="4"
-              markerWidth="7"
-              markerHeight="7"
-              orient="auto-start-reverse"
-            >
-              <path d="M0,0 L8,4 L0,8 z" :class="`cfg-arrow-${kind}`" />
-            </marker>
-          </defs>
-          <g
-            v-for="edge in drawnEdges"
-            :key="edge.key"
-            :class="[ 'cfg-edge', edge.onPath ? 'on-path' : 'other' ]"
+        <defs>
+          <marker
+            v-for="kind in [ 'path', 'other' ]"
+            :id="`cfg-arrow-${kind}`"
+            :key="kind"
+            viewBox="0 0 8 8"
+            refX="7"
+            refY="4"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
           >
-            <title>{{ edge.title }}</title>
-            <path
-              :d="edge.d"
-              :marker-end="`url(#cfg-arrow-${edge.onPath ? 'path' : 'other'})`"
-            />
-            <text
-              v-if="edge.label"
-              :x="edge.labelX"
-              :y="edge.labelY"
-              class="cfg-edge-label"
-            >
-              {{ edge.label }}
-            </text>
-          </g>
-        </svg>
-
-        <div
-          v-for="block in blocks"
-          :key="block.id"
-          :ref="el => setBlockRef(block.id, el)"
-          :class="[
-            'cfg-block',
-            block.onPath ? 'on-path' : 'off-path'
-          ]"
+            <path d="M0,0 L8,4 L0,8 z" :class="`cfg-arrow-${kind}`" />
+          </marker>
+        </defs>
+        <g
+          v-for="edge in drawnEdges"
+          :key="edge.key"
+          :class="[ 'cfg-edge', edge.onPath ? 'on-path' : 'other' ]"
         >
-          <div class="cfg-block-header">
-            <span class="cfg-block-id">B{{ block.id }}</span>
-            <span v-if="block.id === cfg.entry" class="cfg-block-kind">
-              entry
-            </span>
-            <span v-else-if="block.id === cfg.exit" class="cfg-block-kind">
-              exit
-            </span>
-            <span v-if="block.lines" class="cfg-block-lines">
-              {{ block.lines }}
-            </span>
-          </div>
-
-          <component
-            :is="row.choices.length ? 'button' : 'div'"
-            v-for="row in block.rows"
-            :key="row.key"
-            :type="row.choices.length ? 'button' : undefined"
-            :class="[
-              'cfg-row',
-              `cfg-row-${row.kind}`,
-              {
-                'has-steps': row.choices.length,
-                selected: row.key === selectedRowKey
-              }
-            ]"
-            :title="row.title"
-            :data-row="row.key"
-            @click="row.choices.length && emit('select', row.choices, $event)"
+          <title>{{ edge.title }}</title>
+          <path
+            :d="edge.d"
+            :marker-end="`url(#cfg-arrow-${edge.onPath ? 'path' : 'other'})`"
+          />
+          <text
+            v-if="edge.label"
+            :x="edge.labelX"
+            :y="edge.labelY"
+            class="cfg-edge-label"
           >
-            <span class="cfg-row-index">{{ row.index }}</span>
-            <span class="cfg-row-text">{{ row.text }}</span>
-            <span v-if="row.line" class="cfg-row-line">{{ row.line }}</span>
-            <span v-if="row.choices.length" class="cfg-row-steps">
-              {{ stepsLabel(row) }}
-            </span>
-          </component>
+            {{ edge.label }}
+          </text>
+        </g>
+      </svg>
+
+      <div
+        v-for="block in blocks"
+        :key="block.id"
+        :ref="el => setBlockRef(block.id, el)"
+        :class="[
+          'cfg-block',
+          block.onPath ? 'on-path' : 'off-path'
+        ]"
+      >
+        <div class="cfg-block-header">
+          <span class="cfg-block-id">B{{ block.id }}</span>
+          <span v-if="block.id === cfg.entry" class="cfg-block-kind">
+            entry
+          </span>
+          <span v-else-if="block.id === cfg.exit" class="cfg-block-kind">
+            exit
+          </span>
+          <span v-if="block.lines" class="cfg-block-lines">
+            {{ block.lines }}
+          </span>
         </div>
+
+        <component
+          :is="row.choices.length ? 'button' : 'div'"
+          v-for="row in block.rows"
+          :key="row.key"
+          :type="row.choices.length ? 'button' : undefined"
+          :class="[
+            'cfg-row',
+            'side-view-choice',
+            `cfg-row-${row.kind}`,
+            {
+              'has-steps': row.choices.length,
+              selected: row.key === selectedRowKey
+            }
+          ]"
+          :title="row.title"
+          :data-row="row.key"
+          @click="row.choices.length && emit('select', row.choices, $event)"
+        >
+          <span class="cfg-row-index">{{ row.index }}</span>
+          <span class="cfg-row-text">{{ row.text }}</span>
+          <span v-if="row.line" class="cfg-row-line">{{ row.line }}</span>
+          <span v-if="row.choices.length" class="cfg-row-steps">
+            {{ stepsLabel(row) }}
+          </span>
+        </component>
       </div>
     </div>
-  </v-card>
+  </report-side-view>
 </template>
 
 <script setup>
@@ -175,7 +158,7 @@ import {
   ref,
   watch
 } from "vue";
-import { useDisplay } from "vuetify";
+import ReportSideView from "./ReportSideView";
 
 const props = defineProps({
   // The trace's `cfgs`.
@@ -191,10 +174,7 @@ const props = defineProps({
 
 const emit = defineEmits([ "close", "select", "update:cfgIndex" ]);
 
-// Below 1280px the function name needs the room more than the title.
-const { mdAndDown: compactHeader } = useDisplay();
-
-const scroller = ref(null);
+const sideView = ref(null);
 const graph = ref(null);
 const showSubexpressions = ref(false);
 const blockElements = new Map();
@@ -446,15 +426,8 @@ function measure() {
 }
 
 function scrollToSelection() {
-  if (!selectedRowKey.value || !scroller.value) return;
-  const _row = scroller.value.querySelector(
-    `[data-row="${selectedRowKey.value}"]`);
-  if (!_row) return;
-  const _rowBox = _row.getBoundingClientRect();
-  const _viewBox = scroller.value.getBoundingClientRect();
-  if (_rowBox.top < _viewBox.top || _rowBox.bottom > _viewBox.bottom) {
-    scroller.value.scrollTop += _rowBox.top - _viewBox.top -
-      (_viewBox.height - _rowBox.height) / 2;
+  if (selectedRowKey.value) {
+    sideView.value?.reveal(`[data-row="${selectedRowKey.value}"]`);
   }
 }
 
@@ -485,14 +458,6 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
 
 <style lang="scss">
 .cfg-view {
-  border: 1px solid #d8dbe0;
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.12);
-
-  .cfg-header {
-    min-height: 40px;
-    background-color: #f7f7f7;
-  }
-
   .cfg-function,
   .cfg-function-select {
     min-width: 0;
@@ -510,45 +475,12 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     background-color: #fff;
   }
 
-  .cfg-toolbar {
-    min-height: 30px;
-    gap: 8px;
-    color: rgba(0, 0, 0, 0.6);
-  }
-
-  .cfg-legend {
-    white-space: nowrap;
-  }
-
-  .cfg-legend-swatch {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    margin-right: 4px;
-    border-radius: 2px;
-    vertical-align: -1px;
-  }
-
-  .cfg-legend-path {
-    border: 2px solid var(--color-report-step-message-default);
-  }
-
-  .cfg-legend-step {
-    background-color: var(--color-report-step-message-default-light);
-  }
-
   .cfg-subexpressions {
     display: flex;
     gap: 4px;
     align-items: center;
     white-space: nowrap;
     cursor: pointer;
-  }
-
-  .cfg-scroller {
-    flex: 1 1 0;
-    min-height: 0;
-    overflow: auto;
   }
 
   .cfg-graph {
@@ -644,35 +576,7 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     width: 100%;
     min-width: 0;
     padding: 1px 8px;
-    border: 0;
-    background: none;
-    color: inherit;
-    font: inherit;
     line-height: 1.6;
-    text-align: left;
-
-    &.has-steps {
-      background-color: var(--color-report-step-message-default-light);
-      cursor: pointer;
-
-      &:hover {
-        background-color: #afd0dd;
-      }
-    }
-
-    &.selected {
-      background-color: #fff6d9;
-      box-shadow: inset 3px 0 0 #e0a800;
-
-      &:hover {
-        background-color: #ffefbf;
-      }
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-report-step-message-default);
-      outline-offset: -2px;
-    }
   }
 
   .cfg-row-index {

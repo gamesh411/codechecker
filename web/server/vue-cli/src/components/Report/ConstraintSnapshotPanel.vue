@@ -31,6 +31,29 @@
         CFG
       </v-btn>
       <v-btn
+        v-if="canShowStates && compactHeader"
+        class="panel-graph-btn mr-1"
+        icon="mdi-layers-outline"
+        variant="text"
+        size="small"
+        density="compact"
+        aria-label="Show among the analyzer states"
+        title="Show this step among the analyzer states of the Bug Path"
+        @click="emit('open-states')"
+      />
+      <v-btn
+        v-else-if="canShowStates"
+        class="panel-graph-btn mr-1"
+        variant="text"
+        size="small"
+        density="comfortable"
+        prepend-icon="mdi-layers-outline"
+        title="Show this step among the analyzer states of the Bug Path"
+        @click="emit('open-states')"
+      >
+        States
+      </v-btn>
+      <v-btn
         class="panel-close-btn"
         icon="mdi-close"
         variant="text"
@@ -215,10 +238,13 @@ const props = defineProps({
   whatIf: { type: Object, required: true },
   // The Path Step the reader sees for an `order`: { label, order }.
   resolveStep: { type: Function, required: true },
-  canShowGraph: { type: Boolean, default: false }
+  canShowGraph: { type: Boolean, default: false },
+  canShowStates: { type: Boolean, default: false }
 });
 
-const emit = defineEmits([ "close", "select-step", "open-graph" ]);
+const emit = defineEmits([
+  "close", "select-step", "open-graph", "open-states"
+]);
 
 // Below 1280px the panel is too narrow for the title and a labelled button.
 const { mdAndDown: compactHeader } = useDisplay();

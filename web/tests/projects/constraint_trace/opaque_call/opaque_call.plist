@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1005a805737b890d3c2e13c4300fefacfbf172ed)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2cc992b87afe2fad4513d408669b2527c6305eff)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -409,6 +409,7 @@
        <key>block</key><integer>5</integer>
        <key>element</key><integer>2</integer>
       </dict>
+      <key>exploded_node</key><integer>0</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>1</integer>
@@ -450,6 +451,7 @@
        <key>block</key><integer>5</integer>
        <key>element</key><integer>2</integer>
       </dict>
+      <key>exploded_node</key><integer>0</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>2</integer>
@@ -499,6 +501,7 @@
        <key>block</key><integer>3</integer>
        <key>element</key><integer>4</integer>
       </dict>
+      <key>exploded_node</key><integer>1</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>3</integer>
@@ -549,6 +552,7 @@
        <key>block</key><integer>3</integer>
        <key>element</key><integer>7</integer>
       </dict>
+      <key>exploded_node</key><integer>2</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>4</integer>
@@ -599,6 +603,7 @@
        <key>block</key><integer>3</integer>
        <key>element</key><integer>7</integer>
       </dict>
+      <key>exploded_node</key><integer>2</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>5</integer>
@@ -658,6 +663,7 @@
        <key>block</key><integer>3</integer>
        <key>terminator</key><true/>
       </dict>
+      <key>exploded_node</key><integer>3</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>6</integer>
@@ -717,6 +723,7 @@
        <key>block</key><integer>3</integer>
        <key>terminator</key><true/>
       </dict>
+      <key>exploded_node</key><integer>3</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>7</integer>
@@ -776,6 +783,7 @@
        <key>block</key><integer>3</integer>
        <key>terminator</key><true/>
       </dict>
+      <key>exploded_node</key><integer>3</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>8</integer>
@@ -835,6 +843,7 @@
        <key>block</key><integer>1</integer>
        <key>element</key><integer>5</integer>
       </dict>
+      <key>exploded_node</key><integer>4</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>9</integer>
@@ -894,6 +903,7 @@
        <key>block</key><integer>1</integer>
        <key>element</key><integer>5</integer>
       </dict>
+      <key>exploded_node</key><integer>4</integer>
      </dict>
      <dict>
       <key>path_index</key><integer>10</integer>
@@ -953,6 +963,7 @@
        <key>block</key><integer>1</integer>
        <key>element</key><integer>5</integer>
       </dict>
+      <key>exploded_node</key><integer>4</integer>
      </dict>
     </array>
     <key>cfgs</key>
@@ -1182,6 +1193,80 @@
         <key>to</key><integer>5</integer>
        </dict>
       </array>
+     </dict>
+    </array>
+    <key>exploded_nodes</key>
+    <array>
+     <dict>
+      <key>id</key><integer>11</integer>
+      <key>state_id</key><integer>495</integer>
+      <key>path_position</key><integer>9</integer>
+      <key>kind</key><string>PostStmt</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>7</integer>
+       <key>col</key><integer>7</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>24</integer>
+      <key>state_id</key><integer>969</integer>
+      <key>path_position</key><integer>22</integer>
+      <key>kind</key><string>PostStmt</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>9</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>29</integer>
+      <key>state_id</key><integer>1294</integer>
+      <key>path_position</key><integer>27</integer>
+      <key>kind</key><string>PostStmt</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>10</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>35</integer>
+      <key>state_id</key><integer>1580</integer>
+      <key>path_position</key><integer>32</integer>
+      <key>kind</key><string>BlockEdge</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>11</integer>
+       <key>col</key><integer>3</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+     <dict>
+      <key>id</key><integer>47</integer>
+      <key>state_id</key><integer>1939</integer>
+      <key>path_position</key><integer>44</integer>
+      <key>kind</key><string>PreLoad</string>
+      <key>location</key>
+      <dict>
+       <key>line</key><integer>13</integer>
+       <key>col</key><integer>19</integer>
+       <key>file</key><integer>0</integer>
+      </dict>
+      <key>frame</key><integer>0</integer>
+     </dict>
+    </array>
+    <key>stack_frames</key>
+    <array>
+     <dict>
+      <key>function</key><string>f</string>
      </dict>
     </array>
    </dict>
