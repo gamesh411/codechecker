@@ -288,7 +288,8 @@ def _check_path(trace_json: str | None,
                     [a.formula for a in applied]),
             baseline, baseline_reason)
         if result.verdict == PathVerdict.INFEASIBLE:
-            result.firstDeadStep = _first_dead_step(ctx, path, applied)
+            result.firstDeadStep, result.firstDeadStepIsEarliest = \
+                _first_dead_step(ctx, path, applied)
         return result
     except z3.Z3Exception as ex:
         LOG.error("Unreadable SMT-LIB in a constraint trace: %s", ex)
@@ -299,19 +300,20 @@ def _check_path(trace_json: str | None,
 
 
 def _first_dead_step(ctx: z3.Context, path: '_Path',
-                     applied: list[_Applied]) -> int:
+                     applied: list[_Applied]) -> tuple[int, bool]:
     """
     The `order` of the earliest Path Step whose accumulated path condition,
-    with the terms applied by then, is unsatisfiable. The last step is known
-    to be.
+    with the terms applied by then, is unsatisfiable, and whether the search
+    proved it earliest. The last step is known to be dead.
 
     Ranges only narrow along a path and applied terms are never taken back,
     so once the path is dead it stays dead, and a binary search finds the
     step. A step the solver gives up on counts as alive, so the named step is
     always one proven dead; when the search budget runs out it is the
-    earliest step proven dead so far.
+    earliest step proven dead so far. Either way it is not proven earliest.
     """
     alive, dead = -1, len(path.steps) - 1
+    gave_up = False
     deadline = time.monotonic() + WHAT_IF_SEARCH_BUDGET_MS / 1000
     while dead - alive > 1:
         remaining_ms = int((deadline - time.monotonic()) * 1000)
@@ -326,8 +328,9 @@ def _first_dead_step(ctx: z3.Context, path: '_Path',
         if verdict == PathVerdict.INFEASIBLE:
             dead = middle
         else:
+            gave_up = gave_up or verdict == PathVerdict.UNKNOWN
             alive = middle
-    return path.steps[dead]['order']
+    return path.steps[dead]['order'], dead - alive == 1 and not gave_up
 
 
 _DECLARED = re.compile(r'\(declare-fun\s+(\S+)')

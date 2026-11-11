@@ -207,6 +207,7 @@ struct WhatIfResult {
   5: optional WhatIfSyntaxError syntaxError,           // Set when a constraint cannot be read; nothing is solved with the constraints and verdict is UNKNOWN.
   6: optional i64               reasonConstraintIndex, // The constraint that reason is about, when it is about one.
   7: optional i64               firstDeadStep,         // When verdict is INFEASIBLE: the `order` of the earliest step whose path condition contradicts the What-If Constraints. Can come before their pathStep.
+  8: optional bool              firstDeadStepIsEarliest, // Set with firstDeadStep. False when the solver gave up or ran out of time during the search, so an earlier step may also be dead.
 }
 
 typedef string AnalyzerType

@@ -328,12 +328,15 @@ class FirstDeadStepTest(unittest.TestCase):
         self.assertIsNone(check(OPAQUE_CALL, (1, 'g != 0')).firstDeadStep)
         self.assertIsNone(check(OPAQUE_CALL, (1, 'w == 0')).firstDeadStep)
         self.assertIsNone(check(OPAQUE_CALL, (1, 'g ==')).firstDeadStep)
+        self.assertIsNone(
+            check(OPAQUE_CALL, (1, 'g != 0')).firstDeadStepIsEarliest)
 
     def test_dead_step_can_come_before_the_anchor(self):
         """ reg_$2 is assumed null from step 6, before the anchor at 8. """
         result = check(OPAQUE_CALL, (8, 'g != 0'))
         self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
         self.assertEqual(result.firstDeadStep, 6)
+        self.assertTrue(result.firstDeadStepIsEarliest)
 
     def test_anchored_term_applies_from_where_its_symbol_appears(self):
         """
@@ -366,6 +369,7 @@ class FirstDeadStepTest(unittest.TestCase):
             result = check(_long_trace(100, 61), (99, 'n != 0'))
 
         self.assertEqual(result.firstDeadStep, 61)
+        self.assertTrue(result.firstDeadStepIsEarliest)
         # Baseline, verdict, then a binary search over the other 99 steps.
         self.assertLessEqual(len(_RecordingSolver.timeouts),
                              2 + math.ceil(math.log2(100)))
@@ -389,6 +393,7 @@ class FirstDeadStepTest(unittest.TestCase):
         self.assertTrue(search)
         self.assertLessEqual(sum(search), what_if.WHAT_IF_SEARCH_BUDGET_MS)
         self.assertGreaterEqual(result.firstDeadStep, 61)
+        self.assertFalse(result.firstDeadStepIsEarliest)
 
     def test_solver_giving_up_in_the_search_counts_as_alive(self):
         """ The named step is always one the solver proved dead. """
@@ -406,3 +411,4 @@ class FirstDeadStepTest(unittest.TestCase):
 
         self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
         self.assertEqual(result.firstDeadStep, 9)
+        self.assertFalse(result.firstDeadStepIsEarliest)

@@ -31,7 +31,7 @@
       />
     </v-app-bar-nav-icon>
 
-    <v-toolbar-title class="pl-0">
+    <v-toolbar-title class="header-title pl-0">
       CodeChecker {{ packageVersion }}
       <v-chip
         v-if="currentProductDisplayName"
@@ -47,24 +47,34 @@
     <span
       v-if="showMenuItems"
     >
-      <v-btn
+      <template
         v-for="item in menuItems"
         :key="item.name"
-        :to="{
-          name: item.route,
-          query: queries[item.query_namespace] === undefined
-            ? item.query || {}
-            : queries[item.query_namespace]
-        }"
-        :class="item.active.includes($route.name) &&
-          'v-btn--active router-link-active'"
-        class="mr-2"
-        :exact="item.exact"
-        variant="text"
-        :prepend-icon="item.icon"
       >
-        {{ item.name }}
-      </v-btn>
+        <v-btn
+          v-if="compactMenu"
+          :to="menuTarget(item)"
+          :class="item.active.includes($route.name) &&
+            'v-btn--active router-link-active'"
+          :exact="item.exact"
+          variant="text"
+          :icon="item.icon"
+          :title="item.name"
+          :aria-label="item.name"
+        />
+        <v-btn
+          v-else
+          :to="menuTarget(item)"
+          :class="item.active.includes($route.name) &&
+            'v-btn--active router-link-active'"
+          class="mr-2"
+          :exact="item.exact"
+          variant="text"
+          :prepend-icon="item.icon"
+        >
+          {{ item.name }}
+        </v-btn>
+      </template>
     </span>
 
     <v-menu
@@ -78,8 +88,12 @@
           append-icon="mdi-menu-down"
           :class="configureMenuItems.map(c => c.route).includes($route.name) &&
             'v-btn--active router-link-active'"
+          :title="compactMenu ? 'Configuration' : undefined"
+          :aria-label="compactMenu ? 'Configuration' : undefined"
         >
-          Configuration
+          <template v-if="!compactMenu">
+            Configuration
+          </template>
         </v-btn>
       </template>
 
@@ -126,6 +140,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { useDisplay } from "vuetify";
 import { useStore } from "vuex";
 
 import { GET_ANNOUNCEMENT, GET_PACKAGE_VERSION } from "@/store/actions.type";
@@ -136,6 +151,19 @@ import UserInfoMenu from "./UserInfoMenu";
 
 const store = useStore();
 const route = useRoute();
+
+// Below 1280px the labelled menu leaves the title no room, and it was
+// clipped to its first letter, so the menu shows icons with tooltips.
+const { mdAndDown: compactMenu } = useDisplay();
+
+function menuTarget(item) {
+  return {
+    name: item.route,
+    query: queries.value[item.query_namespace] === undefined
+      ? item.query || {}
+      : queries.value[item.query_namespace]
+  };
+}
 
 const menuButtons = ref([
   {
@@ -238,3 +266,13 @@ onMounted(() => {
 const getAnnouncement = () => store.dispatch(GET_ANNOUNCEMENT);
 const getPackageVersion = () => store.dispatch(GET_PACKAGE_VERSION);
 </script>
+
+<!-- Plain CSS: a scoped scss block would also scope the Vuetify styles the
+build prepends to every scss block, such as its padding reset. -->
+<style scoped>
+/* The title takes the width it needs before the spacer takes the rest,
+   instead of sharing the free space with it. */
+.header-title {
+  flex: 0 1 auto;
+}
+</style>

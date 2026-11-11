@@ -459,6 +459,7 @@ class TestConstraintTrace(unittest.TestCase):
                                  (step, 'g != null', holds_throughout))
             self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
             self.assertIsNone(result.firstDeadStep)
+            self.assertIsNone(result.firstDeadStepIsEarliest)
 
         result = self._check('opaque_call', (step, 'g != null', True))
         self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
@@ -468,6 +469,7 @@ class TestConstraintTrace(unittest.TestCase):
         # which comes before the "Assuming 'g' is null" event.
         dies = self._first_step_constraining('opaque_call', 'derived_')
         self.assertEqual(result.firstDeadStep, dies)
+        self.assertTrue(result.firstDeadStepIsEarliest)
         self.assertLess(
             dies, self._event_step('opaque_call', "Assuming 'g' is null"))
 

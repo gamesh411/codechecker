@@ -151,7 +151,7 @@
               <template v-else>
                 these {{ verdict.count }} assumptions together.
               </template>
-              <template v-if="verdict.dead">
+              <template v-if="verdict.dead?.earliest">
                 <!-- Literal text at both ends keeps the spaces around it. -->
                 It dies {{ verdict.dead.beforeAnchor ? "earlier, at" : "at" }}
                 <button
@@ -165,6 +165,17 @@
                   ? "whose path condition already contradicts"
                   : "the first step whose path condition contradicts" }}
                 {{ verdict.count > 1 ? "them" : "it" }}.
+              </template>
+              <template v-else-if="verdict.dead">
+                It is dead by
+                <button
+                  type="button"
+                  class="what-if-dead-step"
+                  :aria-label="`Select ${verdict.dead.label}`"
+                  @click="emit('select-step', verdict.dead.order)"
+                  v-text="verdict.dead.label"
+                />. The solver gave up before it could tell whether an
+                earlier step is dead too.
               </template>
               <code-text :text="verdict.trail" />
             </div>
@@ -378,6 +389,9 @@ const verdict = computed(() => {
 
 // The server names the earliest dead step; the reader sees it as the step
 // that line selection would pick, which can be a later one on the same line.
+// When the solver gave up during the search, the step is only proven dead,
+// not first. A server older than API 6.79 sends no flag, and its step keeps
+// reading as the first, as before.
 function deadStep(response, about, count) {
   const _order = response.firstDeadStep?.toNumber();
   const _step = _order !== undefined ? props.resolveStep(_order) : null;
@@ -386,6 +400,7 @@ function deadStep(response, about, count) {
   return {
     label: _step.label,
     order: _order,
+    earliest: response.firstDeadStepIsEarliest !== false,
     beforeAnchor: count === 1 && !about.holdsThroughout &&
       _step.order < about.order
   };

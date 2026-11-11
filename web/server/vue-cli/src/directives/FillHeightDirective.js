@@ -3,7 +3,10 @@ import _ from "lodash";
 function fillHeight(el) {
   el.style.overflow = "auto";
   const windowHeight = window.innerHeight;
-  const top = el.getBoundingClientRect().top;
+  // Relative to the document: measured while the page is scrolled, the
+  // viewport top would make the element taller by the scroll offset, and
+  // that height keeps the page scrollable by the same amount.
+  const top = el.getBoundingClientRect().top + window.scrollY;
 
   // Get footer element height.
   let footerHeight = 0;
@@ -44,6 +47,14 @@ export const FillHeight = {
 
     window.addEventListener("resize", _.debounce(fn, 200), options);
 
+    // Content above the element can change height after mount, such as a
+    // header that wraps once a child component loads. The page then grows
+    // past the window, so the body's size is what tells us to measure again.
+    // Once the element fits again the body is back to the same size, so this
+    // settles after one round.
+    el._bodyObserver = new ResizeObserver(() => fn());
+    el._bodyObserver.observe(document.body);
+
     el._onResize = { fn, options };
     
     // Call immediately after mount
@@ -58,6 +69,9 @@ export const FillHeight = {
   },
 
   unmounted(el) {
+    el._bodyObserver?.disconnect();
+    delete el._bodyObserver;
+
     if (!el._onResize) return;
     const { fn, options } = el._onResize;
 

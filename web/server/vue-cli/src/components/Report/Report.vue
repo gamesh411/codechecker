@@ -209,7 +209,7 @@
                   </v-col>
 
                   <v-col
-                    class="file-path-col py-0 pl-1 pr-2"
+                    class="file-path-col py-0"
                     align-self="center"
                   >
                     <copy-btn
@@ -953,9 +953,11 @@ function selectStepByOrder(order) {
   selectPathStep(_step);
   if (editor.value && _step.fileId.equals(sourceFile.value?.fileId) &&
       _step.line <= editor.value.state.doc.lines) {
+    // Centered, because the step's bubble sits below its line, and a line
+    // scrolled only near the edge left the bubble out of view.
     editor.value.dispatch({
       effects: EditorView.scrollIntoView(
-        editor.value.state.doc.line(_step.line).from, { y: "nearest" })
+        editor.value.state.doc.line(_step.line).from, { y: "center" })
     });
   }
 }
@@ -1494,12 +1496,17 @@ function truncate(text, length) {
   .header {
     background-color: #f7f7f7;
 
+    // Same space on both sides of the branch divider and before "Found in:".
+    column-gap: 12px;
+
     // Keeps the long path shrinkable beside the copy button, so that its
-    // ellipsis clips the path's left end instead of hiding all of it.
+    // ellipsis clips the path's left end instead of hiding all of it. Below
+    // its min-width "Found in:" wraps to its own line, which keeps the file
+    // name readable in a narrow window.
     .file-path-col {
       display: flex;
       align-items: center;
-      min-width: 0;
+      min-width: 16rem;
 
       .file-path {
         min-width: 0;

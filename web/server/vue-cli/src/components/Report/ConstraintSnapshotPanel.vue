@@ -29,10 +29,13 @@
       <span
         v-if="diesHere"
         class="panel-dies-here text-caption ml-1"
-        title="The first step whose path condition contradicts the What-If
-          Constraints that were checked"
+        :title="diesHere.earliest
+          ? 'The first step whose path condition contradicts the What-If ' +
+            'Constraints that were checked'
+          : 'The path condition here contradicts the What-If Constraints ' +
+            'that were checked. An earlier step may too.'"
       >
-        Path dies here
+        {{ diesHere.earliest ? "Path dies here" : "Path dead here" }}
       </span>
     </div>
 
@@ -63,10 +66,18 @@
                 </div>
                 <div class="panel-value">
                   <span :class="{ 'text-medium-emphasis': row.muted }">
-                    <range-text v-if="row.range" :range="row.range" />
+                    <range-text
+                      v-if="row.range"
+                      :range="row.range"
+                      :symbol="row.symbol"
+                    />
                     <template v-else>{{ row.display }}</template>
                   </span>
-                  <div v-if="row.symbol" class="panel-symbol">
+                  <div
+                    v-if="row.symbol"
+                    class="panel-symbol"
+                    :title="row.symbol"
+                  >
                     {{ row.symbol }}
                   </div>
                 </div>
@@ -86,7 +97,7 @@
                   {{ range.symbol }}
                 </div>
                 <div class="panel-value">
-                  <range-text :range="range.range" />
+                  <range-text :range="range.range" :symbol="range.symbol" />
                 </div>
               </div>
             </div>
@@ -122,9 +133,13 @@
                 {{ row.name ?? row.symbol }}
               </div>
               <div class="panel-value">
-                <range-text :range="row.range" />
+                <range-text :range="row.range" :symbol="row.symbol" />
                 <div class="panel-meta">
-                  <span v-if="row.name" class="panel-symbol">
+                  <span
+                    v-if="row.name"
+                    class="panel-symbol"
+                    :title="row.symbol"
+                  >
                     {{ row.symbol }}
                   </span>
                   <span
@@ -183,8 +198,9 @@ const emit = defineEmits([ "close", "select-step" ]);
 const diesHere = computed(() => {
   const _response = props.whatIf.result.value?.response;
   const _dead = _response?.firstDeadStep?.toNumber();
-  return _dead !== undefined &&
-    props.resolveStep(_dead)?.order === props.step.order;
+  if (_dead === undefined ||
+      props.resolveStep(_dead)?.order !== props.step.order) return null;
+  return { earliest: _response.firstDeadStepIsEarliest !== false };
 });
 
 const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
@@ -192,15 +208,30 @@ const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
 const body = ref(null);
 const { canScrollUp, canScrollDown } = useScrollShadows(body);
 
+// A symbol dump starts with its type, as in reg_$1<int * g> or
+// conj_$2{void *, ...}. The type stops at a brace or angle bracket, so a
+// pointer inside the region of a non-pointer field does not count.
+const POINTER_SYMBOL = /^[a-z]+_\$\d+[<{][^,{}<>]*\*/;
+const POINTER_WORDS = new Map([
+  [ "{ [0, 0] }", "null" ],
+  [ "{ [1, 18446744073709551615] }", "non-null" ]
+]);
+
 // One span per interval, so a long range set wraps only between intervals.
-function RangeText({ range }) {
+// A pointer's null and non-null ranges read as words; the title keeps the
+// analyzer's range.
+function RangeText({ range, symbol }) {
+  const _word = symbol && POINTER_SYMBOL.test(symbol)
+    ? POINTER_WORDS.get(range) : undefined;
+  if (_word) return h("span", { title: range }, _word);
+
   const _intervals = range.match(/\[[^\]]*\]/g);
   if (!_intervals) return range;
   return h("span", { class: "panel-intervals", title: range },
     _intervals.map(interval =>
       h("span", { class: "panel-interval" }, interval)));
 }
-RangeText.props = [ "range" ];
+RangeText.props = [ "range", "symbol" ];
 
 const knownRanges = computed(() =>
   new Map(props.step.symbolRanges.map(range => [ range.symbol, range.range ]))
@@ -348,9 +379,16 @@ const accumulatedRows = computed(() =>
     overflow-wrap: anywhere;
   }
 
+  // Beside a name the symbol is secondary, and a field's symbol on a real
+  // report runs to several lines, so it shows two and keeps the rest in its
+  // title.
   .panel-symbol {
     color: rgba(0, 0, 0, 0.55);
     font-size: 0.75rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 
   .panel-meta {
