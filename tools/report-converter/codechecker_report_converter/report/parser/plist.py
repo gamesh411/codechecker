@@ -540,7 +540,7 @@ class Parser(BaseParser):
             if report.analyzer_name:
                 diagnostic['type'] = report.analyzer_name
 
-            path = []
+            path: list[dict] = []
             control_path_indices: dict[int, int] = {}
             if report.bug_path_positions:
                 for i in range(len(report.bug_path_positions) - 1):
