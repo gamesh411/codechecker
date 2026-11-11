@@ -19,7 +19,28 @@ import z3
 from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
     WhatIfConstraint
 
+from codechecker_report_converter.report import constraint_trace
+
 from codechecker_server.api import what_if
+
+
+def _trace(steps):
+    """
+    The stored version 2 trace of `steps`, each step on an analyzer node of
+    its own. Each assertion stands for a path condition entry, whose symbol
+    it is named by.
+    """
+    nodes = [{'symbol_ranges': [],
+              'variables': step['variables'],
+              'path_condition': [{'symbol': line, 'range': ''}
+                                 for line in step['smt_assertions']],
+              'smt_declarations': step['smt_declarations'],
+              'smt_assertions': step['smt_assertions']}
+             for step in steps]
+    return json.dumps(constraint_trace.encode(
+        nodes, [{'kind': step['kind'], 'index': step['index'],
+                 'order': step['order'], 'exploded_node': node}
+                for node, step in enumerate(steps)]))
 
 
 def _step(order, variables, declarations, assertions):
@@ -40,51 +61,51 @@ V_IS_ZERO = '(assert (= reg_$1 #x00000000))'
 
 # `v` holds reg_$1, assumed 0, until a call replaces it with an unconstrained
 # reg_$2. The last step holds the whole path condition.
-REASSIGNED = json.dumps({'version': 1, 'steps': [
+REASSIGNED = _trace([
     _step(1, [_symbol('v', 'reg_$1')], [DECLARE_1], [V_IS_ZERO]),
     _step(5, [_symbol('v', 'reg_$2')], [DECLARE_1, DECLARE_2], [V_IS_ZERO]),
     _step(7, [_symbol('u', 'reg_$2')], [DECLARE_1, DECLARE_2], [V_IS_ZERO]),
-]})
+])
 
 # `q` is a pointer parameter assumed null, `n` and `p` hold concrete values,
 # and `f` has a symbol whose type has no solver term.
-POINTERS = json.dumps({'version': 1, 'steps': [_step(
+POINTERS = _trace([_step(
     1, [_symbol('q', 'reg_$1', False),
         {'name': 'n', 'value': '0', 'kind': 'integer'},
         {'name': 'p', 'value': '&x', 'kind': 'address'},
         {'name': 'f', 'value': 'reg_$3<float f>', 'kind': 'symbol'}],
     ['(declare-fun reg_$1 () (_ BitVec 64))'],
-    ['(assert (= reg_$1 #x0000000000000000))'])]})
+    ['(assert (= reg_$1 #x0000000000000000))'])])
 
 
 # `g` holds reg_$1, assumed non-null, until an opaque call at step 3 replaces
 # it with reg_$2, which the path assumes null from step 6.
 G_NOT_NULL = '(assert (not (= reg_$1 #x00000000)))'
 G_NULL = '(assert (= reg_$2 #x00000000))'
-OPAQUE_CALL = json.dumps({'version': 1, 'steps': [
+OPAQUE_CALL = _trace([
     _step(1, [_symbol('g', 'reg_$1')], [DECLARE_1], [G_NOT_NULL]),
     _step(3, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2], [G_NOT_NULL]),
     _step(6, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2],
           [G_NULL, G_NOT_NULL]),
     _step(8, [_symbol('g', 'reg_$2')], [DECLARE_1, DECLARE_2],
           [G_NULL, G_NOT_NULL]),
-]})
+])
 
 # `p` is first an unconstrained symbol, then holds 0, then &x.
-CONCRETE_LATER = json.dumps({'version': 1, 'steps': [
+CONCRETE_LATER = _trace([
     _step(1, [_symbol('p', 'reg_$1', False)], [DECLARE_1], []),
     _step(2, [{'name': 'p', 'value': '0', 'kind': 'integer'}], [], []),
     _step(4, [{'name': 'p', 'value': '0', 'kind': 'integer'}], [], []),
     _step(5, [{'name': 'p', 'value': '&x', 'kind': 'address'}], [], []),
-]})
+])
 
 
 def _long_trace(length, dies_at):
     """ `n` has one symbol, which the path assumes 0 from step `dies_at`. """
-    return json.dumps({'version': 1, 'steps': [
+    return _trace([
         _step(order, [_symbol('n', 'reg_$1')], [DECLARE_1],
               [V_IS_ZERO] if order >= dies_at else [])
-        for order in range(length)]})
+        for order in range(length)])
 
 
 def check(trace, *constraints):
@@ -114,11 +135,11 @@ class WhatIfTest(unittest.TestCase):
             check(REASSIGNED, (5, 'v == 1')).verdict, PathVerdict.FEASIBLE)
 
     def test_signedness_decides_the_comparison(self):
-        trace = json.dumps({'version': 1, 'steps': [_step(
+        trace = _trace([_step(
             1, [_symbol('s', 'reg_$1'), _symbol('u', 'reg_$2', False)],
             [DECLARE_1, DECLARE_2],
             ['(assert (= reg_$1 #xffffffff))',
-             '(assert (= reg_$2 #xffffffff))'])]})
+             '(assert (= reg_$2 #xffffffff))'])])
 
         self.assertEqual(check(trace, (1, 's < 0')).verdict,
                          PathVerdict.FEASIBLE)
@@ -413,6 +434,44 @@ class FirstDeadStepTest(unittest.TestCase):
         self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
         self.assertEqual(result.firstDeadStep, 9)
         self.assertFalse(result.firstDeadStepIsEarliest)
+
+
+class TraceFormatTest(unittest.TestCase):
+
+    def test_older_trace_is_not_checked(self):
+        """ A trace stored before version 2 keeps only its version. """
+        result = check(json.dumps({'version': 1}), (1, 'v == 0'))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(result.reason, what_if.OLD_TRACE_REASON)
+        self.assertEqual(result.baselineReason, what_if.OLD_TRACE_REASON)
+
+    def test_trace_without_smtlib_is_not_checked(self):
+        """ What a Clang without Z3 records. """
+        trace = constraint_trace.encode(
+            [{'symbol_ranges': [],
+              'variables': [{'name': 'v', 'value': 'reg_$1<int v>',
+                             'kind': 'symbol'}],
+              'path_condition': [{'symbol': 'reg_$1<int v>',
+                                  'range': '{ [0, 0] }'}]}],
+            [{'kind': 'event', 'index': 0, 'order': 1, 'exploded_node': 0}])
+        result = check(json.dumps(trace), (1, 'v == 0'))
+        self.assertEqual(result.reason, what_if.NO_SMTLIB_REASON)
+
+    def test_unreadable_trace_is_not_checked(self):
+        trace = json.loads(REASSIGNED)
+        trace['steps'][0]['exploded_node'] = 99
+        result = check(json.dumps(trace), (1, 'v == 0'))
+        self.assertEqual(result.reason, what_if.UNREADABLE_TRACE_REASON)
+
+    def test_steps_on_one_node_hold_its_values(self):
+        """ The edge into a line and its event share their node. """
+        trace = json.loads(OPAQUE_CALL)
+        trace['steps'].insert(1, {'kind': 'control', 'index': 0, 'order': 2,
+                                  'exploded_node': 0})
+        trace = json.dumps(trace)
+        self.assertEqual(check(trace, (2, 'g == 0')).firstDeadStep, 1)
+        self.assertEqual(check(trace, (3, 'g == 0')).verdict,
+                         PathVerdict.FEASIBLE)
 
 
 class PreparedPathTest(unittest.TestCase):

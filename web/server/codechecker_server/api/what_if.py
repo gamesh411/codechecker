@@ -25,6 +25,9 @@ import z3
 from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
     WhatIfResult, WhatIfSyntaxError
 
+from codechecker_report_converter.report.constraint_trace import \
+    ConstraintTrace, MalformedTrace, VERSION as TRACE_VERSION
+
 from codechecker_common.logger import get_logger
 
 LOG = get_logger('server')
@@ -37,8 +40,8 @@ WHAT_IF_SOLVER_TIMEOUT_MS = 2000
 WHAT_IF_SEARCH_BUDGET_MS = 2 * WHAT_IF_SOLVER_TIMEOUT_MS
 
 # Prepared paths kept per API worker process, so that the reports several
-# readers are checking at once stay prepared in every worker. A 1205-step path
-# keeps about 6 MB.
+# readers are checking at once stay prepared in every worker. A path keeps
+# each value of its trace once, with the steps it holds for.
 WHAT_IF_CACHE_SIZE = 8
 
 NO_TRACE_REASON = \
@@ -46,6 +49,12 @@ NO_TRACE_REASON = \
 NO_SMTLIB_REASON = \
     "This report has no solver input for this path. Recording it needs a " \
     "Clang built with Z3."
+OLD_TRACE_REASON = \
+    "This report's Constraint Snapshots were recorded in an older format, " \
+    "so this path cannot be checked. Analyze and store it again to check it."
+UNREADABLE_TRACE_REASON = \
+    "This report's Constraint Snapshots are unreadable, so this path cannot " \
+    "be checked."
 
 
 class ConstraintSyntaxError(Exception):
@@ -208,10 +217,6 @@ def _solve(ctx: z3.Context, assertions, extra,
         f"({why})."
 
 
-def _union(*lists: list[str]) -> list[str]:
-    return list(dict.fromkeys(line for lines in lists for line in lines))
-
-
 class PreparedPath:
     """
     A Bug Path read from its stored constraint trace for checking: its Path
@@ -226,14 +231,24 @@ class PreparedPath:
         self._baseline = None
 
         trace = json.loads(trace_json) if trace_json else None
-        if not trace or not trace.get('steps'):
+        if not trace:
             self.unchecked_reason = NO_TRACE_REASON
             return
-        shared = {}
-        self.path = _Path(sorted(
-            (_compact_step(step, shared) for step in trace['steps']),
-            key=lambda step: step['order']))
-        if 'smt_assertions' not in self.path.steps[-1]:
+        if trace.get('version') != TRACE_VERSION:
+            self.unchecked_reason = OLD_TRACE_REASON
+            return
+        if not trace.get('steps'):
+            self.unchecked_reason = NO_TRACE_REASON
+            return
+        try:
+            constraint_trace = ConstraintTrace(trace)
+            constraint_trace.check()
+            self.path = _Path(constraint_trace)
+        except (MalformedTrace, KeyError, IndexError, TypeError) as ex:
+            LOG.error("Unreadable constraint trace: %s", ex)
+            self.unchecked_reason = UNREADABLE_TRACE_REASON
+            return
+        if not self.path.smtlib:
             self.unchecked_reason = NO_SMTLIB_REASON
 
     def baseline(self) -> tuple[int, str | None]:
@@ -248,25 +263,6 @@ class PreparedPath:
         if baseline[0] != PathVerdict.UNKNOWN:
             self._baseline = baseline
         return baseline
-
-
-def _compact_step(step: dict, shared: dict) -> dict:
-    """
-    What a check reads of a Path Step, with values equal to those of other
-    steps shared. Each step repeats most of the previous one, so a long path
-    holds few distinct values, and a check never changes them.
-    """
-    def share(value, key):
-        return shared.setdefault(key, value)
-
-    compact = {'order': step['order'],
-               'variables': [share(variable, tuple(variable.items()))
-                             for variable in step['variables']]}
-    for key in ('smt_declarations', 'smt_assertions'):
-        if key in step:
-            lines = tuple(share(line, line) for line in step[key])
-            compact[key] = share(list(lines), (key, lines))
-    return compact
 
 
 _prepared_paths: OrderedDict = OrderedDict()
@@ -407,36 +403,58 @@ class _Path:
     """
     The Path Steps of a Bug Path in order, the values they hold, and their
     solver input in a Z3 context of its own.
+
+    A step shows the snapshot of its analyzer node, and each value of the
+    trace is kept once, with the span of nodes it holds for, so a long path
+    costs what its trace does rather than its steps times their snapshots.
     """
 
-    def __init__(self, steps: list[dict]):
-        self.steps = steps
+    def __init__(self, trace: ConstraintTrace):
+        self.steps = sorted(({'order': step['order'],
+                              'node': step['exploded_node']}
+                             for step in trace.steps),
+                            key=lambda step: step['order'])
+        self.smtlib = trace.smtlib
         self.ctx = z3.Context()
         self._assertions = {}
         self._symbols = {}
         self.by_order = {step['order']: index
-                         for index, step in enumerate(steps)}
+                         for index, step in enumerate(self.steps)}
+
+        self._variables: dict[str, list] = {}
+        for life in trace.lifetimes('variables'):
+            variable = trace.entry('variables', life.entry)
+            self._variables.setdefault(variable['name'], []).append(
+                (variable, life.start, life.end))
+        self._path_condition = [
+            (trace.assertion(life.entry), life.start, life.end)
+            for life in trace.lifetimes('path_condition')] \
+            if self.smtlib else []
         # Symbol IDs are unique within a report, so declaring every symbol of
         # the path lets any step's assertions be read with any term.
-        self.declarations = _union(
-            *(step.get('smt_declarations', []) for step in steps))
-        declared = {}
-        self._declared = []
-        for step in steps:
-            lines = tuple(step.get('smt_declarations', []))
-            if lines not in declared:
-                declared[lines] = {_DECLARED.match(line).group(1)
-                                   for line in lines if _DECLARED.match(line)}
-            self._declared.append(declared[lines])
+        declarations = sorted(trace.lifetimes('smt_declarations'),
+                              key=lambda life: life.start)
+        self.declarations = list(dict.fromkeys(
+            trace.entry('smt_declarations', life.entry)
+            for life in declarations))
+        self._declared: dict[str, list[tuple[int, int]]] = {}
+        for life in declarations:
+            match = _DECLARED.match(
+                trace.entry('smt_declarations', life.entry))
+            if match:
+                self._declared.setdefault(match.group(1), []).append(
+                    (life.start, life.end))
 
     def assertions(self, index: int):
         """ The path condition accumulated at step `index`, parsed. """
-        if index not in self._assertions:
-            self._assertions[index] = z3.parse_smt2_string(
+        node = self.steps[index]['node']
+        if node not in self._assertions:
+            self._assertions[node] = z3.parse_smt2_string(
                 "\n".join(self.declarations +
-                          self.steps[index]['smt_assertions']),
+                          [line for line, start, end in self._path_condition
+                           if start <= node < end]),
                 ctx=self.ctx)
-        return self._assertions[index]
+        return self._assertions[node]
 
     def symbol(self, smt: str):
         """ The Z3 term of a variable's SMT symbol. """
@@ -476,8 +494,15 @@ class _Path:
         return list(applied.values())
 
     def _variable(self, index: int, name: str) -> dict | None:
-        return next((variable for variable in self.steps[index]['variables']
-                     if variable['name'] == name), None)
+        node = self.steps[index]['node']
+        return next((variable for variable, start, end
+                     in self._variables.get(name, ())
+                     if start <= node < end), None)
+
+    def _is_declared(self, name: str, index: int) -> bool:
+        node = self.steps[index]['node']
+        return any(start <= node < end
+                   for start, end in self._declared.get(name, ()))
 
     def _since(self, index: int, variable: dict) -> int:
         """
@@ -487,10 +512,11 @@ class _Path:
         of steps up to `index` where the variable holds it.
         """
         if variable['kind'] == 'symbol' and 'smt' in variable:
-            names = set(_SMT_SYMBOL.findall(variable['smt'])) & \
-                self._declared[index]
+            names = {name for name in _SMT_SYMBOL.findall(variable['smt'])
+                     if self._is_declared(name, index)}
             return next(earlier for earlier in range(index + 1)
-                        if names <= self._declared[earlier])
+                        if all(self._is_declared(name, earlier)
+                               for name in names))
 
         while index > 0 and self._variable(index - 1, variable['name']) \
                 == variable:
