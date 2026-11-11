@@ -38,6 +38,24 @@ InvalidFileContentMsg: str = \
     "your project to update the reports."
 
 
+# The tables of a constraint trace that hold locations, and their key there.
+TRACE_LOCATIONS = (('exploded_nodes', 'location'),
+                   ('stack_frames', 'call_site'))
+
+
+def map_trace_locations(trace: dict, map_file: Callable) -> dict:
+    """ A copy of the trace whose locations have their `file` mapped. """
+    result = dict(trace)
+    for table, key in TRACE_LOCATIONS:
+        if table in trace:
+            result[table] = [
+                {**item, key: {**item[key],
+                               'file': map_file(item[key]['file'])}}
+                if key in item else item
+                for item in trace[table]]
+    return result
+
+
 class File:
     def __init__(
         self,
@@ -406,6 +424,12 @@ class Report:
             self.macro_expansions
         ):
             event.file.trim(path_prefixes)
+
+        # The trace names its files by path, outside of the File objects.
+        if self.constraint_trace is not None:
+            self.constraint_trace = map_trace_locations(
+                self.constraint_trace,
+                lambda path: util.trim_path_prefixes(path, path_prefixes))
 
     @property
     def files(self) -> set[File]:

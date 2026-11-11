@@ -27,8 +27,9 @@ from codechecker_report_converter.report import \
     File, \
     MacroExpansion, \
     Range, Report, \
-    UnknownChecker, \
-    get_or_create_file
+    TRACE_LOCATIONS, UnknownChecker, \
+    get_or_create_file, \
+    map_trace_locations
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
     BaseParser, get_tool_info
@@ -184,28 +185,10 @@ def get_file_index_map(
     return file_index_map
 
 
-# The tables of a constraint trace that hold locations, and their key there.
-_TRACE_LOCATIONS = (('exploded_nodes', 'location'),
-                    ('stack_frames', 'call_site'))
-
-
-def _map_trace_locations(trace: dict, map_file: Callable) -> dict:
-    """ A copy of the trace whose locations have their `file` mapped. """
-    result = dict(trace)
-    for table, key in _TRACE_LOCATIONS:
-        if table in trace:
-            result[table] = [
-                {**item, key: {**item[key],
-                               'file': map_file(item[key]['file'])}}
-                if key in item else item
-                for item in trace[table]]
-    return result
-
-
 def _trace_location_files(trace: dict) -> set[str]:
     """ The file paths that a stored constraint trace's locations name. """
     return {item[key]['file']
-            for table, key in _TRACE_LOCATIONS
+            for table, key in TRACE_LOCATIONS
             for item in trace.get(table, [])
             if key in item}
 
@@ -452,7 +435,7 @@ class Parser(BaseParser):
             # Keys beside `steps`, such as `cfgs`, need no translation, except
             # for locations: they name their file by path, since storage does
             # not keep the plist's file indices.
-            return _map_trace_locations(
+            return map_trace_locations(
                 {**trace, 'steps': steps},
                 lambda file_index: files[file_index].original_path)
         except (KeyError, TypeError) as ex:
@@ -671,7 +654,7 @@ class Parser(BaseParser):
                 'path_index': path_index
             })
 
-        return _map_trace_locations(
+        return map_trace_locations(
             {**trace, 'steps': steps},
             lambda file_path: file_index_map[file_path])
 

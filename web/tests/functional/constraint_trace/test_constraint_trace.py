@@ -18,7 +18,6 @@ import json
 import os
 import shutil
 import sqlite3
-import sys
 import unittest
 
 from libtest import codechecker
@@ -46,35 +45,55 @@ class TestConstraintTrace(unittest.TestCase):
             'analyzers': ['clangsa']
         }
 
-        server_access = codechecker.start_or_get_server()
-        server_access['viewer_product'] = 'constraint_trace'
-        codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
-        codechecker_cfg.update(server_access)
+        # pytest does not run teardown_class after a failed setup_class, and
+        # runs setup_class again for the next test. The product would be
+        # left behind on the global server, and every later test would fail
+        # with "Failed to add the product" instead of the first real error.
+        try:
+            server_access = codechecker.start_or_get_server()
+            server_access['viewer_product'] = 'constraint_trace'
+            codechecker_cfg.update(server_access)
+            # Before the product exists, so that a failed setup can remove it.
+            env.export_test_cfg(TEST_WORKSPACE,
+                                {'codechecker_cfg': codechecker_cfg})
+            codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
-        for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                         'no_cfgs', 'no_exploded_nodes', 'z3_refuted',
-                         'concrete_value', 'opaque_call',
-                         'several_contexts']:
-            report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
-            shutil.copytree(
-                os.path.join(project.path('constraint_trace'), run_name),
-                report_dir)
+            for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
+                             'no_cfgs', 'no_exploded_nodes', 'z3_refuted',
+                             'concrete_value', 'opaque_call',
+                             'several_contexts']:
+                report_dir = os.path.join(
+                    TEST_WORKSPACE, 'test_proj', run_name)
+                shutil.copytree(
+                    os.path.join(project.path('constraint_trace'), run_name),
+                    report_dir)
 
-            for plist in glob.glob(os.path.join(report_dir, '*.plist')):
-                with open(plist, 'r+', encoding="utf-8") as plist_file:
-                    content = plist_file.read()
-                    plist_file.seek(0)
-                    plist_file.truncate()
-                    plist_file.write(
-                        content.replace("$FILE_PATH$", report_dir))
+                for plist in glob.glob(os.path.join(report_dir, '*.plist')):
+                    with open(plist, 'r+', encoding="utf-8") as plist_file:
+                        content = plist_file.read()
+                        plist_file.seek(0)
+                        plist_file.truncate()
+                        plist_file.write(
+                            content.replace("$FILE_PATH$", report_dir))
 
+                codechecker_cfg['reportdir'] = report_dir
+                if codechecker.store(codechecker_cfg, run_name):
+                    raise RuntimeError(f"Failed to store '{run_name}'")
+                codechecker_cfg['run_names'].append(run_name)
+
+            # The same reports again, with the workspace cut off their paths.
             codechecker_cfg['reportdir'] = report_dir
-            if codechecker.store(codechecker_cfg, run_name):
-                sys.exit(1)
-            codechecker_cfg['run_names'].append(run_name)
+            codechecker_cfg['trim_path_prefix'] = TEST_WORKSPACE
+            if codechecker.store(codechecker_cfg, 'trimmed_paths'):
+                raise RuntimeError("Failed to store 'trimmed_paths'")
+            del codechecker_cfg['trim_path_prefix']
+            codechecker_cfg['run_names'].append('trimmed_paths')
 
-        env.export_test_cfg(TEST_WORKSPACE,
-                            {'codechecker_cfg': codechecker_cfg})
+            env.export_test_cfg(TEST_WORKSPACE,
+                                {'codechecker_cfg': codechecker_cfg})
+        except BaseException:
+            TestConstraintTrace.teardown_class(self)
+            raise
 
     def teardown_class(self):
         global TEST_WORKSPACE
@@ -369,6 +388,27 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertEqual(node_of("Calling 'take'", 1),
                          node_of("Entered call from 'several_contexts'", 1))
         self.assertEqual(node_of("Calling 'take'", 1)['kind'], 'CallEnter')
+
+    def test_trim_path_prefix_applies_to_trace_locations(self):
+        """
+        `--trim-path-prefix` cuts the paths of the trace's locations like
+        every other path of a stored report.
+        """
+        details = self._details('trimmed_paths')
+        trace = json.loads(details.constraintTrace)
+        trimmed = os.path.join('test_proj', 'several_contexts',
+                               'several_contexts.c')
+
+        self.assertTrue(trace['exploded_nodes'])
+        self.assertTrue(all(node['location']['file'] == trimmed
+                            for node in trace['exploded_nodes']))
+        call_sites = [frame['call_site']['file']
+                      for frame in trace['stack_frames']
+                      if 'call_site' in frame]
+        self.assertTrue(call_sites)
+        self.assertEqual(set(call_sites), {trimmed})
+        self.assertTrue(all(event.filePath == trimmed
+                            for event in details.pathEvents))
 
     def test_report_stored_without_exploded_nodes(self):
         """
