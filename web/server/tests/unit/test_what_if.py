@@ -89,7 +89,8 @@ def _long_trace(length, dies_at):
 
 def check(trace, *constraints):
     return what_if.check_what_if(
-        trace, [WhatIfConstraint(*constraint) for constraint in constraints])
+        what_if.PreparedPath(trace),
+        [WhatIfConstraint(*constraint) for constraint in constraints])
 
 
 class _RecordingSolver(z3.Solver):
@@ -412,3 +413,84 @@ class FirstDeadStepTest(unittest.TestCase):
         self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
         self.assertEqual(result.firstDeadStep, 9)
         self.assertFalse(result.firstDeadStepIsEarliest)
+
+
+class PreparedPathTest(unittest.TestCase):
+
+    def setUp(self):
+        what_if._prepared_paths.clear()
+
+    def test_checks_on_one_path_answer_as_on_fresh_ones(self):
+        checks = [
+            (REASSIGNED, [(1, 'v == 1')]),
+            (REASSIGNED, [(5, 'v > 3'), (7, 'u < 2')]),
+            (REASSIGNED, [(1, 'v ===')]),
+            (REASSIGNED, [(2, 'v == 0')]),
+            (POINTERS, [(1, 'q != null')]),
+            (POINTERS, [(1, 'p == 4096')]),
+            (OPAQUE_CALL, [(1, 'g != 0', True)]),
+            (CONCRETE_LATER, [(5, 'p == 0', True)]),
+            (_long_trace(40, 25), [(39, 'n != 0')]),
+        ]
+        prepared = {}
+        for _ in range(2):
+            for trace, constraints in checks:
+                path = prepared.setdefault(trace, what_if.PreparedPath(trace))
+                self.assertEqual(
+                    what_if.check_what_if(
+                        path, [WhatIfConstraint(*c) for c in constraints]),
+                    check(trace, *constraints))
+
+    def test_baseline_is_solved_once(self):
+        path = what_if.PreparedPath(REASSIGNED)
+        _RecordingSolver.timeouts = []
+        with mock.patch.object(what_if.z3, 'Solver', _RecordingSolver):
+            what_if.check_what_if(path, [WhatIfConstraint(1, 'v == 0')])
+            what_if.check_what_if(path, [WhatIfConstraint(5, 'v == 1')])
+        # Baseline and verdict, then only the verdict.
+        self.assertEqual(len(_RecordingSolver.timeouts), 3)
+
+    def test_baseline_the_solver_gave_up_on_is_solved_again(self):
+        # Baseline and verdict of two checks.
+        answers = iter([z3.unknown, z3.sat, z3.sat, z3.sat])
+
+        class GivesUpOnce(z3.Solver):
+            def check(self, *_):
+                return next(answers)
+
+            def reason_unknown(self):
+                return 'timeout'
+
+        path = what_if.PreparedPath(REASSIGNED)
+        with mock.patch.object(what_if.z3, 'Solver', GivesUpOnce):
+            first = what_if.check_what_if(path, [WhatIfConstraint(1, 'v ===')])
+            second = what_if.check_what_if(path,
+                                           [WhatIfConstraint(1, 'v ===')])
+
+        self.assertEqual(first.baselineVerdict, PathVerdict.UNKNOWN)
+        self.assertEqual(second.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_cache_reads_a_trace_once_per_key(self):
+        loads = []
+
+        def load(trace):
+            loads.append(trace)
+            return trace
+
+        first = what_if.prepared_path('a', lambda: load(REASSIGNED))
+        self.assertIs(what_if.prepared_path('a', lambda: load(POINTERS)),
+                      first)
+        self.assertIsNot(what_if.prepared_path('b', lambda: load(POINTERS)),
+                         first)
+        self.assertEqual(loads, [REASSIGNED, POINTERS])
+
+    def test_cache_drops_the_least_recently_used_path(self):
+        size = what_if.WHAT_IF_CACHE_SIZE
+        for key in range(size):
+            what_if.prepared_path(key, lambda: REASSIGNED)
+        # Key 0 is used again, so key 1 is the one dropped.
+        what_if.prepared_path(0, lambda: REASSIGNED)
+        what_if.prepared_path(size, lambda: REASSIGNED)
+
+        self.assertEqual(list(what_if._prepared_paths),
+                         [*range(2, size), 0, size])

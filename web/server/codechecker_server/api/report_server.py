@@ -78,7 +78,7 @@ from .thrift_enum_helper import detection_status_enum, \
     detection_status_str, report_status_enum, \
     review_status_enum, review_status_str, report_extended_data_type_enum
 from .report_annotations import report_annotation_types
-from .what_if import check_what_if
+from .what_if import PreparedPath, check_what_if, prepared_path
 
 # These names are inherited from Thrift stubs.
 # pylint: disable=invalid-name
@@ -2659,10 +2659,15 @@ class ThriftRequestHandler:
                 raise codechecker_api_shared.ttypes.RequestFailed(
                     codechecker_api_shared.ttypes.ErrorCode.DATABASE,
                     f"Report {reportId} not found!")
-            trace = get_report_details(
-                session, [reportId])[reportId].constraintTrace
+            path_data = session.get(ReportPathData, reportId)
+            if path_data is None:
+                path = PreparedPath(None)
+            else:
+                path = prepared_path(path_data.digest, lambda: next(
+                    (item.msg for item in path_data.path_data
+                     if item.type == "constraint_trace"), None))
 
-        return check_what_if(trace, constraints)
+        return check_what_if(path, constraints)
 
     def _setReviewStatus(self, session, report_hash, status,
                          message, date=None):

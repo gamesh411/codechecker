@@ -401,6 +401,14 @@ class ReportPathData(Base):
             json.dumps(list(map(asdict, data))).encode("utf-8"),
             zlib.Z_BEST_COMPRESSION)
 
+    @property
+    def digest(self) -> bytes:
+        """
+        Tells stored path data apart, which a report ID alone does not:
+        SQLite gives a new report the ID of a deleted one.
+        """
+        return hashlib.sha256(self._path_data).digest()
+
     def __init__(self, report_id, path_data):
         self.report_id = report_id
         self.path_data = path_data
