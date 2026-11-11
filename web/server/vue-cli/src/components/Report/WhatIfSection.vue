@@ -145,13 +145,28 @@
               <template v-if="verdict.about">
                 <code class="what-if-expression">{{
                   verdict.about.expression }}</code>
-                {{ verdict.about.holdsThroughout
-                  ? "throughout" : `at ${verdict.about.heading}` }}.
+                <template v-if="verdict.dead?.atAnchor">
+                  at
+                  <button
+                    type="button"
+                    class="what-if-dead-step"
+                    :aria-label="`Select ${verdict.dead.label}`"
+                    @click="emit('select-step', verdict.dead.order)"
+                    v-text="verdict.dead.label"
+                  />.
+                </template>
+                {{ verdict.dead?.atAnchor ? ""
+                  : verdict.about.holdsThroughout
+                    ? "throughout." : `at ${verdict.about.heading}.` }}
               </template>
               <template v-else>
                 these {{ verdict.count }} assumptions together.
               </template>
-              <template v-if="verdict.dead?.earliest">
+              <template v-if="verdict.dead?.earliest && verdict.dead.atAnchor">
+                It dies right there, the first step whose path condition
+                contradicts it.
+              </template>
+              <template v-else-if="verdict.dead?.earliest">
                 <!-- Literal text at both ends keeps the spaces around it. -->
                 It dies {{ verdict.dead.beforeAnchor ? "earlier, at" : "at" }}
                 <button
@@ -402,7 +417,10 @@ function deadStep(response, about, count) {
     order: _order,
     earliest: response.firstDeadStepIsEarliest !== false,
     beforeAnchor: count === 1 && !about.holdsThroughout &&
-      _step.order < about.order
+      _step.order < about.order,
+    // Naming the step twice in one verdict reads as a stutter.
+    atAnchor: count === 1 && !about.holdsThroughout &&
+      props.resolveStep(about.order)?.order === _step.order
   };
 }
 
