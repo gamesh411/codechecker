@@ -194,7 +194,7 @@ const cfg = computed(() => props.cfgs[props.cfgIndex] ?? props.cfgs[0]);
 const stepsByPlace = computed(() => {
   const _byPlace = new Map();
   props.steps.forEach(step => {
-    const _position = step.snapshot.cfg_position;
+    const _position = step.cfgPosition;
     if (!_position || props.cfgs[_position.cfg] !== cfg.value) return;
     const _key = placeKey(_position);
     if (!_byPlace.has(_key)) _byPlace.set(_key, []);

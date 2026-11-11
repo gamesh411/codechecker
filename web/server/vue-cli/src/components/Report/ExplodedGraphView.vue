@@ -136,7 +136,7 @@ function describeCallSite(callSite) {
 const stepsByNode = computed(() => {
   const _byNode = new Map();
   props.steps.forEach(step => {
-    const _node = step.snapshot.exploded_node;
+    const _node = step.node;
     if (_node === undefined) return;
     if (!_byNode.has(_node)) _byNode.set(_node, []);
     _byNode.get(_node).push(step);
@@ -216,7 +216,7 @@ function stepsLabel(state) {
 const selectedState = computed(() => {
   if (props.selectedOrder === null) return null;
   const _step = props.steps.find(step => step.order === props.selectedOrder);
-  return _step?.snapshot.exploded_node ?? null;
+  return _step?.node ?? null;
 });
 
 async function scrollToSelection() {

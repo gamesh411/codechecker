@@ -272,8 +272,8 @@
                       v-if="showConstraints && hasExplodedNodes &&
                         statesView.open"
                       class="cfg-side-view"
-                      :nodes="constraintTrace.exploded_nodes"
-                      :frames="constraintTrace.stack_frames ?? []"
+                      :nodes="constraintTrace.nodes"
+                      :frames="constraintTrace.frames"
                       :steps="constraintPathSteps"
                       :selected-order="selectedConstraintStep?.order ?? null"
                       :one-choice-per-snapshot="oneChoicePerSnapshot"
@@ -322,7 +322,7 @@
                   :steps="stepPicker.steps"
                   :can-show-graph="stepPicker.fromLine &&
                     hasControlFlowGraphs &&
-                    stepPicker.steps.some(step => step.snapshot.cfg_position)"
+                    stepPicker.steps.some(step => step.cfgPosition)"
                   :can-show-states="stepPicker.fromLine && hasExplodedNodes"
                   @select="selectPickedStep"
                   @open-graph="openGraphAt(stepPicker.steps[0].order)"
@@ -422,6 +422,7 @@ import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
 import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
+import { ConstraintTrace, readConstraintTrace } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
 import PathStepPicker from "./PathStepPicker";
@@ -458,8 +459,9 @@ const showComments = ref(false);
 const commentCols = ref(3);
 const showConstraints = ref(false);
 const constraintCols = ref(4);
-// A trace can hold tens of megabytes of snapshots that never change once
-// loaded, so it and the steps built from it stay out of deep reactivity.
+// A trace can hold megabytes of snapshots that never change once loaded, so
+// it and the steps built from it stay out of deep reactivity. It is a
+// ConstraintTrace, `{ version }` for a trace in an older format, or null.
 const constraintTrace = shallowRef(null);
 const pathStepsById = ref(new Map());
 const constraintPathSteps = shallowRef([]);
@@ -575,24 +577,32 @@ const lineWidgetField = context => {
 const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
 const hasConstraintTrace = computed(() =>
-  (constraintTrace.value?.steps?.length ?? 0) > 0
+  constraintTrace.value instanceof ConstraintTrace &&
+    constraintTrace.value.steps.length > 0
 );
-// Traces from a Clang before the CFG side view have no graphs.
+const hasOlderConstraintTrace = computed(() =>
+  !!constraintTrace.value && !(constraintTrace.value instanceof ConstraintTrace)
+);
 const hasControlFlowGraphs = computed(() =>
-  (constraintTrace.value?.cfgs?.length ?? 0) > 0
+  hasConstraintTrace.value && constraintTrace.value.cfgs.length > 0
 );
-// Nor exploded graph nodes, which came after the graphs.
 const hasExplodedNodes = computed(() =>
-  (constraintTrace.value?.exploded_nodes?.length ?? 0) > 0
+  hasConstraintTrace.value && constraintTrace.value.nodes.length > 0
 );
-const constraintToggleHint = computed(() =>
-  hasConstraintTrace.value
-    ? "Show constraints: click a bug path step or a source line to see " +
-      "what the analyzer knew there."
-    : "This report has no constraint data. Analyze with the analyzer config " +
-      "option emit-constraint-snapshots=true to see what the analyzer knew " +
-      "at each step."
-);
+const constraintToggleHint = computed(() => {
+  if (hasConstraintTrace.value) {
+    return "Show constraints: click a bug path step or a source line to see " +
+      "what the analyzer knew there.";
+  }
+  if (hasOlderConstraintTrace.value) {
+    return "This report's constraint data was recorded in an older format, " +
+      "which this CodeChecker cannot show. Analyze and store the report " +
+      "again to see what the analyzer knew at each step.";
+  }
+  return "This report has no constraint data. Analyze with the analyzer " +
+    "config option emit-constraint-snapshots=true to see what the analyzer " +
+    "knew at each step.";
+});
 const selectedControlStep = computed(() =>
   selectedControlIndex.value === null
     ? undefined
@@ -610,7 +620,7 @@ const selectedConstraintStep = computed(() => {
       symbolRanges: _control.snapshot.symbol_ranges ?? [],
       variables: _control.snapshot.variables ?? [],
       pathCondition: _control.snapshot.path_condition ?? [],
-      symbolNames: constraintSymbolNames(_control.order),
+      symbolNames: constraintTrace.value.symbolNames(_control.order),
       order: _control.order
     };
   }
@@ -618,8 +628,10 @@ const selectedConstraintStep = computed(() => {
   const _event = pathStepsById.value.get(selectedStepId.value);
   if (!_event) return null;
 
-  const _snapshot = constraintTrace.value.steps.find(step =>
+  const _traceStep = constraintTrace.value.steps.find(step =>
     step.kind === "event" && step.index === _event.$index - 1);
+  const _snapshot = _traceStep &&
+    constraintTrace.value.snapshot(_traceStep.exploded_node);
 
   return {
     heading: `Step ${_event.$index}`,
@@ -627,8 +639,8 @@ const selectedConstraintStep = computed(() => {
     symbolRanges: _snapshot?.symbol_ranges ?? [],
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
-    symbolNames: constraintSymbolNames(_snapshot?.order ?? -1),
-    order: _snapshot?.order ?? -1
+    symbolNames: constraintTrace.value.symbolNames(_traceStep?.order ?? -1),
+    order: _traceStep?.order ?? -1
   };
 });
 const editorCols = computed(() => {
@@ -998,7 +1010,7 @@ function selectGraphSteps(choices, event) {
   if (choices.length === 1) {
     revealPathStep(choices[0]);
   } else {
-    const _place = choices[0].snapshot.cfg_position;
+    const _place = choices[0].cfgPosition;
     const _where = _place.element !== undefined
       ? `B${_place.block}.${_place.element + 1}`
       : `B${_place.block}${_place.terminator ? " terminator" : " entry"}`;
@@ -1010,7 +1022,7 @@ function selectGraphSteps(choices, event) {
 // take the same place, so one opening closes the other.
 function openGraphAt(order) {
   const _position = constraintPathSteps.value
-    .find(step => step.order === order)?.snapshot.cfg_position;
+    .find(step => step.order === order)?.cfgPosition;
   stepPicker.value.open = false;
   statesView.value.open = false;
   cfgView.value = {
@@ -1030,8 +1042,7 @@ function selectStateSteps(choices, event) {
   if (choices.length === 1) {
     revealPathStep(choices[0]);
   } else {
-    const _node = constraintTrace.value.exploded_nodes[
-      choices[0].snapshot.exploded_node];
+    const _node = constraintTrace.value.nodes[choices[0].node];
     openStepPicker(choices, event, `State #${_node.id}`, false);
   }
 }
@@ -1047,7 +1058,7 @@ function pathStepsOnLine(line, fileId = sourceFile.value?.fileId) {
 function oneChoicePerSnapshot(steps) {
   return steps.filter((step, index) => {
     const _next = steps[index + 1];
-    if (!_next || snapshotKey(_next) !== snapshotKey(step)) return true;
+    if (!_next || !sameSnapshot(_next, step)) return true;
     // Of a run with equal snapshots the event is kept if there is one.
     return step.kind === "event" && _next.kind !== "event";
   });
@@ -1059,9 +1070,8 @@ function displayedStep(order) {
   const _step = constraintPathSteps.value.find(step => step.order === order);
   if (!_step) return null;
 
-  const _key = snapshotKey(_step);
   return pathStepsOnLine(_step.line, _step.fileId).find(choice =>
-    choice.order >= order && snapshotKey(choice) === _key) ?? _step;
+    choice.order >= order && sameSnapshot(choice, _step)) ?? _step;
 }
 
 function selectStepByOrder(order) {
@@ -1083,17 +1093,9 @@ function revealPathStep(step) {
 }
 
 // Every line, graph and state choice compares snapshots, which grow with the
-// path, so each snapshot's key is computed once.
-const snapshotKeys = new WeakMap();
-
-function snapshotKey(step) {
-  let _key = snapshotKeys.get(step.snapshot);
-  if (_key === undefined) {
-    const { symbol_ranges, variables, path_condition } = step.snapshot;
-    _key = JSON.stringify([ symbol_ranges, variables, path_condition ]);
-    snapshotKeys.set(step.snapshot, _key);
-  }
-  return _key;
+// path, so they are compared without being built.
+function sameSnapshot(a, b) {
+  return constraintTrace.value.sameSnapshot(a.node, b.node);
 }
 
 // Picker rows are told apart by the values that actually differ between them,
@@ -1252,7 +1254,7 @@ async function drawBugPath() {
     );
   });
 
-  constraintTrace.value = parseConstraintTrace(_reportDetail.constraintTrace);
+  constraintTrace.value = readConstraintTrace(_reportDetail.constraintTrace);
   if (!hasConstraintTrace.value) {
     showConstraints.value = false;
   }
@@ -1325,10 +1327,24 @@ async function drawBugPath() {
 // that names it. Control steps sit between events, so they are told apart by
 // the event they follow.
 function collectPathSteps(events, executionPath) {
-  const _steps = (constraintTrace.value?.steps ?? []).map(step => {
+  if (!hasConstraintTrace.value) return [];
+
+  const _trace = constraintTrace.value;
+  // A step's snapshot is built the first time it is shown.
+  const _placed = (step, fields) => Object.defineProperty({
+    ...fields,
+    order: step.order,
+    node: step.exploded_node,
+    cfgPosition: _trace.cfgPosition(step.exploded_node)
+  }, "snapshot", {
+    get: () => _trace.snapshot(step.exploded_node),
+    enumerable: true
+  });
+
+  const _steps = _trace.steps.map(step => {
     if (step.kind === "event") {
       const _event = events[step.index];
-      return _event && {
+      return _event && _placed(step, {
         kind: "event",
         key: `event-${step.index}`,
         stepId: _event.$id,
@@ -1336,23 +1352,19 @@ function collectPathSteps(events, executionPath) {
         fileId: _event.fileId,
         line: _event.startLine.toNumber(),
         message: _event.msg,
-        label: `Step ${_event.$index}`,
-        order: step.order,
-        snapshot: step
-      };
+        label: `Step ${_event.$index}`
+      });
     }
 
     const _point = executionPath[step.index];
-    return _point && {
+    return _point && _placed(step, {
       kind: "control",
       key: `control-${step.index}`,
       positionIndex: step.index,
       fileId: _point.fileId,
       line: Number(_point.startLine),
-      message: `Reaches line ${_point.startLine}, column ${_point.startCol}`,
-      order: step.order,
-      snapshot: step
-    };
+      message: `Reaches line ${_point.startLine}, column ${_point.startCol}`
+    });
   }).filter(Boolean).sort((a, b) => a.order - b.order);
 
   let _lastEvent = 0;
@@ -1366,32 +1378,6 @@ function collectPathSteps(events, executionPath) {
   });
 
   return _steps;
-}
-
-// A symbol's name in the path condition, kept from the last step it had one,
-// because the variable can be gone by the time its constraint is shown.
-function constraintSymbolNames(order) {
-  const _names = new Map();
-  constraintTrace.value.steps
-    .filter(step => step.order <= order)
-    .sort((a, b) => a.order - b.order)
-    .forEach(step => {
-      (step.variables ?? [])
-        .filter(variable => variable.kind === "symbol")
-        .forEach(variable => _names.set(variable.value, variable.name));
-    });
-  return _names;
-}
-
-function parseConstraintTrace(trace) {
-  if (!trace) return null;
-
-  try {
-    return JSON.parse(trace);
-  } catch (error) {
-    console.warn("Malformed constraint trace: ", error);
-    return null;
-  }
 }
 
 function clearLineWidgets() {
