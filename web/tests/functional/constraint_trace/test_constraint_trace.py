@@ -52,7 +52,8 @@ class TestConstraintTrace(unittest.TestCase):
         codechecker_cfg.update(server_access)
 
         for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
-                         'z3_refuted', 'concrete_value', 'opaque_call']:
+                         'no_cfgs', 'z3_refuted', 'concrete_value',
+                         'opaque_call']:
             report_dir = os.path.join(TEST_WORKSPACE, 'test_proj', run_name)
             shutil.copytree(
                 os.path.join(project.path('constraint_trace'), run_name),
@@ -255,6 +256,61 @@ class TestConstraintTrace(unittest.TestCase):
 
         self.assertIsNone(details.constraintTrace)
         self.assertTrue(details.pathEvents)
+
+    def test_control_flow_graph_survives_store(self):
+        """
+        The trace carries the function's CFG once, and each Path Step says
+        where in it it is, so the UI can map graph elements back to steps.
+        """
+        details = self._details('with_snapshots')
+
+        trace = json.loads(details.constraintTrace)
+        self.assertEqual([cfg['function'] for cfg in trace['cfgs']], ['f'])
+        cfg = trace['cfgs'][0]
+        blocks = {block['id']: block for block in cfg['blocks']}
+        self.assertEqual(cfg['blocks'][0]['id'], cfg['entry'])
+        self.assertIn(cfg['entry'], cfg['path_blocks'])
+        self.assertTrue(all(
+            edge['from'] in cfg['path_blocks'] and
+            edge['to'] in cfg['path_blocks'] for edge in cfg['path_edges']))
+        self.assertTrue(all(step['cfg_position']['cfg'] == 0 and
+                            step['cfg_position']['block'] in blocks
+                            for step in trace['steps']))
+
+        def element_of(message):
+            index = [event.msg for event in details.pathEvents].index(message)
+            position = next(
+                step['cfg_position'] for step in trace['steps']
+                if step['kind'] == 'event' and step['index'] == index)
+            block = blocks[position['block']]
+            return block, block['elements'][position['element']]
+
+        # Hand-derived from demo/two-path.c: a == 0 is first assumed on line 7,
+        # where `if (a != 0)` takes its false branch and skips `p = &x`. The
+        # store the dereference's null comes from is the one on line 14.
+        block, element = element_of("Assuming 'a' is equal to 0")
+        self.assertEqual(
+            (element['text'], element['line']), ('a != 0', 7))
+        self.assertEqual(block['terminator'], 'if a != 0')
+        then_block, else_block = block['successors']
+        self.assertNotIn(then_block, cfg['path_blocks'])
+        self.assertIn({'from': block['id'], 'to': else_block},
+                      cfg['path_edges'])
+        _, element = element_of("Null pointer value stored to 'p'")
+        self.assertEqual((element['text'], element['line']), ('p = 0', 14))
+        self.assertNotIn('parent', element)
+
+    def test_report_stored_without_control_flow_graph(self):
+        """
+        A plist from a Clang that predates CFG emission still stores and
+        shows its snapshots, with no graph and no step positions.
+        """
+        trace = json.loads(self._details('no_cfgs').constraintTrace)
+
+        self.assertTrue(trace['steps'])
+        self.assertNotIn('cfgs', trace)
+        self.assertFalse(any('cfg_position' in step
+                             for step in trace['steps']))
 
     def test_bug_path_is_feasible_without_what_if_constraints(self):
         """

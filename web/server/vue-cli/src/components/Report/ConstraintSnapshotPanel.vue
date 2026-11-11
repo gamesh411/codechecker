@@ -8,6 +8,29 @@
       <span class="text-subtitle-2">Constraint Snapshot</span>
       <v-spacer />
       <v-btn
+        v-if="canShowGraph && compactHeader"
+        class="panel-graph-btn mr-1"
+        icon="mdi-graph-outline"
+        variant="text"
+        size="small"
+        density="compact"
+        aria-label="Show in the control flow graph"
+        title="Show this step in its function's control flow graph"
+        @click="emit('open-graph')"
+      />
+      <v-btn
+        v-else-if="canShowGraph"
+        class="panel-graph-btn mr-1"
+        variant="text"
+        size="small"
+        density="comfortable"
+        prepend-icon="mdi-graph-outline"
+        title="Show this step in its function's control flow graph"
+        @click="emit('open-graph')"
+      >
+        CFG
+      </v-btn>
+      <v-btn
         class="panel-close-btn"
         icon="mdi-close"
         variant="text"
@@ -179,6 +202,7 @@
 
 <script setup>
 import { computed, h, ref } from "vue";
+import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
@@ -190,10 +214,14 @@ const props = defineProps({
   // From useWhatIf, owned by the report view.
   whatIf: { type: Object, required: true },
   // The Path Step the reader sees for an `order`: { label, order }.
-  resolveStep: { type: Function, required: true }
+  resolveStep: { type: Function, required: true },
+  canShowGraph: { type: Boolean, default: false }
 });
 
-const emit = defineEmits([ "close", "select-step" ]);
+const emit = defineEmits([ "close", "select-step", "open-graph" ]);
+
+// Below 1280px the panel is too narrow for the title and a labelled button.
+const { mdAndDown: compactHeader } = useDisplay();
 
 const diesHere = computed(() => {
   const _response = props.whatIf.result.value?.response;

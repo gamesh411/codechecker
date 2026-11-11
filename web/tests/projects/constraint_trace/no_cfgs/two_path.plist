@@ -1,0 +1,2231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>clang_version</key>
+	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1005a805737b890d3c2e13c4300fefacfbf172ed)</string>
+	<key>diagnostics</key>
+	<array>
+		<dict>
+			<key>ExecutedLines</key>
+			<dict>
+				<key>0</key>
+				<array>
+					<integer>5</integer>
+					<integer>6</integer>
+					<integer>7</integer>
+					<integer>9</integer>
+					<integer>11</integer>
+					<integer>12</integer>
+					<integer>13</integer>
+					<integer>14</integer>
+					<integer>15</integer>
+				</array>
+			</dict>
+			<key>category</key>
+			<string>Logic error</string>
+			<key>check_name</key>
+			<string>core.NullDereference</string>
+			<key>constraint_trace</key>
+			<dict>
+				<key>steps</key>
+				<array>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>0</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>1</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>2</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>3</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>4</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>5</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>6</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>7</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>9</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>10</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>11</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>13</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array/>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>14</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array/>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>15</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array/>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>16</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array/>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+					<dict>
+						<key>path_condition</key>
+						<array>
+							<dict>
+								<key>range</key>
+								<string>{ [0, 0] }</string>
+								<key>symbol</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>range</key>
+								<string>{ [-2147483648, -1], [1, 2147483647] }</string>
+								<key>symbol</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+						</array>
+						<key>path_index</key>
+						<integer>17</integer>
+						<key>smt_assertions</key>
+						<array>
+							<string>(assert (= reg_$1 #x00000000))</string>
+							<string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
+    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+						</array>
+						<key>smt_declarations</key>
+						<array>
+							<string>(declare-fun reg_$1 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$2 () (_ BitVec 32))</string>
+							<string>(declare-fun reg_$9 () (_ BitVec 32))</string>
+						</array>
+						<key>symbol_ranges</key>
+						<array/>
+						<key>variables</key>
+						<array>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>a</string>
+								<key>smt</key>
+								<string>reg_$1</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$1&lt;int a&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>b</string>
+								<key>smt</key>
+								<string>reg_$2</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$2&lt;int b&gt;</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>integer</string>
+								<key>name</key>
+								<string>p</string>
+								<key>value</key>
+								<string>0</string>
+							</dict>
+							<dict>
+								<key>kind</key>
+								<string>symbol</string>
+								<key>name</key>
+								<string>x</string>
+								<key>smt</key>
+								<string>reg_$9</string>
+								<key>smt_signed</key>
+								<true/>
+								<key>value</key>
+								<string>reg_$9&lt;int x&gt;</string>
+							</dict>
+						</array>
+					</dict>
+				</array>
+				<key>version</key>
+				<integer>1</integer>
+			</dict>
+			<key>description</key>
+			<string>Dereference of null pointer (loaded from variable 'p')</string>
+			<key>issue_context</key>
+			<string>f</string>
+			<key>issue_context_kind</key>
+			<string>function</string>
+			<key>issue_hash_content_of_line_in_context</key>
+			<string>8fb53a35561632b82cf1f73bfb0654b2</string>
+			<key>issue_hash_function_offset</key>
+			<string>10</string>
+			<key>location</key>
+			<dict>
+				<key>col</key>
+				<integer>10</integer>
+				<key>file</key>
+				<integer>0</integer>
+				<key>line</key>
+				<integer>15</integer>
+			</dict>
+			<key>path</key>
+			<array>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>6</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>6</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>extended_message</key>
+					<string>Assuming 'a' is equal to 0</string>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>7</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>7</integer>
+					</dict>
+					<key>message</key>
+					<string>Assuming 'a' is equal to 0</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>7</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>12</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>7</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>7</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>extended_message</key>
+					<string>Assuming 'b' is not equal to 0</string>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>7</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>9</integer>
+					</dict>
+					<key>message</key>
+					<string>Assuming 'b' is not equal to 0</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>9</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>12</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>9</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>9</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>extended_message</key>
+					<string>'a' is equal to 0</string>
+					<key>kind</key>
+					<string>pop-up</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>7</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>11</integer>
+					</dict>
+					<key>message</key>
+					<string>'a' is equal to 0</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>11</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>11</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>12</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>12</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>11</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>12</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>12</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>4</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>extended_message</key>
+					<string>'b' is not equal to 0</string>
+					<key>kind</key>
+					<string>pop-up</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>7</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>13</integer>
+					</dict>
+					<key>message</key>
+					<string>'b' is not equal to 0</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>13</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>7</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>13</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>14</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>14</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>7</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>13</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>extended_message</key>
+					<string>Null pointer value stored to 'p'</string>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>5</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>14</integer>
+					</dict>
+					<key>message</key>
+					<string>Null pointer value stored to 'p'</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>5</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>14</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>9</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>14</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>8</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>14</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>5</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>14</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>edges</key>
+					<array>
+						<dict>
+							<key>end</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>10</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>10</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+							</array>
+							<key>start</key>
+							<array>
+								<dict>
+									<key>col</key>
+									<integer>3</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+								<dict>
+									<key>col</key>
+									<integer>8</integer>
+									<key>file</key>
+									<integer>0</integer>
+									<key>line</key>
+									<integer>15</integer>
+								</dict>
+							</array>
+						</dict>
+					</array>
+					<key>kind</key>
+					<string>control</string>
+				</dict>
+				<dict>
+					<key>depth</key>
+					<integer>0</integer>
+					<key>extended_message</key>
+					<string>Dereference of null pointer (loaded from variable 'p')</string>
+					<key>kind</key>
+					<string>event</string>
+					<key>location</key>
+					<dict>
+						<key>col</key>
+						<integer>10</integer>
+						<key>file</key>
+						<integer>0</integer>
+						<key>line</key>
+						<integer>15</integer>
+					</dict>
+					<key>message</key>
+					<string>Dereference of null pointer (loaded from variable 'p')</string>
+					<key>ranges</key>
+					<array>
+						<array>
+							<dict>
+								<key>col</key>
+								<integer>11</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>15</integer>
+							</dict>
+							<dict>
+								<key>col</key>
+								<integer>11</integer>
+								<key>file</key>
+								<integer>0</integer>
+								<key>line</key>
+								<integer>15</integer>
+							</dict>
+						</array>
+					</array>
+				</dict>
+			</array>
+			<key>type</key>
+			<string>Dereference of null pointer</string>
+		</dict>
+	</array>
+	<key>files</key>
+	<array>
+		<string>$FILE_PATH$/two_path.c</string>
+	</array>
+</dict>
+</plist>

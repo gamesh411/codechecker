@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 8521dcce025f7b83bfd4f0129fc677fcdae65c3b)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1005a805737b890d3c2e13c4300fefacfbf172ed)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -268,6 +268,12 @@
       <key>smt_assertions</key>
       <array>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>1</integer>
@@ -308,6 +314,12 @@
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>10</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>2</integer>
@@ -348,6 +360,12 @@
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>10</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>3</integer>
@@ -388,6 +406,12 @@
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>10</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>4</integer>
@@ -424,6 +448,12 @@
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>5</integer>
@@ -460,6 +490,12 @@
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>6</integer>
@@ -495,6 +531,177 @@
       <key>smt_assertions</key>
       <array>
        <string>(assert (= (bvmul reg_$1 reg_$1) #xffffffff))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
+     </dict>
+    </array>
+    <key>cfgs</key>
+    <array>
+     <dict>
+      <key>function</key><string>square_is_minus_one</string>
+      <key>entry</key><integer>4</integer>
+      <key>exit</key><integer>0</integer>
+      <key>blocks</key>
+      <array>
+       <dict>
+        <key>id</key><integer>4</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>3</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>3</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>5</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+          <key>line</key><integer>5</integer>
+          <key>parent</key><integer>2</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>int *p = 0;</string>
+          <key>line</key><integer>5</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>7</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>7</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x * x</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>10</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>1</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>9</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>-1</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>10</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>x * x == -1</string>
+          <key>line</key><integer>6</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if x * x == -1</string>
+        <key>successors</key>
+        <array>
+         <integer>2</integer>
+         <integer>1</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>2</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p (ImplicitCastExpr, LValueToRValue, int *)</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>2</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*p</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*p (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return *p;</string>
+          <key>line</key><integer>7</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>1</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>8</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return 0;</string>
+          <key>line</key><integer>8</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>0</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+        </array>
+       </dict>
+      </array>
+      <key>path_blocks</key>
+      <array>
+       <integer>2</integer>
+       <integer>3</integer>
+       <integer>4</integer>
+      </array>
+      <key>path_edges</key>
+      <array>
+       <dict>
+        <key>from</key><integer>3</integer>
+        <key>to</key><integer>2</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>4</integer>
+        <key>to</key><integer>3</integer>
+       </dict>
       </array>
      </dict>
     </array>

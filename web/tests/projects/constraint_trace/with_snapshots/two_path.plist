@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 8521dcce025f7b83bfd4f0129fc677fcdae65c3b)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1005a805737b890d3c2e13c4300fefacfbf172ed)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -650,6 +650,12 @@
       <array>
        <string>(assert (= reg_$1 #x00000000))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>9</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>1</integer>
@@ -706,6 +712,12 @@
       <array>
        <string>(assert (= reg_$1 #x00000000))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>9</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>2</integer>
@@ -762,6 +774,12 @@
       <array>
        <string>(assert (= reg_$1 #x00000000))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>9</integer>
+       <key>element</key><integer>6</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>3</integer>
@@ -828,6 +846,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>7</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>4</integer>
@@ -894,6 +918,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>7</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>5</integer>
@@ -960,6 +990,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>7</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>6</integer>
@@ -1026,6 +1062,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>5</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>7</integer>
@@ -1092,6 +1134,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>5</integer>
+       <key>terminator</key><true/>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>9</integer>
@@ -1154,6 +1202,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>4</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>10</integer>
@@ -1216,6 +1270,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>11</integer>
@@ -1278,6 +1338,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>3</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>13</integer>
@@ -1336,6 +1402,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>14</integer>
@@ -1394,6 +1466,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>2</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>15</integer>
@@ -1452,6 +1530,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>16</integer>
@@ -1510,6 +1594,12 @@
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
       </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
      </dict>
      <dict>
       <key>path_index</key><integer>17</integer>
@@ -1567,6 +1657,372 @@
        <string>(assert (= reg_$1 #x00000000))</string>
        <string>(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))
     (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))</string>
+      </array>
+      <key>cfg_position</key>
+      <dict>
+       <key>cfg</key><integer>0</integer>
+       <key>block</key><integer>1</integer>
+       <key>element</key><integer>3</integer>
+      </dict>
+     </dict>
+    </array>
+    <key>cfgs</key>
+    <array>
+     <dict>
+      <key>function</key><string>f</string>
+      <key>entry</key><integer>10</integer>
+      <key>exit</key><integer>0</integer>
+      <key>blocks</key>
+      <array>
+       <dict>
+        <key>id</key><integer>10</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>9</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>9</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+          <key>line</key><integer>6</integer>
+          <key>parent</key><integer>2</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>int *p = 0;</string>
+          <key>line</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>7</integer>
+          <key>parent</key><integer>6</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a != 0</string>
+          <key>line</key><integer>7</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if a != 0</string>
+        <key>successors</key>
+        <array>
+         <integer>8</integer>
+         <integer>7</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>8</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>x</string>
+          <key>line</key><integer>8</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>&amp;x</string>
+          <key>line</key><integer>8</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>8</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p = &amp;x</string>
+          <key>line</key><integer>8</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>7</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>7</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>b</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>9</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b == 0</string>
+          <key>line</key><integer>9</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if b == 0</string>
+        <key>successors</key>
+        <array>
+         <integer>6</integer>
+         <integer>5</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>6</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>x</string>
+          <key>line</key><integer>10</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>&amp;x</string>
+          <key>line</key><integer>10</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>10</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p = &amp;x</string>
+          <key>line</key><integer>10</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>5</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>5</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>a</string>
+          <key>line</key><integer>11</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>11</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>11</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>a == 0</string>
+          <key>line</key><integer>11</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if a == 0</string>
+        <key>successors</key>
+        <array>
+         <integer>4</integer>
+         <integer>3</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>4</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>12</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+          <key>line</key><integer>12</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>12</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p = 0</string>
+          <key>line</key><integer>12</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>3</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>3</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>b</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>13</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>b != 0</string>
+          <key>line</key><integer>13</integer>
+         </dict>
+        </array>
+        <key>terminator</key><string>if b != 0</string>
+        <key>successors</key>
+        <array>
+         <integer>2</integer>
+         <integer>1</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>2</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>0</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>0 (ImplicitCastExpr, NullToPointer, int *)</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>14</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p = 0</string>
+          <key>line</key><integer>14</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>1</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>1</integer>
+        <key>elements</key>
+        <array>
+         <dict>
+          <key>text</key><string>p</string>
+          <key>line</key><integer>15</integer>
+          <key>parent</key><integer>1</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>p (ImplicitCastExpr, LValueToRValue, int *)</string>
+          <key>line</key><integer>15</integer>
+          <key>parent</key><integer>2</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*p</string>
+          <key>line</key><integer>15</integer>
+          <key>parent</key><integer>3</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>*p (ImplicitCastExpr, LValueToRValue, int)</string>
+          <key>line</key><integer>15</integer>
+          <key>parent</key><integer>4</integer>
+         </dict>
+         <dict>
+          <key>text</key><string>return *p;</string>
+          <key>line</key><integer>15</integer>
+         </dict>
+        </array>
+        <key>successors</key>
+        <array>
+         <integer>0</integer>
+        </array>
+       </dict>
+       <dict>
+        <key>id</key><integer>0</integer>
+        <key>elements</key>
+        <array>
+        </array>
+        <key>successors</key>
+        <array>
+        </array>
+       </dict>
+      </array>
+      <key>path_blocks</key>
+      <array>
+       <integer>1</integer>
+       <integer>2</integer>
+       <integer>3</integer>
+       <integer>4</integer>
+       <integer>5</integer>
+       <integer>7</integer>
+       <integer>9</integer>
+       <integer>10</integer>
+      </array>
+      <key>path_edges</key>
+      <array>
+       <dict>
+        <key>from</key><integer>2</integer>
+        <key>to</key><integer>1</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>3</integer>
+        <key>to</key><integer>2</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>4</integer>
+        <key>to</key><integer>3</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>5</integer>
+        <key>to</key><integer>4</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>7</integer>
+        <key>to</key><integer>5</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>9</integer>
+        <key>to</key><integer>7</integer>
+       </dict>
+       <dict>
+        <key>from</key><integer>10</integer>
+        <key>to</key><integer>9</integer>
+       </dict>
       </array>
      </dict>
     </array>

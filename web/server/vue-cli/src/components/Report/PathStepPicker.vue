@@ -10,7 +10,7 @@
   >
     <v-card class="path-step-picker" variant="flat" rounded="sm">
       <div class="picker-title px-3 pt-2 pb-1 text-caption">
-        Line {{ line }}: {{ steps.length }} Path Steps
+        {{ title }}: {{ steps.length }} Path Steps
       </div>
       <v-divider />
       <v-list class="picker-list" density="compact">
@@ -29,6 +29,19 @@
           </div>
         </v-list-item>
       </v-list>
+      <template v-if="canShowGraph">
+        <v-divider />
+        <v-btn
+          class="picker-graph-btn"
+          variant="text"
+          size="small"
+          block
+          prepend-icon="mdi-graph-outline"
+          @click="emit('open-graph')"
+        >
+          Choose in the control flow graph
+        </v-btn>
+      </template>
     </v-card>
   </v-menu>
 </template>
@@ -37,11 +50,12 @@
 defineProps({
   modelValue: { type: Boolean, required: true },
   target: { type: Array, default: null },
-  line: { type: Number, default: null },
-  steps: { type: Array, required: true }
+  title: { type: String, default: "" },
+  steps: { type: Array, required: true },
+  canShowGraph: { type: Boolean, default: false }
 });
 
-const emit = defineEmits([ "update:modelValue", "select" ]);
+const emit = defineEmits([ "update:modelValue", "select", "open-graph" ]);
 </script>
 
 <style lang="scss">
@@ -81,6 +95,12 @@ const emit = defineEmits([ "update:modelValue", "select" ]);
   .picker-message {
     min-width: 0;
     overflow-wrap: anywhere;
+  }
+
+  .picker-graph-btn {
+    justify-content: flex-start;
+    text-transform: none;
+    letter-spacing: normal;
   }
 
   .picker-values {

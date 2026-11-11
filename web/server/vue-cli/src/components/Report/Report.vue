@@ -255,6 +255,19 @@
                       {{ lineSelectionHint }}
                     </div>
 
+                    <control-flow-graph-view
+                      v-if="showConstraints && hasControlFlowGraphs &&
+                        cfgView.open"
+                      v-model:cfg-index="cfgView.cfgIndex"
+                      class="cfg-side-view"
+                      :cfgs="constraintTrace.cfgs"
+                      :steps="constraintPathSteps"
+                      :selected-order="selectedConstraintStep?.order ?? null"
+                      :one-choice-per-snapshot="oneChoicePerSnapshot"
+                      @select="selectGraphSteps"
+                      @close="cfgView.open = false"
+                    />
+
                     <v-row
                       v-fill-height
                       :class="[
@@ -279,8 +292,10 @@
                       :report-id="report.reportId"
                       :what-if="whatIf"
                       :resolve-step="displayedStep"
+                      :can-show-graph="hasControlFlowGraphs"
                       @close="clearStepSelection"
                       @select-step="selectStepByOrder"
+                      @open-graph="openGraphAt(selectedConstraintStep.order)"
                     />
                   </v-col>
                 </v-row>
@@ -288,9 +303,13 @@
                 <path-step-picker
                   v-model="stepPicker.open"
                   :target="stepPicker.target"
-                  :line="stepPicker.line"
+                  :title="stepPicker.title"
                   :steps="stepPicker.steps"
-                  @select="selectPathStep"
+                  :can-show-graph="stepPicker.fromLine &&
+                    hasControlFlowGraphs &&
+                    stepPicker.steps.some(step => step.snapshot.cfg_position)"
+                  @select="selectPickedStep"
+                  @open-graph="openGraphAt(stepPicker.steps[0].order)"
                 />
               </v-container>
             </v-col>
@@ -385,6 +404,7 @@ import SelectReviewStatusDialog from "./SelectReviewStatusDialog";
 import SelectSameReport from "./SelectSameReport";
 
 import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
+import ControlFlowGraphView from "./ControlFlowGraphView";
 import PathStepPicker from "./PathStepPicker";
 import ReportStepMessage from "./ReportStepMessage";
 
@@ -423,7 +443,10 @@ const pathStepsById = ref(new Map());
 const constraintPathSteps = ref([]);
 const selectedStepId = ref(null);
 const selectedControlIndex = ref(null);
-const stepPicker = ref({ open: false, target: null, line: null, steps: [] });
+const stepPicker = ref({
+  open: false, target: null, title: "", steps: [], fromLine: false
+});
+const cfgView = ref({ open: false, cfgIndex: 0 });
 const lineSelectionHint = ref(null);
 const loading = ref(true);
 const bus = mitt();
@@ -530,6 +553,10 @@ const trackingBranch = computed(() => sourceFile.value?.trackingBranch);
 const hasBlameInfo = computed(() => sourceFile.value?.hasBlameInfo);
 const hasConstraintTrace = computed(() =>
   (constraintTrace.value?.steps?.length ?? 0) > 0
+);
+// Traces from a Clang before the CFG side view have no graphs.
+const hasControlFlowGraphs = computed(() =>
+  (constraintTrace.value?.cfgs?.length ?? 0) > 0
 );
 const constraintToggleHint = computed(() =>
   hasConstraintTrace.value
@@ -645,6 +672,9 @@ watch(report, () => {
 
 // What-If Constraints belong to the open report view only.
 watch(() => report.value?.reportId?.toString(), whatIf.reset);
+watch(() => report.value?.reportId?.toString(), () => {
+  cfgView.value = { open: false, cfgIndex: 0 };
+});
 
 watch(
   [ showConstraints, constraintPathSteps, selectedControlStep, sourceFile ],
@@ -910,25 +940,66 @@ function selectStepsOnLine(line, event) {
   } else if (_steps.length === 1) {
     selectPathStep(_steps[0]);
   } else {
-    lineSelectionHint.value = null;
-    stepPicker.value = {
-      open: true,
-      target: [ event.clientX, event.clientY ],
-      line,
-      steps: describePickerSteps(_steps)
-    };
+    openStepPicker(_steps, event, `Line ${line}`, true);
   }
+}
+
+function openStepPicker(steps, event, title, fromLine) {
+  lineSelectionHint.value = null;
+  stepPicker.value = {
+    open: true,
+    target: [ event.clientX, event.clientY ],
+    title,
+    steps: describePickerSteps(steps),
+    fromLine
+  };
+}
+
+// A step chosen in the graph scrolls its line into view, which a line click
+// does not need.
+function selectPickedStep(step) {
+  if (stepPicker.value.fromLine) {
+    selectPathStep(step);
+  } else {
+    revealPathStep(step);
+  }
+}
+
+// The choices of a graph element, each one as a line offers it.
+function selectGraphSteps(choices, event) {
+  if (choices.length === 1) {
+    revealPathStep(choices[0]);
+  } else {
+    const _place = choices[0].snapshot.cfg_position;
+    const _where = _place.element !== undefined
+      ? `B${_place.block}.${_place.element + 1}`
+      : `B${_place.block}${_place.terminator ? " terminator" : " entry"}`;
+    openStepPicker(choices, event, _where, false);
+  }
+}
+
+// Opens the graph of the function the step at `order` is in.
+function openGraphAt(order) {
+  const _position = constraintPathSteps.value
+    .find(step => step.order === order)?.snapshot.cfg_position;
+  stepPicker.value.open = false;
+  cfgView.value = {
+    open: true,
+    cfgIndex: _position?.cfg ?? cfgView.value.cfgIndex
+  };
+}
+
+function pathStepsOnLine(line, fileId = sourceFile.value?.fileId) {
+  return oneChoicePerSnapshot(constraintPathSteps.value.filter(step =>
+    step.line === line && step.fileId.equals(fileId)));
 }
 
 // Several Path Steps with the same snapshot (the edge into a statement and the
 // edge into its condition, or an event at that spot) would show the same panel,
-// so they count as one choice.
-function pathStepsOnLine(line, fileId = sourceFile.value?.fileId) {
-  const _onLine = constraintPathSteps.value.filter(step =>
-    step.line === line && step.fileId.equals(fileId));
-
-  return _onLine.filter((step, index) => {
-    const _next = _onLine[index + 1];
+// so they count as one choice. `steps` are in Bug Path order.
+function oneChoicePerSnapshot(steps) {
+  return steps.filter((step, index) => {
+    const _next = steps[index + 1];
     if (!_next || snapshotKey(_next) !== snapshotKey(step)) return true;
     // Of a run with equal snapshots the event is kept if there is one.
     return step.kind === "event" && _next.kind !== "event";
@@ -948,16 +1019,18 @@ function displayedStep(order) {
 
 function selectStepByOrder(order) {
   const _step = displayedStep(order);
-  if (!_step) return;
+  if (_step) revealPathStep(_step);
+}
 
-  selectPathStep(_step);
-  if (editor.value && _step.fileId.equals(sourceFile.value?.fileId) &&
-      _step.line <= editor.value.state.doc.lines) {
+function revealPathStep(step) {
+  selectPathStep(step);
+  if (editor.value && step.fileId.equals(sourceFile.value?.fileId) &&
+      step.line <= editor.value.state.doc.lines) {
     // Centered, because the step's bubble sits below its line, and a line
     // scrolled only near the edge left the bubble out of view.
     editor.value.dispatch({
       effects: EditorView.scrollIntoView(
-        editor.value.state.doc.line(_step.line).from, { y: "center" })
+        editor.value.state.doc.line(step.line).from, { y: "center" })
     });
   }
 }
@@ -1605,6 +1678,27 @@ function truncate(text, length) {
 .editor-col {
   position: relative;
   min-width: 0;
+  container-type: inline-size;
+}
+
+// Over the right part of the source, so opening it reflows neither the code
+// and its arrows nor the snapshot panel.
+.cfg-side-view {
+  position: absolute !important;
+  z-index: 4;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  // Narrow source views are covered whole, since a graph squeezed beside them
+  // cuts every statement short.
+  width: clamp(min(100%, 440px), 58%, 640px);
+}
+
+// Rather than leave a sliver of line numbers beside it.
+@container (max-width: 600px) {
+  .cfg-side-view {
+    width: 100%;
+  }
 }
 
 // Floats over the code so the reason is seen without reflowing the source view.

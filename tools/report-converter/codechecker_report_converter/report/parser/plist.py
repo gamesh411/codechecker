@@ -422,7 +422,8 @@ class Parser(BaseParser):
                     'order': step.get('order', path_index)
                 })
 
-            return {'version': trace['version'], 'steps': steps}
+            # Keys beside `steps`, such as `cfgs`, need no translation.
+            return {**trace, 'steps': steps}
         except (KeyError, TypeError) as ex:
             LOG.warning("Ignoring malformed constraint trace in '%s': %s",
                         diag.get('check_name'), ex)
@@ -636,7 +637,7 @@ class Parser(BaseParser):
                 'path_index': path_index
             })
 
-        return {'version': trace['version'], 'steps': steps}
+        return {**trace, 'steps': steps}
 
     def _create_location(
         self,
