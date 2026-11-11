@@ -17,6 +17,8 @@ from codechecker_client.product import create_product_url
 
 from codechecker_common.logger import get_logger
 
+from codechecker_web.shared import thrift_limits
+
 LOG = get_logger('system')
 
 
@@ -43,7 +45,9 @@ class BaseClientHelper:
         # verify the proxy format in our side.
         self._validate_proxy_format()
 
-        self.protocol = TJSONProtocol.TJSONProtocol(self.transport)
+        self.protocol = TJSONProtocol.TJSONProtocol(
+            self.transport,
+            string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         self.client = None
 
         self.get_new_token = get_new_token

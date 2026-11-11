@@ -28,7 +28,7 @@ except Exception:
     print("'thrift' package (https://pypi.org/project/thrift/) is not "
           "available in your environment. Please install it before you run "
           "this script again.")
-    print("> pip3 install thrift==0.22.0")
+    print("> pip3 install thrift==0.25.0")
     sys.exit(1)
 
 
@@ -74,7 +74,9 @@ def create_client(
     url += f"v{CLIENT_API}/{endpoint}"
 
     transport = THttpClient.THttpClient(url)
-    protocol = TJSONProtocol.TJSONProtocol(transport)
+    # Thrift's default limit of 16,384,000 characters fails on long report
+    # details; see codechecker_web/shared/thrift_limits.py.
+    protocol = TJSONProtocol.TJSONProtocol(transport, string_length_limit=None)
 
     if token:
         transport.setCustomHeaders({

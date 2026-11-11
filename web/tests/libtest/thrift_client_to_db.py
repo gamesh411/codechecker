@@ -23,6 +23,7 @@ import codechecker_api.python.shared as codechecker_api_shared
 from codechecker_client.product import create_product_url
 
 from codechecker_api.python.DBAccess_v6.ttypes import ReportFilter
+from codechecker_web.shared import thrift_limits
 from codechecker_web.shared.webserver_context import get_context
 
 VERSION = get_context().api_version
@@ -132,7 +133,8 @@ class CCViewerHelper(ThriftAPIHelper):
                                  VERSION + endpoint)
         print("Setup viewer client: "+url)
         transport = THttpClient.THttpClient(url)
-        protocol = TJSONProtocol.TJSONProtocol(transport)
+        protocol = TJSONProtocol.TJSONProtocol(
+            transport, string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         client = codeCheckerDBAccess.Client(protocol)
         if session_token:
             headers = {'Authorization': 'Bearer ' + session_token}
@@ -182,7 +184,8 @@ class CCAuthHelper(ThriftAPIHelper):
             codeCheckerAuthentication
         url = create_product_url(proto, host, port, '/v' + VERSION + uri)
         transport = THttpClient.THttpClient(url)
-        protocol = TJSONProtocol.TJSONProtocol(transport)
+        protocol = TJSONProtocol.TJSONProtocol(
+            transport, string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         client = codeCheckerAuthentication.Client(protocol)
         if session_token:
             headers = {'Authorization': 'Bearer ' + session_token}
@@ -206,7 +209,8 @@ class CCProductHelper(ThriftAPIHelper):
             full_uri = '/' + product + full_uri
         url = create_product_url(proto, host, port, full_uri)
         transport = THttpClient.THttpClient(url)
-        protocol = TJSONProtocol.TJSONProtocol(transport)
+        protocol = TJSONProtocol.TJSONProtocol(
+            transport, string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         client = codeCheckerProductService.Client(protocol)
         if session_token:
             headers = {'Authorization': 'Bearer ' + session_token}
@@ -228,7 +232,8 @@ class CCConfigHelper(ThriftAPIHelper):
         full_uri = '/v' + VERSION + uri
         url = create_product_url(proto, host, port, full_uri)
         transport = THttpClient.THttpClient(url)
-        protocol = TJSONProtocol.TJSONProtocol(transport)
+        protocol = TJSONProtocol.TJSONProtocol(
+            transport, string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         client = configurationService.Client(protocol)
         if session_token:
             headers = {'Authorization': 'Bearer ' + session_token}
@@ -248,7 +253,8 @@ class CCTaskHelper(ThriftAPIHelper):
 
         url = create_product_url(proto, host, port, f"/v{VERSION}{uri}")
         transport = THttpClient.THttpClient(url)
-        protocol = TJSONProtocol.TJSONProtocol(transport)
+        protocol = TJSONProtocol.TJSONProtocol(
+            transport, string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         client = codeCheckerServersideTaskService.Client(protocol)
         if session_token:
             headers = {'Cookie': f"{SESSION_COOKIE_NAME}={session_token}"}

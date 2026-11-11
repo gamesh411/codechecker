@@ -52,7 +52,7 @@ from codechecker_common.compatibility.multiprocessing import \
     Pool, Process, Queue, Value, cpu_count, SyncManager
 from codechecker_common.logger import get_logger, signal_log
 
-from codechecker_web.shared import database_status
+from codechecker_web.shared import database_status, thrift_limits
 
 from . import instance_manager, permissions, routing, session_manager
 from .api.authentication import ThriftAuthHandler as AuthHandler_v6
@@ -368,7 +368,8 @@ class RequestHandler(SimpleHTTPRequestHandler):
         """
         Handles POST queries, which are usually Thrift messages.
         """
-        protocol_factory = TJSONProtocol.TJSONProtocolFactory()
+        protocol_factory = TJSONProtocol.TJSONProtocolFactory(
+            string_length_limit=thrift_limits.STRING_LENGTH_LIMIT)
         input_protocol_factory = protocol_factory
         output_protocol_factory = protocol_factory
 

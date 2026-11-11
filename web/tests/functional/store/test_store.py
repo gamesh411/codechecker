@@ -10,9 +10,11 @@
 store tests.
 """
 
+import base64
 import html
 import json
 import os
+import random
 import shlex
 import shutil
 import inspect
@@ -22,7 +24,8 @@ import unittest
 
 from codechecker_report_converter import util
 
-from codechecker_api.python.DBAccess_v6.ttypes import AnalysisInfoFilter
+from codechecker_api.python.DBAccess_v6.ttypes import AnalysisInfoFilter, \
+    ReportFilter, RunFilter
 from libtest import codechecker
 from libtest import env
 from libtest import plist_test
@@ -512,6 +515,54 @@ class TestStore(unittest.TestCase):
 
         _, out, _ = _call_cmd(store_cmd)
         self.assertIn("Report Limit Exceeded", out)
+
+    def test_strings_over_thrift_default_limit(self):
+        """
+        Thrift 0.25 limits a string to 16,384,000 characters by default,
+        which failed a store whose compressed ZIP was over about 12.3 MiB, and
+        a Python client reading a report with a longer string.
+        """
+        report_dir = os.path.join(self._temp_workspace, "large_strings")
+        shutil.copytree(self._divide_zero_workspace, report_dir)
+        report_file = os.path.join(report_dir, "divide_zero.plist")
+        with open(report_file, "rb") as f:
+            report_content = plistlib.load(f)
+
+        # Random, so that compression keeps the store's ZIP over the limit.
+        message = base64.b64encode(
+            random.Random(0).randbytes(15_000_000)).decode()
+        diagnostic = report_content["diagnostics"][0]
+        event = next(item for item in diagnostic["path"]
+                     if item["kind"] == "event")
+        event["message"] = message
+        with open(report_file, "wb") as f:
+            plistlib.dump(report_content, f)
+
+        run_name = "large_strings"
+        url = env.parts_to_url(self._codechecker_cfg)
+        ret, out, err = _call_cmd([
+            env.codechecker_cmd(), "store", report_dir,
+            "--name", run_name, "--url", url])
+        self.assertEqual(ret, 0, f"Store failed:\n{out}\n{err}")
+
+        ret, out, err = _call_cmd([
+            env.codechecker_cmd(), "cmd", "results", run_name,
+            "--details", "--url", url, "-o", "json"])
+        self.assertEqual(ret, 0, f"Reading the results failed:\n{out}{err}")
+        self.assertIn(message, out)
+
+        run_id = self._cc_client.getRunData(
+            RunFilter(names=[run_name], exactMatch=True), 1, 0, None)[0].runId
+        report_id = next(
+            report.reportId
+            for report in self._cc_client.getRunResults(
+                [run_id], 500, 0, [], ReportFilter(), None, False)
+            if report.checkerMsg == diagnostic["description"])
+        details = self._cc_client.getReportDetails(report_id)
+        self.assertIn(message, [event.msg for event in details.pathEvents])
+
+        _call_cmd([env.codechecker_cmd(), "cmd", "del", "-n", run_name,
+                   "--url", url])
 
     def test_store_stats(self):
         """
