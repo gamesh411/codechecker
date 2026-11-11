@@ -118,6 +118,7 @@ import {
 
 import { FillHeight } from "@/directives";
 import { Report } from "@/components/Report";
+import { forgetReportDetails } from "@/components/Report/ReportDetailsCache";
 import { ReportTree } from "@/components/Report/ReportTree";
 
 const vFillHeight = FillHeight;
@@ -151,6 +152,8 @@ onMounted(function() {
 });
 
 function loadReport(reportId, reportHash) {
+  forgetReportDetails();
+
   if (reportId) {
     loadReportById(reportId).catch(() => {
       if (reportHash) {

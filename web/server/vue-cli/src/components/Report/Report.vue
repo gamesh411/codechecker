@@ -424,6 +424,7 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
 import PathStepPicker from "./PathStepPicker";
+import { getReportDetails } from "./ReportDetailsCache";
 import ReportStepMessage from "./ReportStepMessage";
 
 import { useReviewStatus } from "@/composables/useReviewStatus";
@@ -1219,12 +1220,7 @@ async function drawBugPath() {
   clearArrowLines();
 
   const _reportId = report.value.reportId;
-  const _reportDetail = await new Promise(resolve => {
-    ccService.getClient().getReportDetails(_reportId,
-      handleThriftError(_reportDetail => {
-        resolve(_reportDetail);
-      }));
-  });
+  const _reportDetail = await getReportDetails(_reportId);
 
   const _errorChecker = new Checker({
     analyzerName: report.value.analyzerName,

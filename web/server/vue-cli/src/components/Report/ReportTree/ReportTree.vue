@@ -60,6 +60,7 @@ import { nextTick, onMounted, ref, watch } from "vue";
 
 import { ReviewStatusIcon } from "@/components/Icons";
 
+import { getReportDetails } from "../ReportDetailsCache";
 import formatReportDetails from "./ReportDetailFormatter";
 import ReportTreeIcon from "./ReportTreeIcon";
 import ReportTreeKind from "./ReportTreeKind";
@@ -186,19 +187,18 @@ function fetchReports() {
             isLoading: false,
             getChildren: item => {
               return new Promise(resolve => {
-                ccService.getClient().getReportDetails(report.reportId,
-                  handleThriftError(details => {
-                    item.children = formatReportDetails(report, details);
-                    resolve();
+                getReportDetails(report.reportId).then(details => {
+                  item.children = formatReportDetails(report, details);
+                  resolve();
 
-                    if (props.report.reportId.equals(item.report.reportId)) {
-                      const _bugItem = item.children.find(c =>
-                        c.id === `${report.reportId}_${ReportTreeKind.BUG}`
-                      );
+                  if (props.report.reportId.equals(item.report.reportId)) {
+                    const _bugItem = item.children.find(c =>
+                      c.id === `${report.reportId}_${ReportTreeKind.BUG}`
+                    );
 
-                      activeItems.value.push(_bugItem);
-                    }
-                  }));
+                    activeItems.value.push(_bugItem);
+                  }
+                });
               });
             }
           });
