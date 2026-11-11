@@ -10,8 +10,13 @@
 
   <v-avatar
     v-else
+    :class="{
+      'report-step-enum-icon--long': digits >= 3,
+      'report-step-enum-icon--wide': digits >= 4
+    }"
     :color="color"
     :size="size"
+    :style="digits >= 4 ? { width: 'auto', minWidth: `${size}px` } : undefined"
   >
     <span class="text-caption text-white">{{ index }}</span>
   </v-avatar>
@@ -26,6 +31,8 @@ const props = defineProps({
   index: { type: [ Number, String ], default: null },
   size: { type: Number, default: 24 }
 });
+
+const digits = computed(() => String(props.index ?? "").length);
 
 const color = computed(() => {
   switch (props.type) {
@@ -42,3 +49,16 @@ const color = computed(() => {
   }
 });
 </script>
+
+<style scoped>
+/* Three digits fit the round badge only in a smaller font; from four on the
+   badge grows into a pill, so the number never touches its edge. */
+.report-step-enum-icon--long .text-caption {
+  font-size: 10px !important;
+  letter-spacing: 0 !important;
+}
+
+.report-step-enum-icon--wide {
+  padding: 0 5px;
+}
+</style>
