@@ -309,16 +309,22 @@ const variableRows = computed(() =>
 
 const otherSymbols = computed(() => {
   const _named = new Set(props.step.variables.map(variable => variable.value));
-  return props.step.symbolRanges.filter(range => !_named.has(range.symbol));
+  return props.step.symbolRanges
+    .filter(range => !_named.has(range.symbol))
+    .sort((a, b) => compareNames(a.symbol, b.symbol));
 });
 
+// Named rows first, as variables come before other symbols above, each in
+// the order variables are.
 const accumulatedRows = computed(() =>
   props.step.pathCondition.map(range => ({
     symbol: range.symbol,
     range: range.range,
     name: props.step.symbolNames.get(range.symbol),
     dropped: !knownRanges.value.has(range.symbol)
-  }))
+  })).sort((a, b) =>
+    (a.name === undefined) - (b.name === undefined) ||
+    compareNames(a.name ?? a.symbol, b.name ?? b.symbol))
 );
 </script>
 
