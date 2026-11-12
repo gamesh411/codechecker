@@ -84,7 +84,8 @@ The panel can be closed with the cross in its header.
 
 * **Variables** lists the variables the analyzer tracks at that point, sorted by name.
   A variable that holds a symbol shows the range of values the analyzer knows for it, and under it the symbol's label, or the symbol itself, such as `reg_$1<int a>`, when the label would only repeat the variable's name.
-  A symbol without a known range reads "no known range".
+  A symbol the analyzer no longer tracks at that step shows the last range the accumulated path condition has for it, with a **dropped** tag, as its row there has.
+  A symbol that was never constrained reads "no known range".
   A variable that holds a concrete value shows the value, such as `&x`.
 * Inside a call the analyzer followed, **Variables** has one group per function on the call stack.
   The function of the selected step comes first, headed by its name and the line it was called at, and each function that called it follows, innermost first, so that `n` of the caller and `n` of the callee are two rows under two headings.
@@ -103,6 +104,7 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that holds the symbol at the selected step, one of the step's own function first and of the innermost caller otherwise, and else by the variable of the step's function that last held it before.
 A name from another function is written `function::name`, as a debugger writes it, when a variable of that name in another function holds something else at that step, such as `top::n` inside a function whose own `n` is 7.
+The function is written without `(anonymous namespace)::`, as in the heading of its group, and **What if** reads the same spelling.
 
 A symbol reads as what it stands for, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
 
@@ -202,7 +204,7 @@ No analysis is run again.
 ### Syntax
 
 Type a constraint in the field and press **Check** or Enter.
-The field suggests an example from the variables of the step.
+The field suggests an example from the names of the step.
 A constraint is one or more comparisons joined by `&&`:
 
 ```
@@ -211,19 +213,32 @@ a == 0 && n > 3
 p != null
 ```
 
-* A comparison is `variable op value`.
+* A comparison is `name op value`.
   The operators are `==`, `!=`, `<`, `<=`, `>` and `>=`.
-* The variable is a name from the **Variables** list of the step.
-  ArrowDown opens a list of those names with their values, and Tab or Enter completes one.
+* The name is one the panel shows at the step:
+  * a variable of the step's function or of any function that called it, such as `n`, or written with its function, such as `top::n`;
+  * memory the panel names, such as `grid->rows`, `*q`, `line->cells[0].width` or `this->Current`.
+
+  A name is identifiers joined by `.` and `->`, after any `*`, with subscripts that are an integer or a name themselves, such as `Op.Node->ValueList[Op.ResNo].V.SimpleTy`, and a function before `::`.
+  It is matched as text against the names of the step, not read as C, so `p->len` and `(*p).len` are not the same name.
+  A variable hides memory of the same name.
 * The value is an integer, or `null`, which is 0.
-  There is no `||`, no arithmetic, and no comparison of two variables.
+  There is no `||`, no arithmetic, and no comparison of two names.
 * A variable is read as the value it holds at the step you typed the constraint at.
+  Memory is read as the value the panel labels with its name: the value it held before the path changed it, reading `this->Current`, and the value a call or a loop left in it, reading "`this->Current` after `this->parse(…)` may have changed it".
   Comparisons on a signed type are signed, on an unsigned type unsigned.
+
+ArrowDown opens a list of every name the check can decide at the step, with its value, and typing narrows it to the names that start with the text typed, or have a part after `::`, `->` or `.` that does.
+Tab or Enter completes one.
+A value that has a name of its own is listed once, under that name; a name that stands for several values is not listed, and the list offers each of them with its function, such as `middle::n` and `top::n` for `n`.
+With **Holds throughout the path** ticked, the list has the names that work throughout, such as `this->Current` when the path has several values of it.
+The list is the server's own: a test compares it with what the server resolves at every step of the test reports.
 
 A text that cannot be read is not added.
 The field turns red and a message such as "Expected an operator (`==`, `!=`, `<`, `<=`, `>`, `>=`), found `x`." says what was expected, with the cursor placed where reading failed.
 
-**Holds throughout the path** applies the constraint to every value the variable takes on the path, also after a call or an assignment replaces the value.
+**Holds throughout the path** applies the constraint to every value the name takes on the path, also after a call or an assignment replaces the value.
+For memory that is every value the panel labels with its name, so `this->Current != null` throughout says that the field is never null, before and after any call that may have changed it.
 Without it the constraint is about the value at the step it was typed at.
 
 Every constraint you add stays in the **Checked together** list, labeled by its step or "Throughout", and all of them are checked together against the path.
@@ -259,6 +274,11 @@ The reason of an Unknown verdict is one of:
 * "The solver has no answer for this path (...)" with the solver's own reason.
 * "Cannot read the constraint: ..." for a syntax error.
 * "`x` has no tracked value at this Path Step.", or "at any Path Step" with **Holds throughout the path**.
+* "`n` names 2 values at this Path Step: `middle::n` and `top::n`. Write the one you mean."
+  Variables of that name in several functions hold different values there, and writing the function picks one.
+  With **Holds throughout the path** it reads "at one Path Step of this path", since a name has to stand for one variable wherever the path has it.
+* "`this->Current` names 3 values at this Path Step: the one before the path changed it; the one after `this->parse(prec::LogicalOr)` may have changed it, line 3486; and the one after `this->parse(prec::Assignment)` may have changed it, line 3490. Holds throughout the path constrains all of them."
+  Memory that calls replaced has several values by the step, and only **Holds throughout the path** can be about them.
 * "N is outside the range of `x` (low to high)."
 * "`x` holds ..., whose numeric value is not recorded, so only a comparison with 0 or null can be decided."
   This is the case of an address.
@@ -284,6 +304,11 @@ A baseline box appears only when the baseline is not Feasible, since then your a
   They cannot be shared or reviewed later.
 * The solver gets 2000 ms for each call.
   A check makes up to two calls and then, if the path is infeasible, searches for the first step where it dies for up to 4000 ms more, so a check can hold a server worker for up to 8 seconds.
+* A name is what the panel shows, so a value the panel cannot name, such as a field of a temporary or the size of memory, cannot be constrained either.
+* A function whose name has template arguments, or a lambda, cannot be written before `::`, so its variables can only be named alone.
+  The list leaves such names out.
+* Memory is told apart by its name only: two `this->Current` of two functions' `this` read as one name.
+  When a function calls itself, its two frames have the same name, and the Unknown verdict says where each was called.
 * The check reasons about what the analyzer recorded.
   Z3 and the analyzer's solver can disagree about nonlinear arithmetic or bit tricks.
   A variable it cannot reason about gives Unknown, not Feasible.
