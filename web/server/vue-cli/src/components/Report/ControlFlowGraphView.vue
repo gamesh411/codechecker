@@ -51,14 +51,13 @@
     </template>
 
     <div
-      ref="graph"
       class="cfg-graph"
-      :style="{ paddingLeft: `${gutterWidth}px` }"
+      :style="{ height: `${layout.height}px` }"
     >
       <svg
         class="cfg-edges"
         :width="gutterWidth + 40"
-        :height="graphHeight"
+        :height="layout.height"
         aria-hidden="true"
       >
         <defs>
@@ -77,7 +76,7 @@
           </marker>
         </defs>
         <g
-          v-for="edge in drawnEdges"
+          v-for="edge in visibleEdges"
           :key="edge.key"
           :class="[ 'cfg-edge', edge.onPath ? 'on-path' : 'other' ]"
         >
@@ -98,13 +97,17 @@
       </svg>
 
       <div
-        v-for="block in blocks"
+        v-for="block in visibleBlocks"
         :key="block.id"
-        :ref="el => setBlockRef(block.id, el)"
         :class="[
           'cfg-block',
           block.onPath ? 'on-path' : 'off-path'
         ]"
+        :style="{
+          top: `${block.top}px`,
+          height: `${block.height}px`,
+          left: `${gutterWidth}px`
+        }"
       >
         <div class="cfg-block-header">
           <span class="cfg-block-id">B{{ block.id }}</span>
@@ -119,31 +122,36 @@
           </span>
         </div>
 
-        <component
-          :is="row.choices.length ? 'button' : 'div'"
-          v-for="row in block.rows"
-          :key="row.key"
-          :type="row.choices.length ? 'button' : undefined"
-          :class="[
-            'cfg-row',
-            'side-view-choice',
-            `cfg-row-${row.kind}`,
-            {
-              'has-steps': row.choices.length,
-              selected: row.key === selectedRowKey
-            }
-          ]"
-          :title="row.title"
-          :data-row="row.key"
-          @click="row.choices.length && emit('select', row.choices, $event)"
+        <div
+          class="cfg-rows"
+          :style="{ paddingTop: `${block.firstRow * ROW_HEIGHT}px` }"
         >
-          <span class="cfg-row-index">{{ row.index }}</span>
-          <span class="cfg-row-text">{{ row.text }}</span>
-          <span v-if="row.line" class="cfg-row-line">{{ row.line }}</span>
-          <span v-if="row.choices.length" class="cfg-row-steps">
-            {{ stepsLabel(row) }}
-          </span>
-        </component>
+          <component
+            :is="row.choices.length ? 'button' : 'div'"
+            v-for="row in block.shownRows"
+            :key="row.key"
+            :type="row.choices.length ? 'button' : undefined"
+            :class="[
+              'cfg-row',
+              'side-view-choice',
+              `cfg-row-${row.kind}`,
+              {
+                'has-steps': row.choices.length,
+                selected: row.key === selectedRowKey
+              }
+            ]"
+            :title="row.title"
+            :data-row="row.key"
+            @click="row.choices.length && emit('select', row.choices, $event)"
+          >
+            <span class="cfg-row-index">{{ row.index }}</span>
+            <span class="cfg-row-text">{{ row.text }}</span>
+            <span v-if="row.line" class="cfg-row-line">{{ row.line }}</span>
+            <span v-if="row.choices.length" class="cfg-row-steps">
+              {{ stepsLabel(row) }}
+            </span>
+          </component>
+        </div>
       </div>
     </div>
   </report-side-view>
@@ -175,11 +183,7 @@ const props = defineProps({
 const emit = defineEmits([ "close", "select", "update:cfgIndex" ]);
 
 const sideView = ref(null);
-const graph = ref(null);
 const showSubexpressions = ref(false);
-const blockElements = new Map();
-const blockBoxes = ref(new Map());
-const graphHeight = ref(0);
 
 const subexpressionsHint = "Show every element of the linearized CFG, " +
   "as -analyzer-checker=debug.DumpCFG lists them";
@@ -187,6 +191,19 @@ const subexpressionsHint = "Show every element of the linearized CFG, " +
 const LANE_GAP = 8;
 const GUTTER_PADDING = 14;
 const FALL_THROUGH_X = 18;
+
+// The graph is laid out from these rather than measured, so that only the
+// blocks and rows in view need to be rendered: a function can have thousands
+// of blocks, and a block tens of thousands of subexpressions. The styles
+// below give the elements these sizes.
+const ROW_HEIGHT = 20;
+const HEADER_HEIGHT = 21;
+const BLOCK_GAP = 16;
+const GRAPH_PADDING_TOP = 10;
+const GRAPH_PADDING_BOTTOM = 16;
+// Rendered beyond each edge of the view, so a scroll shows no gap before the
+// next frame fills it.
+const OVERSCAN = 600;
 
 const cfg = computed(() => props.cfgs[props.cfgIndex] ?? props.cfgs[0]);
 
@@ -280,35 +297,97 @@ const blocks = computed(() => {
     }
 
     _rows.forEach(row => {
-      row.choices = props.oneChoicePerSnapshot(
-        [ ...row.steps ].sort((a, b) => a.order - b.order));
+      row.choices = row.steps.length
+        ? props.oneChoicePerSnapshot(
+          [ ...row.steps ].sort((a, b) => a.order - b.order))
+        : [];
     });
 
-    const _lines = block.elements.map(element => element.line)
-      .filter(Boolean);
-    const _first = Math.min(..._lines);
-    const _last = Math.max(..._lines);
+    let _first = Infinity;
+    let _last = -Infinity;
+    block.elements.forEach(({ line }) => {
+      if (!line) return;
+      _first = Math.min(_first, line);
+      _last = Math.max(_last, line);
+    });
 
     return {
       id: block.id,
       successors: block.successors,
       onPath: _onPath.has(block.id),
-      lines: !_lines.length ? ""
+      lines: _first > _last ? ""
         : _first === _last ? `line ${_first}` : `lines ${_first}–${_last}`,
       rows: _rows
     };
   });
 });
 
-const selectedRowKey = computed(() => {
+// Where each block sits, from the sizes above. Blocks on the Bug Path have a
+// thicker border.
+const layout = computed(() => {
+  const _boxes = new Map();
+  let _top = GRAPH_PADDING_TOP;
+  const _placed = blocks.value.map(block => {
+    const _border = block.onPath ? 2 : 1;
+    const _height = 2 * _border + HEADER_HEIGHT +
+      block.rows.length * ROW_HEIGHT;
+    const _box = {
+      top: _top,
+      bottom: _top + _height,
+      border: _border,
+      rowsTop: _top + _border + HEADER_HEIGHT,
+      rowCount: block.rows.length
+    };
+    _boxes.set(block.id, _box);
+    _top += _height + BLOCK_GAP;
+    return { block, box: _box };
+  });
+  return {
+    placed: _placed,
+    boxes: _boxes,
+    height: _top - BLOCK_GAP + GRAPH_PADDING_BOTTOM
+  };
+});
+
+// The scrolled view, in the graph's coordinates.
+const view = ref({ top: 0, height: 0 });
+
+const shownRange = computed(() => {
+  // Before the first measurement, a screenful from the top.
+  const _height = view.value.height || 1000;
+  return [ view.value.top - OVERSCAN, view.value.top + _height + OVERSCAN ];
+});
+
+const visibleBlocks = computed(() => {
+  const [ _low, _high ] = shownRange.value;
+  return layout.value.placed
+    .filter(({ box }) => box.bottom > _low && box.top < _high)
+    .map(({ block, box }) => {
+      const _clamp = row => Math.min(Math.max(row, 0), box.rowCount);
+      const _first = _clamp(Math.floor((_low - box.rowsTop) / ROW_HEIGHT));
+      const _last = _clamp(Math.ceil((_high - box.rowsTop) / ROW_HEIGHT));
+      return {
+        ...block,
+        top: box.top,
+        height: box.bottom - box.top,
+        firstRow: _first,
+        shownRows: block.rows.slice(_first, _last)
+      };
+    });
+});
+
+const selectedRow = computed(() => {
   if (props.selectedOrder === null) return null;
   for (const block of blocks.value) {
-    const _row = block.rows.find(row =>
+    const _index = block.rows.findIndex(row =>
       row.steps.some(step => step.order === props.selectedOrder));
-    if (_row) return _row.key;
+    if (_index >= 0) return { block: block.id, index: _index,
+      key: block.rows[_index].key };
   }
   return null;
 });
+
+const selectedRowKey = computed(() => selectedRow.value?.key ?? null);
 
 // Edges to the next block down are short arrows between the two; every other
 // edge runs in a lane of the left gutter, shorter spans closer to the blocks,
@@ -373,8 +452,7 @@ const gutterWidth = computed(() =>
   GUTTER_PADDING + routedEdges.value.laneCount * LANE_GAP + 6);
 
 const drawnEdges = computed(() => {
-  const _boxes = blockBoxes.value;
-  if (!_boxes.size) return [];
+  const _boxes = layout.value.boxes;
   const _left = gutterWidth.value;
 
   // Several gutter edges leave or enter one block; spread their ends apart.
@@ -391,7 +469,6 @@ const drawnEdges = computed(() => {
   const _drawn = routedEdges.value.edges.map(edge => {
     const _from = _boxes.get(edge.from);
     const _to = _boxes.get(edge.to);
-    if (!_from || !_to) return null;
     const _title = `B${edge.from} → B${edge.to}` +
       (edge.label ? ` (${edge.label === "T" ? "true" : "false"})` : "") +
       (edge.onPath ? ", taken by the Bug Path" : "");
@@ -403,7 +480,9 @@ const drawnEdges = computed(() => {
         title: _title,
         d: `M${_x},${_from.bottom} L${_x},${_to.top}`,
         labelX: _x + 5,
-        labelY: _from.bottom + 9
+        labelY: _from.bottom + 9,
+        low: _from.bottom,
+        high: _to.top
       };
     }
 
@@ -418,57 +497,74 @@ const drawnEdges = computed(() => {
       title: _title,
       d: `M${_left},${_y1} H${_laneX} V${_y2} H${_left}`,
       labelX: _left - 9,
-      labelY: _y1 - 2
+      labelY: _y1 - 2,
+      low: Math.min(_y1, _y2) - 8,
+      high: Math.max(_y1, _y2) + 8
     };
-  }).filter(Boolean);
+  });
 
   // Edges the Bug Path took are drawn last, so they stay on top.
   return [ ..._drawn.filter(edge => !edge.onPath),
     ..._drawn.filter(edge => edge.onPath) ];
 });
 
-function setBlockRef(id, el) {
-  if (el) blockElements.set(id, el);
-  else blockElements.delete(id);
+const visibleEdges = computed(() => {
+  const [ _low, _high ] = shownRange.value;
+  return drawnEdges.value.filter(edge =>
+    edge.high > _low && edge.low < _high);
+});
+
+function updateView() {
+  const _scroller = sideView.value?.scroller;
+  if (!_scroller) return;
+  const _top = _scroller.scrollTop;
+  const _height = _scroller.clientHeight;
+  if (_top !== view.value.top || _height !== view.value.height) {
+    view.value = { top: _top, height: _height };
+  }
 }
 
-function measure() {
-  const _boxes = new Map();
-  blockElements.forEach((el, id) => {
-    _boxes.set(id,
-      { top: el.offsetTop, bottom: el.offsetTop + el.offsetHeight });
+let frameRequest = null;
+function onScroll() {
+  if (frameRequest !== null) return;
+  frameRequest = requestAnimationFrame(() => {
+    frameRequest = null;
+    updateView();
   });
-  blockBoxes.value = _boxes;
-  graphHeight.value = graph.value?.scrollHeight ?? 0;
 }
 
 function scrollToSelection() {
-  if (selectedRowKey.value) {
-    sideView.value?.reveal(`[data-row="${selectedRowKey.value}"]`);
-  }
+  const _selected = selectedRow.value;
+  if (!_selected) return;
+  const _box = layout.value.boxes.get(_selected.block);
+  const _top = _box.rowsTop + _selected.index * ROW_HEIGHT;
+  sideView.value?.revealRange(_top, _top + ROW_HEIGHT);
+  updateView();
 }
 
 let resizeObserver = null;
 
 onMounted(async () => {
-  resizeObserver = new ResizeObserver(measure);
-  resizeObserver.observe(graph.value);
+  const _scroller = sideView.value.scroller;
+  _scroller.addEventListener("scroll", onScroll, { passive: true });
+  resizeObserver = new ResizeObserver(updateView);
+  resizeObserver.observe(_scroller);
   await nextTick();
-  measure();
+  updateView();
   scrollToSelection();
 });
 
-onBeforeUnmount(() => resizeObserver?.disconnect());
-
-watch([ blocks, gutterWidth ], async () => {
-  await nextTick();
-  measure();
+onBeforeUnmount(() => {
+  sideView.value?.scroller?.removeEventListener("scroll", onScroll);
+  resizeObserver?.disconnect();
+  if (frameRequest !== null) cancelAnimationFrame(frameRequest);
 });
 
 watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
   async () => {
     await nextTick();
-    measure();
+    // A shorter graph can leave the view scrolled past its end.
+    updateView();
     scrollToSelection();
   });
 </script>
@@ -502,7 +598,6 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
 
   .cfg-graph {
     position: relative;
-    padding: 10px 10px 16px 0;
   }
 
   .cfg-edges {
@@ -541,17 +636,16 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     }
   }
 
+  // Placed and sized by the component's layout, which these sizes must match.
   .cfg-block {
-    position: relative;
-    min-width: 0;
+    position: absolute;
+    right: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
     border: 1px solid #c4c8ce;
     border-radius: 4px;
     background-color: #fff;
     font-size: 12px;
-
-    & + .cfg-block {
-      margin-top: 16px;
-    }
 
     &.on-path {
       border: 2px solid var(--color-report-step-message-default);
@@ -567,8 +661,11 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     display: flex;
     gap: 6px;
     align-items: baseline;
-    padding: 2px 8px;
+    box-sizing: border-box;
+    height: 21px;
+    padding: 0 8px;
     border-bottom: 1px solid #e3e5e8;
+    line-height: 20px;
   }
 
   .cfg-block-id {
@@ -590,10 +687,12 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     display: flex;
     gap: 6px;
     align-items: baseline;
+    box-sizing: border-box;
     width: 100%;
+    height: 20px;
     min-width: 0;
-    padding: 1px 8px;
-    line-height: 1.6;
+    padding: 0 8px;
+    line-height: 20px;
   }
 
   .cfg-row-index {

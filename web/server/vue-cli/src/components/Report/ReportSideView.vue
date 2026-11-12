@@ -71,7 +71,17 @@ function reveal(selector) {
   }
 }
 
-defineExpose({ reveal });
+// Centers the range from `top` to `bottom` of the scrolled content when it is
+// out of view, for content that is only rendered while in view.
+function revealRange(top, bottom) {
+  const _view = scroller.value;
+  if (!_view) return;
+  if (top < _view.scrollTop || bottom > _view.scrollTop + _view.clientHeight) {
+    _view.scrollTop = top - (_view.clientHeight - (bottom - top)) / 2;
+  }
+}
+
+defineExpose({ reveal, revealRange, scroller });
 </script>
 
 <style lang="scss">
