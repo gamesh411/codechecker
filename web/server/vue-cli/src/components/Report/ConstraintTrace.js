@@ -106,6 +106,9 @@ export class ConstraintTrace {
     this._symbols = null;
     this._expressions = null;
     this._calls = null;
+    this._memory = null;
+    this._whatIfNames = new Map();
+    this._whatIfNamesAt = new Map();
   }
 
   // The symbol table as a Map from symbol dump to its entry: `kind`, `smt`
@@ -496,7 +499,7 @@ export class ConstraintTrace {
         const _held = _shown.get(named.name);
         const _clash = named.frame !== _own && _held &&
           [ ..._held ].some(value => value !== symbol);
-        const _function = this.frames[named.frame]?.function;
+        const _function = functionName(this.frames[named.frame]?.function);
         named.qualified = _clash && _function ? _function : null;
       });
     }
@@ -540,6 +543,179 @@ export class ConstraintTrace {
     this._symbolNameLog = _log;
     return _log;
   }
+
+  // Every name a What-If Constraint at the step at `order` can be written on,
+  // sorted, each as { name, values }, the values it stands for there as a
+  // variable entry has them: a name that stands for one value the check can
+  // decide, or with `throughout`, a name the step shows that stands for values
+  // the check can decide and, wherever variables hold it, for one at a time.
+  // This is the server's resolution in what_if.py, read the same way: a name
+  // is a variable of the step's frame or a calling frame, also written
+  // `function::name`, or else memory the symbol table names, with a solver
+  // term the step declares, and a variable's name hides memory of that name.
+  // The jest tests compare the two on every fixture.
+  whatIfNames(order, throughout = false) {
+    const _key = `${order} ${throughout}`;
+    if (this._whatIfNames.has(_key)) return this._whatIfNames.get(_key);
+
+    const _steps = this.orderedSteps();
+    const _at = _steps.findIndex(step => step.order === order);
+    const _names = [];
+    if (this.smtlib && _at >= 0) {
+      this.whatIfNamesAt(_steps[_at].exploded_node).forEach((held, name) => {
+        if (!WHAT_IF_NAME.test(name)) return;
+        const _values = throughout
+          ? this.everyWhatIfValue(name) : this.oneWhatIfValue(_at, name);
+        if (!_values || !_values.every(value => value.kind !== "symbol" ||
+            value.smt !== undefined)) return;
+        _names.push({
+          name,
+          values: [ ...new Map(held.map(one =>
+            [ valueKey(one.value), one.value ])).values() ]
+        });
+      });
+    }
+    _names.sort((a, b) => compareText(a.name, b.name));
+    this._whatIfNames.set(_key, _names);
+    return _names;
+  }
+
+  // The one value a name stands for at the step at index `at` of the ordered
+  // steps, as a one-element list, or null when it stands for none or more.
+  oneWhatIfValue(at, name) {
+    const _values = this.whatIfValues(at, name);
+    return _values.length === 1 ? [ _values[0].value ] : null;
+  }
+
+  // Every value a name stands for along the path, or null when it stands for
+  // none, or at some step for variables of several frames holding different
+  // values. Memory can hold several, one after the other.
+  everyWhatIfValue(name) {
+    const _found = new Map();
+    const _steps = this.orderedSteps();
+    for (let _at = 0; _at < _steps.length; ++_at) {
+      const _values = this.whatIfValues(_at, name);
+      if (_values.filter(held => !held.memory).length > 1) return null;
+      _values.forEach(held => {
+        if (!_found.has(valueKey(held.value))) {
+          _found.set(valueKey(held.value), held.value);
+        }
+      });
+    }
+    return _found.size ? [ ..._found.values() ] : null;
+  }
+
+  // What holds the values a name stands for at the step at index `at`, one
+  // for each value.
+  whatIfValues(at, name) {
+    const _distinct = new Map();
+    const _node = this.orderedSteps()[at].exploded_node;
+    (this.whatIfNamesAt(_node).get(name) ?? []).forEach(held => {
+      if (!_distinct.has(valueKey(held.value))) {
+        _distinct.set(valueKey(held.value), held);
+      }
+    });
+    return [ ..._distinct.values() ];
+  }
+
+  // Every name of a node, as a Map to what holds a value under it there:
+  // each { value, frame, memory }.
+  whatIfNamesAt(node) {
+    if (this._whatIfNamesAt.has(node)) return this._whatIfNamesAt.get(node);
+
+    const _names = new Map();
+    const _add = (name, held) => {
+      if (!_names.has(name)) _names.set(name, []);
+      _names.get(name).push(held);
+    };
+    const _own = this.nodes[node].frame ?? null;
+    const _lists = this.rawLists(node);
+    const _variables = [
+      ..._lists.variables.map(raw =>
+        [ this.entry("variables", raw), _own ]),
+      ..._lists.caller_variables.map(raw => {
+        const _variable = this.entry("caller_variables", raw);
+        return [ _variable, _variable.frame ];
+      })
+    ];
+    _variables.forEach(([ variable, frame ]) => {
+      const _held = { value: variable, frame, memory: false };
+      _add(variable.name, _held);
+      const _function = frame === null || frame === undefined
+        ? "" : functionName(this.frames[frame]?.function);
+      if (_function) _add(`${_function}::${variable.name}`, _held);
+    });
+
+    const _byVariable = new Set(_names.keys());
+    const _declared = new Set(_lists.smt_declarations.map(raw =>
+      DECLARED.exec(this.strings[raw[0]])?.[1]));
+    this.whatIfMemory().forEach(memory => {
+      if (!_byVariable.has(memory.name) && _declared.has(memory.value.smt)) {
+        _add(memory.name, { value: memory.value, frame: null, memory: true });
+      }
+    });
+    this._whatIfNamesAt.set(node, _names);
+    return _names;
+  }
+
+  // The memory the symbol table names, with a solver term: a region value's
+  // access path, and that of a part of a value a call or a loop replaced, as
+  // { name, value }, in the order the path meets them.
+  whatIfMemory() {
+    if (this._memory) return this._memory;
+
+    const _first = new Map();
+    this.nodes.forEach((node, index) => {
+      const _delta = node.smt_declarations;
+      [ ...(_delta?.replace ?? []), ...(_delta?.insert ?? []) ].forEach(
+        operation => {
+          const _name = DECLARED.exec(this.strings[operation[1]])?.[1];
+          if (_name !== undefined && !_first.has(_name)) {
+            _first.set(_name, index);
+          }
+        });
+    });
+    const _memory = [];
+    this.symbols.forEach((entry, dump) => {
+      const _name = entry.kind === "region_value" ? entry.name
+        : entry.kind === "derived" ? entry.region : undefined;
+      if (!_name || entry.smt === undefined) return;
+      _memory.push({ name: _name, value: {
+        name: _name, value: dump, kind: "symbol", smt: entry.smt,
+        smt_signed: entry.smt_signed
+      } });
+    });
+    const _at = memory => _first.get(memory.value.smt) ?? this.nodes.length;
+    _memory.sort((a, b) => _at(a) - _at(b) ||
+      compareText(a.value.value, b.value.value));
+    this._memory = _memory;
+    return _memory;
+  }
+}
+
+// A What-If name as the server reads one: a variable, optionally after its
+// function, or an access path whose subscripts are an integer or a path.
+const IDENTIFIER = "[A-Za-z_]\\w*";
+const MEMBERS = `(?:(?:\\.|->)${IDENTIFIER})`;
+const WHAT_IF_NAME = new RegExp(`^\\**${IDENTIFIER}(?:::${IDENTIFIER})*` +
+  `(?:${MEMBERS}|\\[(?:\\d+|${IDENTIFIER}${MEMBERS}*)\\])*$`);
+
+const DECLARED = /^\(declare-fun\s+(\S+)/;
+
+function valueKey(value) {
+  return `${value.kind}:${value.value}`;
+}
+
+// The order of Python's sorted(), which the server's lists have.
+function compareText(a, b) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+// A function as the report page writes it, in a group's heading and before
+// `::` in a name: most of a long C++ name is the anonymous namespace it is
+// in.
+export function functionName(name) {
+  return (name ?? "").replaceAll("(anonymous namespace)::", "");
 }
 
 // Statement text longer than this is shortened wherever it is shown.

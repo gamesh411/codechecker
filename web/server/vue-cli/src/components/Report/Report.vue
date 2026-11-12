@@ -651,6 +651,8 @@ const selectedConstraintStep = computed(() => {
       typeOf: symbolType,
       order: _control.order,
       smtlib: constraintTrace.value.smtlib,
+      whatIfNames: throughout =>
+        constraintTrace.value.whatIfNames(_control.order, throughout),
       changes: constraintTrace.value.changedAt(_control.order),
       silent: silentOrders.value.has(_control.order)
     };
@@ -686,6 +688,8 @@ const selectedConstraintStep = computed(() => {
     typeOf: symbolType,
     order: _traceStep?.order ?? -1,
     smtlib: constraintTrace.value.smtlib,
+    whatIfNames: throughout =>
+      constraintTrace.value.whatIfNames(_traceStep?.order ?? -1, throughout),
     changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
     silent: false
   };

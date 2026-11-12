@@ -101,7 +101,7 @@
                   ? "Throughout" : constraint.heading }}
               </span>
               <code class="what-if-row-expression">
-                {{ constraint.expression }}
+                <name-text :text="constraint.expression" />
               </code>
               <v-btn
                 class="what-if-row-remove"
@@ -143,8 +143,9 @@
             <div class="what-if-verdict-text">
               {{ verdict.lead }}
               <template v-if="verdict.about">
-                <code class="what-if-expression">{{
-                  verdict.about.expression }}</code>
+                <code class="what-if-expression"><name-text
+                  :text="verdict.about.expression"
+                /></code>
                 <template v-if="verdict.dead?.atAnchor">
                   at
                   <button
@@ -192,7 +193,10 @@
                 />. The solver gave up before it could tell whether an
                 earlier step is dead too.
               </template>
-              <code-text :text="verdict.trail" />
+              <!-- The space would be dropped between two tags. -->
+              <template v-if="verdict.trail">
+                {{ " " }}<code-text :text="verdict.trail" />
+              </template>
             </div>
           </div>
         </div>
@@ -207,7 +211,7 @@
         :id="listboxId"
         class="what-if-suggestions"
         role="listbox"
-        aria-label="Variables at this step"
+        aria-label="Names at this step"
         :style="suggestionsStyle"
       >
         <li
@@ -221,8 +225,32 @@
           @mousedown.prevent="accept(index)"
           @mousemove="activeSuggestion = index"
         >
-          <span class="what-if-suggestion-name">{{ suggestion.name }}</span>
-          <span class="what-if-suggestion-value">{{ suggestion.value }}</span>
+          <span class="what-if-suggestion-name">
+            <name-text :text="suggestion.name" />
+          </span>
+          <span
+            class="what-if-suggestion-value"
+            :class="{ 'what-if-intervals': suggestion.value.intervals }"
+            :title="suggestion.value.text"
+          >
+            <template v-if="suggestion.value.intervals">
+              <template
+                v-for="(interval, at) in suggestion.value.intervals"
+                :key="at"
+              >
+                {{ at ? ", " : "" }}<span class="what-if-interval">{{
+                  interval }}</span>
+              </template>
+            </template>
+            <template v-else>
+              {{ suggestion.value.text }}
+            </template>
+            <span
+              v-if="suggestion.value.dropped"
+              class="what-if-suggestion-dropped"
+              title="The analyzer no longer tracks this value at this step"
+            >dropped</span>
+          </span>
         </li>
       </ul>
     </teleport>
@@ -245,6 +273,8 @@ import { PathVerdict } from "@cc/report-server-types";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
+import { compareNames, readableRange } from "./ConstraintTrace";
+
 const props = defineProps({
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
@@ -264,10 +294,19 @@ const THROUGHOUT_HINT = "Apply it to every value the variable takes on " +
 // eslint-disable-next-line vue/no-setup-props-reactivity-loss
 const { constraints, result, checking } = props.whatIf;
 
+// A long access path or function name wraps after a separator, never inside
+// an identifier or inside `->`.
+function NameText({ text }) {
+  return (text ?? "").split(/(?<=\.|->|::|\[)/).flatMap((part, index) =>
+    index ? [ h("wbr"), part ] : [ part ]);
+}
+NameText.props = [ "text" ];
+
 // Server messages quote names and operators in backticks.
 function CodeText({ text }) {
-  return (text ?? "").split("`").map((part, index) =>
-    index % 2 ? h("code", { class: "what-if-code" }, part) : part);
+  return (text ?? "").split("`").map((part, index) => index % 2
+    ? h("code", { class: "what-if-code" }, h(NameText, { text: part }))
+    : part);
 }
 CodeText.props = [ "text" ];
 
@@ -282,15 +321,22 @@ const { canScrollUp, canScrollDown } = useScrollShadows(scroller);
 const listboxId = `what-if-suggestions-${useId()}`;
 const errorId = `what-if-error-${useId()}`;
 
-// Suggests only a variable the check can decide: a symbol with a solver term,
-// or an integer. A reference or an address gets Unknown, and so does every
-// variable of a trace without solver input, so then nothing is suggested.
+// The names the server can check a constraint on at this step, as it
+// resolves them, which a trace without solver input has none of.
+const names = computed(() =>
+  props.step.whatIfNames?.(holdsThroughout.value) ?? []);
+
+// Suggests a name the check can decide: a variable of the step's own function
+// that holds a symbol, then one that holds an integer, as before callers and
+// memory had names, and else the shortest name, which fits a narrow field.
 const placeholder = computed(() => {
-  if (!props.step.smtlib) return "";
-  const _variable =
-    props.step.variables.find(v => v.kind === "symbol" && v.smt) ??
-    props.step.variables.find(v => v.kind === "integer");
-  return _variable ? `${_variable.name} == 0` : "";
+  const _anchored = new Set((props.step.whatIfNames?.(false) ?? [])
+    .map(name => name.name));
+  const _own = props.step.variables.filter(v => _anchored.has(v.name));
+  const _name = _own.find(v => v.kind === "symbol")?.name ??
+    _own.find(v => v.kind === "integer")?.name ??
+    [ ..._anchored ].sort((a, b) => a.length - b.length)[0];
+  return _name ? `${_name} == 0` : "";
 });
 
 // The text the error was about is gone once the reader edits it.
@@ -429,9 +475,9 @@ function deadStep(response, about, count) {
   };
 }
 
-// Name suggestions: the variables of the selected step whose names start with
-// the word being typed where a variable name belongs. An empty input lists
-// them only on ArrowDown, so that Enter there still checks.
+// Name suggestions: the names of the selected step that start with the word
+// being typed where a name belongs. An empty input lists them only on
+// ArrowDown, so that Enter there still checks.
 const caret = ref(0);
 const focused = ref(false);
 const suggestionsDismissed = ref(false);
@@ -443,13 +489,17 @@ function updateCaret() {
   caret.value = inputElement()?.selectionStart ?? expression.value.length;
 }
 
+// The characters of a name: an access path such as `p->cells[0].width` or
+// `*q`, and a function before `::`. An operator follows a space or a digit
+// in practice, so `->` and a subscript are read as part of the name.
 const wordAtCaret = computed(() => {
   const _before = expression.value.slice(0, caret.value);
-  const _match = _before.match(/(?:^|&&)\s*([A-Za-z_]\w*)?$/);
+  const _match = _before.match(/(?:^|&&)\s*([A-Za-z_*][\w.:*[\]>-]*)?$/);
   if (!_match) return null;
 
   const _prefix = _match[1] ?? "";
-  const _rest = expression.value.slice(caret.value).match(/^\w*/)[0];
+  const _rest = expression.value.slice(caret.value)
+    .match(/^[\w.:*[\]>-]*/)[0];
   return {
     prefix: _prefix,
     word: _prefix + _rest,
@@ -461,23 +511,50 @@ const wordAtCaret = computed(() => {
 const knownRanges = computed(() =>
   new Map(props.step.symbolRanges.map(range => [ range.symbol, range.range ]))
 );
+const pathRanges = computed(() =>
+  new Map(props.step.pathCondition.map(range => [ range.symbol, range.range ]))
+);
+
+// What a name stands for, as the panel reads it: { text, dropped }, a
+// concrete value, or the range of its symbol, the last one the path condition
+// has when the analyzer dropped it here.
+function valueOf(values) {
+  if (values.length !== 1) return { text: `${values.length} values` };
+  const [ _value ] = values;
+  if (_value.kind !== "symbol") return { text: _value.value };
+  const _known = knownRanges.value.get(_value.value);
+  const _range = _known ?? pathRanges.value.get(_value.value);
+  if (!_range) return { text: "no known range" };
+  const _readable = readableRange(_range, _value.value,
+    props.step.typeOf?.(_value.value));
+  return {
+    text: _readable ?? _range.replace(/^\{\s*|\s*\}$/g, ""),
+    // A range of several intervals wraps between them only.
+    intervals: _readable ? null : _range.match(/\[[^\]]*\]/g),
+    dropped: !_known
+  };
+}
 
 const suggestions = computed(() => {
   const _word = wordAtCaret.value;
   if (!_word) return [];
   if (!expression.value.trim() && !suggestionsForced.value) return [];
 
-  const _matches = props.step.variables
-    .filter(variable => variable.name.startsWith(_word.prefix))
-    .map(variable => ({
-      name: variable.name,
-      value: variable.kind !== "symbol" ? variable.value :
-        knownRanges.value.get(variable.value)?.replace(/^\{\s*|\s*\}$/g, "")
-          ?? "no known range"
-    }));
+  const _matches = names.value.filter(name =>
+    startsAPart(name.name, _word.prefix));
+  // A value that has a name of its own is not offered again under its
+  // function's name, unless that is what the reader is typing.
+  const _values = name => name.values.map(value =>
+    `${value.kind}:${value.value}`).join(" ");
+  const _plain = new Set(_matches.filter(name => !name.name.includes("::"))
+    .map(_values));
+  const _shown = _matches
+    .filter(name => !name.name.includes("::") || !_plain.has(_values(name)))
+    .sort((a, b) => compareNames(a.name, b.name))
+    .map(name => ({ name: name.name, value: valueOf(name.values) }));
   // A finished name needs no suggestion.
-  return _matches.length === 1 && _matches[0].name === _word.word
-    ? [] : _matches;
+  return _shown.length === 1 && _shown[0].name === _word.word
+    ? [] : _shown;
 });
 
 const suggestionsOpen = computed(() =>
@@ -486,6 +563,15 @@ const suggestionsOpen = computed(() =>
 );
 
 watch(suggestions, () => { activeSuggestion.value = 0; });
+
+// Whether a name, or a part of it after `::`, `->` or `.`, starts with the
+// text typed, so that `n` finds `top::n` when `n` alone is ambiguous, and
+// `SimpleTy` finds `Op.Node->ValueList[Op.ResNo].V.SimpleTy`.
+function startsAPart(name, prefix) {
+  return [ 0, ...[ ...name.matchAll(/::|->|\./g) ]
+    .map(match => match.index + match[0].length) ]
+    .some(at => name.startsWith(prefix, at));
+}
 
 function accept(index) {
   const _word = wordAtCaret.value;
@@ -550,8 +636,12 @@ function onBlur() {
 }
 
 // The list floats over the page, so no scrolling container of the panel clips
-// it. It opens upwards when the input sits low in the window.
+// it. It opens upwards when the input sits low in the window. A narrow field
+// gets a wider list, which grows to the left to stay in the window, so that a
+// long access path and its value both stay readable.
 const SUGGESTIONS_MAX_HEIGHT = 200;
+const SUGGESTIONS_MIN_WIDTH = 320;
+const WINDOW_MARGIN = 8;
 
 function placeSuggestions() {
   const _rect = field.value?.getBoundingClientRect();
@@ -559,9 +649,13 @@ function placeSuggestions() {
 
   const _below = window.innerHeight - _rect.bottom;
   const _opensUp = _below < SUGGESTIONS_MAX_HEIGHT + 8 && _rect.top > _below;
+  const _width = Math.min(Math.max(_rect.width, SUGGESTIONS_MIN_WIDTH),
+    window.innerWidth - 2 * WINDOW_MARGIN);
+  const _left = Math.max(WINDOW_MARGIN, Math.min(_rect.left,
+    window.innerWidth - WINDOW_MARGIN - _width));
   suggestionsStyle.value = {
-    left: `${_rect.left}px`,
-    width: `${_rect.width}px`,
+    left: `${_left}px`,
+    width: `${_width}px`,
     maxHeight: `${SUGGESTIONS_MAX_HEIGHT}px`,
     ...(_opensUp
       ? { bottom: `${window.innerHeight - _rect.top + 2}px` }
@@ -611,9 +705,12 @@ onBeforeUnmount(() => {
     min-width: 0;
   }
 
+  // A placeholder on a long access path ends in an ellipsis rather than
+  // being cut at the field's edge.
   .what-if-input input {
     font-family: monospace;
     font-size: 0.875rem;
+    text-overflow: ellipsis;
   }
 
   .what-if-check {
@@ -784,19 +881,48 @@ onBeforeUnmount(() => {
     background-color: #e8eef6;
   }
 
+  // A long name wraps at its separators and keeps the value beside it; an
+  // identifier longer than the line still wraps inside it.
   .what-if-suggestion-name {
+    flex: 1 1 auto;
+    min-width: 0;
     font-family: monospace;
     font-weight: 600;
+    overflow-wrap: anywhere;
   }
 
+  // A value stays on one line, except a range of several intervals, which
+  // wraps between them rather than being cut.
   .what-if-suggestion-value {
-    min-width: 0;
+    flex: 0 0 auto;
+    max-width: 55%;
     margin-left: auto;
-    overflow: hidden;
     color: rgba(0, 0, 0, 0.55);
     font-family: monospace;
     font-size: 0.75rem;
+    text-align: right;
+    // Only a concrete value such as a long address is ever this wide.
+    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .what-if-intervals {
+    flex-shrink: 1;
+    white-space: normal;
+  }
+
+  .what-if-interval {
+    white-space: nowrap;
+  }
+
+  .what-if-suggestion-dropped {
+    margin-left: 4px;
+    padding: 0 4px;
+    border-radius: 3px;
+    color: #6b5a12;
+    background-color: #f6efc8;
+    font-family: sans-serif;
     white-space: nowrap;
   }
 }
