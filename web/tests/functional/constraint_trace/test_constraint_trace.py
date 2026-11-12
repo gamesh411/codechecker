@@ -916,6 +916,102 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertIn('any Path Step', result.reason)
         self.assertEqual(result.reasonConstraintIndex, 0)
 
+    def test_what_if_on_a_callers_variable(self):
+        """
+        Hand-derived from demo/caller-frames.c: at the dereference inside
+        `inner`, top's `n` is the 2 it was assumed, middle's `k` is 7, and
+        `m` is one value that middle got from top.
+        """
+        step = self._event_step(
+            'caller_frames',
+            "Dereference of null pointer (loaded from variable 'p')")
+
+        for text, verdict in [('top::n == 2', PathVerdict.FEASIBLE),
+                              ('top::n == 3', PathVerdict.INFEASIBLE),
+                              ('middle::k != 7', PathVerdict.INFEASIBLE),
+                              ('m > 5', PathVerdict.FEASIBLE),
+                              ('m <= 5', PathVerdict.INFEASIBLE),
+                              ('g == 4', PathVerdict.FEASIBLE)]:
+            result = self._check('caller_frames', (step, text))
+            self.assertEqual(result.verdict, verdict, text)
+            self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_name_in_several_functions_is_unknown_with_candidates(self):
+        """
+        inner's own `n` is gone by the dereference, and middle's 6 and top's
+        symbol are different values, so `n` alone could be either.
+        """
+        step = self._event_step(
+            'caller_frames',
+            "Dereference of null pointer (loaded from variable 'p')")
+
+        result = self._check('caller_frames', (step, 'n == 6'))
+
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(
+            result.reason,
+            '`n` names 2 values at this Path Step: `middle::n` and '
+            '`top::n`. Write the one you mean.')
+        self.assertEqual(result.reasonConstraintIndex, 0)
+        self.assertEqual(
+            self._check('caller_frames', (step, 'middle::n == 6')).verdict,
+            PathVerdict.FEASIBLE)
+
+    def test_what_if_on_an_access_path(self):
+        """
+        Hand-derived from demo/access-path.c: the path assumes
+        `grid->rows > 2`, `line->cells[0].width == 1` and a set bit 2 in
+        `line->next->cells[1].flags`, none of them a variable.
+        """
+        step = self._event_step(
+            'access_path',
+            "Dereference of null pointer (loaded from variable 'out')")
+
+        for text, verdict in [
+                ('grid->rows == 3', PathVerdict.FEASIBLE),
+                ('grid->rows < 3', PathVerdict.INFEASIBLE),
+                ('line->cells[0].width != 1', PathVerdict.INFEASIBLE),
+                ('line->next == null', PathVerdict.INFEASIBLE),
+                ('line->next->cells[1].flags == 0', PathVerdict.INFEASIBLE),
+                ('line->next->cells[1].flags == 4', PathVerdict.FEASIBLE)]:
+            result = self._check('access_path', (step, text))
+            self.assertEqual(result.verdict, verdict, text)
+
+    def test_holds_throughout_on_an_access_path(self):
+        """
+        Hand-derived from demo/replaced-field.c: `Tok.Kind` is the value
+        `lex(&Tok)` left, which the path assumes 0, and holding throughout
+        is about that value wherever the path has it.
+        """
+        step = self._event_step('replaced_field',
+                                "Assuming field 'Kind' is equal to 0")
+
+        self.assertEqual(
+            self._check('replaced_field',
+                        (step, 'Tok.Kind != 0', True)).verdict,
+            PathVerdict.INFEASIBLE)
+        self.assertEqual(
+            self._check('replaced_field', (step, 'Tok.Kind == 0',
+                                           True)).verdict,
+            PathVerdict.FEASIBLE)
+
+    def test_trace_without_the_new_keys_resolves_variables_as_before(self):
+        """
+        A trace from a Clang before the symbol table and the callers' list
+        has variables only, which resolve as they did, by name or with
+        their function.
+        """
+        raw = json.loads(self._details('no_symbols').constraintTrace)
+        self.assertNotIn('symbols', raw)
+        self.assertFalse(any('caller_variables' in node
+                             for node in raw['exploded_nodes']))
+        step = self._event_step('no_symbols', "Assuming 'len' is > 16")
+
+        for text in ('len == 3', 'copy::len == 3'):
+            self.assertEqual(
+                self._check('no_symbols', (step, text)).verdict,
+                PathVerdict.INFEASIBLE, text)
+
     def test_check_writes_nothing_to_the_database(self):
         """
         What-If Constraints stay temporary: the product database is the same,

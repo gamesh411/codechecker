@@ -1,0 +1,3189 @@
+{
+ "access_path": {
+  "anchored": {
+   "0": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "1": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "10": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "2": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "3": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "4": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "5": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "6": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "7": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "8": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "9": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "1": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "10": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "2": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "3": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "4": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "5": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = symbol:reg_$3<int * out>",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = symbol:reg_$3<int * out>"
+   ],
+   "6": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "7": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "8": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ],
+   "9": [
+    "cut::grid = symbol:reg_$1<struct grid * grid>",
+    "cut::line = symbol:reg_$2<struct line * line>",
+    "cut::out = integer:0",
+    "grid = symbol:reg_$1<struct grid * grid>",
+    "grid->rows = symbol:reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>",
+    "line = symbol:reg_$2<struct line * line>",
+    "line->cells[0].width = symbol:reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>",
+    "line->next = symbol:reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>",
+    "line->next->cells[1].flags = symbol:reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>",
+    "out = integer:0"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 5}, \"frame\": 0, \"id\": 17, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 9}, \"path_condition\": {\"insert\": [[0, 0, 1, 13], [1, 2, 3, 14]]}, \"path_position\": 15, \"smt_declarations\": {\"insert\": [[0, 15], [1, 16], [2, 17], [3, 18]]}, \"state_id\": 817, \"symbol_ranges\": {\"insert\": [[0, 0, 1], [1, 2, 3]]}, \"variables\": {\"insert\": [[0, 4, 0, 5, 6, 0], [1, 7, 8, 5, 9, 0], [2, 10, 11, 5, 12, 0]]}}, {\"cfg_position\": {\"block\": 4, \"cfg\": 0, \"element\": 9}, \"frame\": 0, \"id\": 56, \"kind\": \"PostStmt\", \"location\": {\"col\": 25, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 9}, \"path_condition\": {\"insert\": [[0, 19, 20, 21], [2, 8, 1, 22]]}, \"path_position\": 36, \"smt_declarations\": {\"insert\": [[4, 23]]}, \"state_id\": 2339, \"symbol_ranges\": {\"insert\": [[0, 19, 20], [1, 8, 1]], \"remove\": [0, 1]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 15}, \"frame\": 0, \"id\": 89, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 10}, \"path_condition\": {\"insert\": [[0, 24, 25, 27], [2, 26, 1, 28]]}, \"path_position\": 65, \"smt_declarations\": {\"insert\": [[5, 29], [6, 30]]}, \"state_id\": 3966, \"symbol_ranges\": {\"insert\": [[0, 24, 25], [2, 26, 1]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 102, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 11}, \"path_position\": 75, \"smt_declarations\": {\"remove\": [2]}, \"state_id\": 4425, \"symbol_ranges\": {\"remove\": [0, 1, 2, 3]}, \"variables\": {\"replace\": [[2, 10, 31, 32]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 103, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 11}, \"path_position\": 76, \"state_id\": 4425}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 140, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/access_path/$FILE_PATH$/access_path.c\", \"line\": 12}, \"path_position\": 85, \"state_id\": 5201}], \"expressions\": [{\"symbol\": 24, \"type\": 41}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"cut\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 1}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 2, \"kind\": \"event\", \"order\": 5}, {\"exploded_node\": 4, \"index\": 4, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 3, \"kind\": \"event\", \"order\": 7}, {\"exploded_node\": 5, \"index\": 5, \"kind\": \"control\", \"order\": 8}, {\"exploded_node\": 5, \"index\": 6, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 5, \"index\": 4, \"kind\": \"event\", \"order\": 10}], \"strings\": [\"reg_$1<struct grid * grid>\", \"{ [1, 18446744073709551615] }\", \"reg_$5<int Element{SymRegion{reg_$1<struct grid * grid>},0 S64b,struct grid}.rows>\", \"{ [3, 2147483647] }\", \"grid\", \"symbol\", \"reg_$1\", \"line\", \"reg_$2<struct line * line>\", \"reg_$2\", \"out\", \"reg_$3<int * out>\", \"reg_$3\", \"(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))\", \"(assert (and (bvsge reg_$5 #x00000003) (bvsle reg_$5 #x7fffffff)))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun reg_$2 () (_ BitVec 64))\", \"(declare-fun reg_$3 () (_ BitVec 64))\", \"(declare-fun reg_$5 () (_ BitVec 32))\", \"reg_$12<int Element{Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.cells,0 S64b,struct cell}.width>\", \"{ [1, 1] }\", \"(assert (= reg_$12 #x00000001))\", \"(assert (and (bvuge reg_$2 #x0000000000000001) (bvule reg_$2 #xffffffffffffffff)))\", \"(declare-fun reg_$12 () (_ BitVec 32))\", \"(reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>) & 4U\", \"{ [1, 4] }\", \"reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>\", \"(assert (and (bvuge (bvand reg_$17 #x00000004) #x00000001)\\n     (bvule (bvand reg_$17 #x00000004) #x00000004)))\", \"(assert (and (bvuge reg_$15 #x0000000000000001) (bvule reg_$15 #xffffffffffffffff)))\", \"(declare-fun reg_$15 () (_ BitVec 64))\", \"(declare-fun reg_$17 () (_ BitVec 32))\", \"0\", \"integer\", \"line->cells[0].width\", \"int\", \"reg_$12\", \"line->next\", \"struct line *\", \"reg_$15\", \"reg_$17<unsigned int Element{Element{SymRegion{reg_$15<struct line * Element{SymRegion{reg_$2<struct line * line>},0 S64b,struct line}.next>},0 S64b,struct line}.cells,1 S64b,struct cell}.flags>\", \"line->next->cells[1].flags\", \"unsigned int\", \"reg_$17\", \"struct grid *\", \"int *\", \"grid->rows\", \"reg_$5\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 33, \"smt\": 35, \"smt_signed\": true, \"symbol\": 19, \"type\": 34}, {\"kind\": \"region_value\", \"name\": 36, \"pointer\": true, \"smt\": 38, \"smt_signed\": false, \"symbol\": 26, \"type\": 37}, {\"kind\": \"region_value\", \"name\": 40, \"smt\": 42, \"smt_signed\": false, \"symbol\": 39, \"type\": 41}, {\"kind\": \"region_value\", \"name\": 4, \"pointer\": true, \"smt\": 6, \"smt_signed\": false, \"symbol\": 0, \"type\": 43}, {\"kind\": \"region_value\", \"name\": 7, \"pointer\": true, \"smt\": 9, \"smt_signed\": false, \"symbol\": 8, \"type\": 37}, {\"kind\": \"region_value\", \"name\": 10, \"pointer\": true, \"smt\": 12, \"smt_signed\": false, \"symbol\": 11, \"type\": 44}, {\"kind\": \"region_value\", \"name\": 45, \"smt\": 46, \"smt_signed\": true, \"symbol\": 2, \"type\": 34}], \"version\": 2}"
+ },
+ "call_result": {
+  "anchored": {
+   "0": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "10": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "11": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "12": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "2": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "4": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "5": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "6": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "7": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "8": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "9": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "10": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "11": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "12": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "2": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "4": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "5": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "6": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "7": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "8": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "9": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 9}, \"frame\": 0, \"id\": 22, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 12}, \"path_condition\": {\"insert\": [[0, 0, 1, 8]]}, \"path_position\": 20, \"smt_declarations\": {\"insert\": [[0, 9], [1, 10]]}, \"state_id\": 1147, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 0, 3, 4, 0], [1, 5, 6, 3, 7, 0]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 48, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 14}, \"path_position\": 46, \"smt_declarations\": {\"insert\": [[2, 14]]}, \"state_id\": 2120, \"variables\": {\"insert\": [[1, 11, 12, 3, 13, 1]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 7}, \"frame\": 0, \"id\": 55, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 15}, \"path_condition\": {\"insert\": [[1, 12, 15, 16]]}, \"path_position\": 53, \"state_id\": 2470, \"symbol_ranges\": {\"insert\": [[1, 12, 15]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 93, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 16}, \"path_position\": 63, \"smt_declarations\": {\"remove\": [0]}, \"state_id\": 4039, \"symbol_ranges\": {\"remove\": [1]}, \"variables\": {\"remove\": [1], \"replace\": [[2, 5, 17, 18]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 94, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 16}, \"path_position\": 64, \"state_id\": 4039}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 5}, \"frame\": 0, \"id\": 116, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 17}, \"path_position\": 77, \"state_id\": 4541, \"variables\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 9}, \"frame\": 0, \"id\": 122, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 18}, \"path_position\": 83, \"state_id\": 4752}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"copy\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 4, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 5, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 1, \"kind\": \"event\", \"order\": 6}, {\"exploded_node\": 4, \"index\": 6, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 3, \"index\": 2, \"kind\": \"event\", \"order\": 8}, {\"exploded_node\": 5, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 6, \"index\": 8, \"kind\": \"control\", \"order\": 10}, {\"exploded_node\": 6, \"index\": 9, \"kind\": \"control\", \"order\": 11}, {\"exploded_node\": 6, \"index\": 3, \"kind\": \"event\", \"order\": 12}], \"strings\": [\"conj_$2{void *, LC1, S2409, #1}\", \"{ [1, 18446744073709551615] }\", \"buf\", \"symbol\", \"conj_$2\", \"out\", \"reg_$1<int * out>\", \"reg_$1\", \"(assert (and (bvuge conj_$2 #x0000000000000001) (bvule conj_$2 #xffffffffffffffff)))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun conj_$2 () (_ BitVec 64))\", \"len\", \"conj_$7{int, LC2, S2301, #1}\", \"conj_$7\", \"(declare-fun conj_$7 () (_ BitVec 32))\", \"{ [17, 2147483647] }\", \"(assert (and (bvsge conj_$7 #x00000011) (bvsle conj_$7 #x7fffffff)))\", \"0\", \"integer\", \"void *\", \"malloc(16)\", \"malloc\", \"copy\", \"int\", \"read_len()\", \"read_len\", \"next_len\", \"int *\"], \"symbols\": [{\"kind\": \"conjured\", \"origin\": {\"callee\": 21, \"frame\": 0, \"function\": 22, \"location\": {\"col\": 15, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 11}, \"reason\": \"other\", \"statement\": 20}, \"pointer\": true, \"smt\": 4, \"smt_signed\": false, \"symbol\": 0, \"type\": 19}, {\"kind\": \"conjured\", \"origin\": {\"callee\": 25, \"function\": 26, \"location\": {\"col\": 36, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/call_result/$FILE_PATH$/call_result.c\", \"line\": 8}, \"reason\": \"call_result\", \"statement\": 24}, \"smt\": 13, \"smt_signed\": true, \"symbol\": 12, \"type\": 23}, {\"kind\": \"region_value\", \"name\": 5, \"pointer\": true, \"smt\": 7, \"smt_signed\": false, \"symbol\": 6, \"type\": 27}], \"version\": 2}"
+ },
+ "caller_frames": {
+  "anchored": {
+   "0": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "1": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "10": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "11": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "12": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "13": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "14": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "15": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "16": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "17": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "18": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "19": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "2": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "20": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "21": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "3": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "4": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "5": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "6": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "7": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "8": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "9": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "1": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "10": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "11": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "12": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "13": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "14": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "15": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "16": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "17": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "18": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "inner::n = integer:7",
+    "inner::p = integer:0",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "p = integer:0",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "19": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "2": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "20": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "21": [
+    "g = symbol:reg_$5<int g>",
+    "h = symbol:reg_$12<int h>",
+    "inner::h = symbol:reg_$12<int h>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "3": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "4": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "5": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "6": [
+    "g = symbol:reg_$5<int g>",
+    "m = symbol:reg_$2<int m>",
+    "top::g = symbol:reg_$5<int g>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "7": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "8": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "9": [
+    "g = symbol:reg_$5<int g>",
+    "k = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::g = symbol:reg_$5<int g>",
+    "middle::k = integer:7",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 11, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 22}, \"path_condition\": {\"insert\": [[0, 0, 1, 11]]}, \"path_position\": 10, \"smt_declarations\": {\"insert\": [[0, 12], [1, 13], [2, 14]]}, \"state_id\": 502, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 3, 4, 5, 1], [1, 6, 7, 4, 8, 1], [2, 9, 0, 4, 10, 1]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 24, \"kind\": \"PostStmt\", \"location\": {\"col\": 17, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 22}, \"path_condition\": {\"insert\": [[1, 3, 15, 16]]}, \"path_position\": 20, \"state_id\": 990, \"symbol_ranges\": {\"insert\": [[1, 3, 15]]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 8}, \"frame\": 0, \"id\": 45, \"kind\": \"CallEnter\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 23}, \"path_position\": 38, \"state_id\": 1719, \"symbol_ranges\": {\"remove\": [0]}}, {\"caller_variables\": {\"insert\": [[0, 0, 6, 7, 4, 8, 1], [1, 0, 9, 0, 4, 10, 1]]}, \"cfg_position\": {\"block\": 3, \"cfg\": 1, \"element\": 4}, \"frame\": 1, \"id\": 57, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 15}, \"path_position\": 50, \"state_id\": 2266, \"variables\": {\"insert\": [[1, 17, 18, 19]], \"replace\": [[2, 9, 20, 19]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 1, \"element\": 8}, \"frame\": 1, \"id\": 64, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 16}, \"path_condition\": {\"insert\": [[1, 7, 21, 22]]}, \"path_position\": 57, \"state_id\": 2622, \"symbol_ranges\": {\"insert\": [[0, 7, 21]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 1, \"element\": 4}, \"frame\": 1, \"id\": 108, \"kind\": \"CallEnter\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 17}, \"path_position\": 69, \"state_id\": 4357}, {\"caller_variables\": {\"insert\": [[0, 1, 2, 3, 4, 5, 1], [1, 1, 17, 18, 19], [2, 1, 6, 7, 4, 8, 1], [3, 1, 9, 20, 19]]}, \"cfg_position\": {\"block\": 2, \"cfg\": 2, \"element\": 3}, \"frame\": 2, \"id\": 117, \"kind\": \"PostLValue\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 10}, \"path_position\": 78, \"smt_declarations\": {\"insert\": [[3, 28]]}, \"state_id\": 4726, \"variables\": {\"insert\": [[0, 23, 24, 4, 25, 1], [2, 26, 27, 19]], \"remove\": [0, 1, 2], \"replace\": [[3, 9, 18, 19]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 2, \"element\": 6}, \"frame\": 2, \"id\": 123, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 10}, \"path_condition\": {\"insert\": [[0, 24, 29, 30]]}, \"path_position\": 84, \"state_id\": 4957, \"symbol_ranges\": {\"insert\": [[0, 24, 29]]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 2, \"element\": 5}, \"frame\": 2, \"id\": 145, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 11}, \"path_position\": 98, \"state_id\": 5820, \"variables\": {\"remove\": [1, 2]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 2, \"element\": 5}, \"frame\": 2, \"id\": 146, \"kind\": \"PreStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 11}, \"path_position\": 99, \"state_id\": 5820}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"top\"}, {\"call_site\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 23}, \"function\": \"middle\", \"parent\": 0}, {\"call_site\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/caller_frames/$FILE_PATH$/caller_frames.c\", \"line\": 17}, \"function\": \"inner\", \"parent\": 1}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 1}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 2, \"kind\": \"event\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"event\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 5, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 4, \"index\": 6, \"kind\": \"control\", \"order\": 8}, {\"exploded_node\": 4, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 4, \"index\": 4, \"kind\": \"event\", \"order\": 10}, {\"exploded_node\": 5, \"index\": 8, \"kind\": \"control\", \"order\": 11}, {\"exploded_node\": 5, \"index\": 5, \"kind\": \"event\", \"order\": 12}, {\"exploded_node\": 5, \"index\": 6, \"kind\": \"event\", \"order\": 13}, {\"exploded_node\": 6, \"index\": 10, \"kind\": \"control\", \"order\": 14}, {\"exploded_node\": 6, \"index\": 7, \"kind\": \"event\", \"order\": 15}, {\"exploded_node\": 7, \"index\": 11, \"kind\": \"control\", \"order\": 16}, {\"exploded_node\": 7, \"index\": 12, \"kind\": \"control\", \"order\": 17}, {\"exploded_node\": 7, \"index\": 8, \"kind\": \"event\", \"order\": 18}, {\"exploded_node\": 8, \"index\": 13, \"kind\": \"control\", \"order\": 19}, {\"exploded_node\": 9, \"index\": 14, \"kind\": \"control\", \"order\": 20}, {\"exploded_node\": 9, \"index\": 9, \"kind\": \"event\", \"order\": 21}], \"strings\": [\"reg_$1<int n>\", \"{ [2, 2] }\", \"g\", \"reg_$5<int g>\", \"symbol\", \"reg_$5\", \"m\", \"reg_$2<int m>\", \"reg_$2\", \"n\", \"reg_$1\", \"(assert (= reg_$1 #x00000002))\", \"(declare-fun reg_$1 () (_ BitVec 32))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"(declare-fun reg_$5 () (_ BitVec 32))\", \"{ [4, 4] }\", \"(assert (= reg_$5 #x00000004))\", \"k\", \"7\", \"integer\", \"6\", \"{ [6, 2147483647] }\", \"(assert (and (bvsge reg_$2 #x00000006) (bvsle reg_$2 #x7fffffff)))\", \"h\", \"reg_$12<int h>\", \"reg_$12\", \"p\", \"0\", \"(declare-fun reg_$12 () (_ BitVec 32))\", \"{ [1, 1] }\", \"(assert (= reg_$12 #x00000001))\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 23, \"smt\": 25, \"smt_signed\": true, \"symbol\": 24, \"type\": 31}, {\"kind\": \"region_value\", \"name\": 9, \"smt\": 10, \"smt_signed\": true, \"symbol\": 0, \"type\": 31}, {\"kind\": \"region_value\", \"name\": 6, \"smt\": 8, \"smt_signed\": true, \"symbol\": 7, \"type\": 31}, {\"kind\": \"region_value\", \"name\": 2, \"smt\": 5, \"smt_signed\": true, \"symbol\": 3, \"type\": 31}], \"version\": 2}"
+ },
+ "concrete_value": {
+  "anchored": {
+   "0": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "1": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "2": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "3": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "4": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "5": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "6": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "7": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "1": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "2": [
+    "f::p = address:&x",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = address:&x",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "3": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "4": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "5": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "6": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ],
+   "7": [
+    "f::p = integer:0",
+    "f::q = symbol:reg_$1<int * q>",
+    "f::x = symbol:reg_$3<int x>",
+    "p = integer:0",
+    "q = symbol:reg_$1<int * q>",
+    "x = symbol:reg_$3<int x>"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 5}, \"frame\": 0, \"id\": 16, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/concrete_value/$FILE_PATH$/concrete_value.c\", \"line\": 6}, \"path_condition\": {\"insert\": [[0, 0, 1, 11]]}, \"path_position\": 15, \"smt_declarations\": {\"insert\": [[0, 12], [1, 13]]}, \"state_id\": 726, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 3, 4], [1, 5, 0, 6, 7, 0], [2, 8, 9, 6, 10, 1]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 43, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/concrete_value/$FILE_PATH$/concrete_value.c\", \"line\": 7}, \"path_position\": 27, \"state_id\": 1424, \"symbol_ranges\": {\"remove\": [0]}, \"variables\": {\"replace\": [[0, 2, 14, 15]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 44, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/concrete_value/$FILE_PATH$/concrete_value.c\", \"line\": 7}, \"path_position\": 28, \"state_id\": 1424}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 53, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/concrete_value/$FILE_PATH$/concrete_value.c\", \"line\": 8}, \"path_position\": 37, \"state_id\": 1716}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"f\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 4}, {\"exploded_node\": 3, \"index\": 4, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 3, \"index\": 5, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 2, \"kind\": \"event\", \"order\": 7}], \"strings\": [\"reg_$1<int * q>\", \"{ [0, 0] }\", \"p\", \"&x\", \"address\", \"q\", \"symbol\", \"reg_$1\", \"x\", \"reg_$3<int x>\", \"reg_$3\", \"(assert (= reg_$1 #x0000000000000000))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun reg_$3 () (_ BitVec 32))\", \"0\", \"integer\", \"int *\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 5, \"pointer\": true, \"smt\": 7, \"smt_signed\": false, \"symbol\": 0, \"type\": 16}, {\"kind\": \"region_value\", \"name\": 8, \"smt\": 10, \"smt_signed\": true, \"symbol\": 9, \"type\": 17}], \"version\": 2}"
+ },
+ "no_smtlib": {
+  "anchored": {
+   "0": [],
+   "1": [],
+   "10": [],
+   "11": [],
+   "13": [],
+   "14": [],
+   "15": [],
+   "16": [],
+   "17": [],
+   "2": [],
+   "3": [],
+   "4": [],
+   "5": [],
+   "6": [],
+   "7": [],
+   "9": []
+  },
+  "throughout": {
+   "0": [],
+   "1": [],
+   "10": [],
+   "11": [],
+   "13": [],
+   "14": [],
+   "15": [],
+   "16": [],
+   "17": [],
+   "2": [],
+   "3": [],
+   "4": [],
+   "5": [],
+   "6": [],
+   "7": [],
+   "9": []
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 9, \"cfg\": 0, \"element\": 6}, \"frame\": 0, \"id\": 17, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[0, 0, 1]]}, \"path_position\": 15, \"state_id\": 700, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 0, 3], [1, 4, 5, 3], [2, 6, 7, 8], [3, 9, 10, 3]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 28, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 9}, \"path_condition\": {\"insert\": [[1, 5, 11]]}, \"path_position\": 25, \"state_id\": 1111, \"symbol_ranges\": {\"insert\": [[1, 5, 11]]}}, {\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 37, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 11}, \"path_position\": 34, \"state_id\": 1402}, {\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 38, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 11}, \"path_position\": 35, \"state_id\": 1402}, {\"cfg_position\": {\"block\": 4, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 48, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 12}, \"path_position\": 45, \"state_id\": 1641, \"symbol_ranges\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 57, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 13}, \"path_position\": 54, \"state_id\": 1899}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 58, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 13}, \"path_position\": 55, \"state_id\": 1964}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 68, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 14}, \"path_position\": 65, \"state_id\": 2239, \"symbol_ranges\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 69, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 14}, \"path_position\": 66, \"state_id\": 2239}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 78, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_smtlib/$FILE_PATH$/two_path.c\", \"line\": 15}, \"path_position\": 75, \"state_id\": 2472}], \"stack_frames\": [{\"function\": \"f\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 1, \"index\": 4, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 5, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 6, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 4, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 5, \"index\": 8, \"kind\": \"control\", \"order\": 10}, {\"exploded_node\": 6, \"index\": 9, \"kind\": \"control\", \"order\": 11}, {\"exploded_node\": 8, \"index\": 10, \"kind\": \"control\", \"order\": 13}, {\"exploded_node\": 7, \"index\": 2, \"kind\": \"event\", \"order\": 14}, {\"exploded_node\": 9, \"index\": 11, \"kind\": \"control\", \"order\": 15}, {\"exploded_node\": 9, \"index\": 12, \"kind\": \"control\", \"order\": 16}, {\"exploded_node\": 9, \"index\": 3, \"kind\": \"event\", \"order\": 17}], \"strings\": [\"reg_$1<int a>\", \"{ [0, 0] }\", \"a\", \"symbol\", \"b\", \"reg_$2<int b>\", \"p\", \"0\", \"integer\", \"x\", \"reg_$9<int x>\", \"{ [-2147483648, -1], [1, 2147483647] }\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 2, \"symbol\": 0, \"type\": 12}, {\"kind\": \"region_value\", \"name\": 4, \"symbol\": 5, \"type\": 12}, {\"kind\": \"region_value\", \"name\": 9, \"symbol\": 10, \"type\": 12}], \"version\": 2}"
+ },
+ "no_symbols": {
+  "anchored": {
+   "0": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "10": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "11": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "12": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "2": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "4": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "5": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "6": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "7": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "8": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "9": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "10": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "11": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "12": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "2": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "4": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "5": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "6": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "copy::out = symbol:reg_$1<int * out>",
+    "len = symbol:conj_$7{int, LC2, S2301, #1}",
+    "out = symbol:reg_$1<int * out>"
+   ],
+   "7": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "8": [
+    "buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::buf = symbol:conj_$2{void *, LC1, S2409, #1}",
+    "copy::out = integer:0",
+    "out = integer:0"
+   ],
+   "9": [
+    "copy::out = integer:0",
+    "out = integer:0"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 9}, \"frame\": 0, \"id\": 22, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 12}, \"path_condition\": {\"insert\": [[0, 0, 1, 8]]}, \"path_position\": 20, \"smt_declarations\": {\"insert\": [[0, 9], [1, 10]]}, \"state_id\": 1147, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 0, 3, 4, 0], [1, 5, 6, 3, 7, 0]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 48, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 14}, \"path_position\": 46, \"smt_declarations\": {\"insert\": [[2, 14]]}, \"state_id\": 2120, \"variables\": {\"insert\": [[1, 11, 12, 3, 13, 1]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 7}, \"frame\": 0, \"id\": 55, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 15}, \"path_condition\": {\"insert\": [[1, 12, 15, 16]]}, \"path_position\": 53, \"state_id\": 2470, \"symbol_ranges\": {\"insert\": [[1, 12, 15]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 93, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 16}, \"path_position\": 63, \"smt_declarations\": {\"remove\": [0]}, \"state_id\": 4039, \"symbol_ranges\": {\"remove\": [1]}, \"variables\": {\"remove\": [1], \"replace\": [[2, 5, 17, 18]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 94, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 16}, \"path_position\": 64, \"state_id\": 4039}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 5}, \"frame\": 0, \"id\": 116, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 17}, \"path_position\": 77, \"state_id\": 4541, \"variables\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 9}, \"frame\": 0, \"id\": 122, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/no_symbols/$FILE_PATH$/call_result.c\", \"line\": 18}, \"path_position\": 83, \"state_id\": 4752}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"copy\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 4, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 5, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 1, \"kind\": \"event\", \"order\": 6}, {\"exploded_node\": 4, \"index\": 6, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 3, \"index\": 2, \"kind\": \"event\", \"order\": 8}, {\"exploded_node\": 5, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 6, \"index\": 8, \"kind\": \"control\", \"order\": 10}, {\"exploded_node\": 6, \"index\": 9, \"kind\": \"control\", \"order\": 11}, {\"exploded_node\": 6, \"index\": 3, \"kind\": \"event\", \"order\": 12}], \"strings\": [\"conj_$2{void *, LC1, S2409, #1}\", \"{ [1, 18446744073709551615] }\", \"buf\", \"symbol\", \"conj_$2\", \"out\", \"reg_$1<int * out>\", \"reg_$1\", \"(assert (and (bvuge conj_$2 #x0000000000000001) (bvule conj_$2 #xffffffffffffffff)))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun conj_$2 () (_ BitVec 64))\", \"len\", \"conj_$7{int, LC2, S2301, #1}\", \"conj_$7\", \"(declare-fun conj_$7 () (_ BitVec 32))\", \"{ [17, 2147483647] }\", \"(assert (and (bvsge conj_$7 #x00000011) (bvsle conj_$7 #x7fffffff)))\", \"0\", \"integer\", \"void *\", \"malloc(16)\", \"malloc\", \"copy\", \"int\", \"read_len()\", \"read_len\", \"next_len\", \"int *\"], \"version\": 2}"
+ },
+ "opaque_call": {
+  "anchored": {
+   "0": [
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "1": [
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "10": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "2": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "3": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "4": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "5": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "6": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "7": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "8": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "9": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "1": [
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "10": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "2": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:reg_$1<int * g>",
+    "g = symbol:reg_$1<int * g>"
+   ],
+   "3": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "4": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "5": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "6": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "7": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "8": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ],
+   "9": [
+    "*g = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::before = symbol:reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>",
+    "f::g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}",
+    "g = symbol:derived_$9{conj_$7{int, LC1, S2159, #1},g}"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 2}, \"frame\": 0, \"id\": 11, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[0, 0, 1, 5]]}, \"path_position\": 9, \"smt_declarations\": {\"insert\": [[0, 6]]}, \"state_id\": 495, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 0, 3, 4, 0]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 4}, \"frame\": 0, \"id\": 24, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 9}, \"path_position\": 22, \"smt_declarations\": {\"insert\": [[1, 10]]}, \"state_id\": 969, \"variables\": {\"insert\": [[0, 7, 8, 3, 9, 1]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 7}, \"frame\": 0, \"id\": 29, \"kind\": \"PostStmt\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 10}, \"path_position\": 27, \"smt_declarations\": {\"insert\": [[2, 13]]}, \"state_id\": 1294, \"variables\": {\"replace\": [[1, 2, 11, 3, 12, 0]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 35, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 11}, \"path_condition\": {\"insert\": [[0, 11, 14, 15]]}, \"path_position\": 32, \"state_id\": 1580, \"symbol_ranges\": {\"insert\": [[0, 11, 14]]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 5}, \"frame\": 0, \"id\": 47, \"kind\": \"PreLoad\", \"location\": {\"col\": 19, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 13}, \"path_position\": 44, \"state_id\": 1939}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"f\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 1}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 2}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 1, \"kind\": \"event\", \"order\": 4}, {\"exploded_node\": 3, \"index\": 4, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 3, \"index\": 5, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 2, \"kind\": \"event\", \"order\": 7}, {\"exploded_node\": 4, \"index\": 6, \"kind\": \"control\", \"order\": 8}, {\"exploded_node\": 4, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 4, \"index\": 3, \"kind\": \"event\", \"order\": 10}], \"strings\": [\"reg_$1<int * g>\", \"{ [1, 18446744073709551615] }\", \"g\", \"symbol\", \"reg_$1\", \"(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"before\", \"reg_$4<int Element{SymRegion{reg_$1<int * g>},0 S64b,int}>\", \"reg_$4\", \"(declare-fun reg_$4 () (_ BitVec 32))\", \"derived_$9{conj_$7{int, LC1, S2159, #1},g}\", \"derived_$9\", \"(declare-fun derived_$9 () (_ BitVec 64))\", \"{ [0, 0] }\", \"(assert (= derived_$9 #x0000000000000000))\", \"conj_$7{int, LC1, S2159, #1}\", \"int\", \"conj_$7\", \"refresh()\", \"refresh\", \"f\", \"int *\", \"*g\"], \"symbols\": [{\"kind\": \"conjured\", \"origin\": {\"callee\": 20, \"frame\": 0, \"function\": 21, \"globals\": true, \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/opaque_call/$FILE_PATH$/opaque_call.c\", \"line\": 10}, \"reason\": \"invalidation\", \"statement\": 19}, \"smt\": 18, \"smt_signed\": true, \"symbol\": 16, \"type\": 17}, {\"kind\": \"derived\", \"parent\": 16, \"pointer\": true, \"region\": 2, \"smt\": 12, \"smt_signed\": false, \"symbol\": 11, \"type\": 22}, {\"kind\": \"region_value\", \"name\": 2, \"pointer\": true, \"smt\": 4, \"smt_signed\": false, \"symbol\": 0, \"type\": 22}, {\"kind\": \"region_value\", \"name\": 23, \"smt\": 9, \"smt_signed\": true, \"symbol\": 8, \"type\": 17}], \"version\": 2}"
+ },
+ "replaced_field": {
+  "anchored": {
+   "0": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "2": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "4": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "5": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "6": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "7": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "1": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "2": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = symbol:reg_$1<int * out>",
+    "parse::out = symbol:reg_$1<int * out>"
+   ],
+   "3": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "4": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "5": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "6": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ],
+   "7": [
+    "Tok.Kind = symbol:derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}",
+    "out = integer:0",
+    "parse::out = integer:0"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 13}, \"frame\": 0, \"id\": 27, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/replaced_field/$FILE_PATH$/replaced_field.c\", \"line\": 12}, \"path_condition\": {\"insert\": [[0, 0, 1, 6]]}, \"path_position\": 26, \"smt_declarations\": {\"insert\": [[0, 7], [1, 8]]}, \"state_id\": 1423, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 3, 4, 5, 0]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 54, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/replaced_field/$FILE_PATH$/replaced_field.c\", \"line\": 13}, \"path_position\": 36, \"smt_declarations\": {\"remove\": [0]}, \"state_id\": 2333, \"symbol_ranges\": {\"remove\": [0]}, \"variables\": {\"replace\": [[0, 2, 9, 10]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 55, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/replaced_field/$FILE_PATH$/replaced_field.c\", \"line\": 13}, \"path_position\": 37, \"state_id\": 2333}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 64, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/replaced_field/$FILE_PATH$/replaced_field.c\", \"line\": 14}, \"path_position\": 46, \"state_id\": 2541}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"parse\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 4}, {\"exploded_node\": 3, \"index\": 4, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 3, \"index\": 5, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 2, \"kind\": \"event\", \"order\": 7}], \"strings\": [\"derived_$6{conj_$2{int, LC1, S2233, #1},Tok.Kind}\", \"{ [0, 0] }\", \"out\", \"reg_$1<int * out>\", \"symbol\", \"reg_$1\", \"(assert (= derived_$6 #x00000000))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun derived_$6 () (_ BitVec 32))\", \"0\", \"integer\", \"conj_$2{int, LC1, S2233, #1}\", \"int\", \"conj_$2\", \"lex(&Tok)\", \"lex\", \"Tok\", \"parse\", \"Tok.Kind\", \"derived_$6\", \"int *\"], \"symbols\": [{\"kind\": \"conjured\", \"origin\": {\"callee\": 15, \"frame\": 0, \"function\": 17, \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/replaced_field/$FILE_PATH$/replaced_field.c\", \"line\": 11}, \"reason\": \"invalidation\", \"region\": 16, \"statement\": 14}, \"smt\": 13, \"smt_signed\": true, \"symbol\": 11, \"type\": 12}, {\"kind\": \"derived\", \"parent\": 11, \"region\": 18, \"smt\": 19, \"smt_signed\": true, \"symbol\": 0, \"type\": 12}, {\"kind\": \"region_value\", \"name\": 2, \"pointer\": true, \"smt\": 5, \"smt_signed\": false, \"symbol\": 3, \"type\": 20}], \"version\": 2}"
+ },
+ "several_contexts": {
+  "anchored": {
+   "0": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = symbol:reg_$1<int * p>",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>"
+   ],
+   "1": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = symbol:reg_$1<int * p>",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>"
+   ],
+   "10": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "11": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "12": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "13": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "14": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "15": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "16": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "17": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "18": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "2": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "3": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "4": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "5": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "6": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "7": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "8": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "9": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = symbol:reg_$1<int * p>",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>"
+   ],
+   "1": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = symbol:reg_$1<int * p>",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>"
+   ],
+   "10": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "11": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "12": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "13": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "14": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "15": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::flag = symbol:reg_$3<int b>",
+    "take::pp = address:&p"
+   ],
+   "16": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "17": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "18": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0",
+    "take::pp = address:&p"
+   ],
+   "2": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "3": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "4": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "flag = symbol:reg_$2<int a>",
+    "p = symbol:reg_$1<int * p>",
+    "pp = address:&p",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = symbol:reg_$1<int * p>",
+    "take::flag = symbol:reg_$2<int a>",
+    "take::pp = address:&p"
+   ],
+   "5": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "6": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "7": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "8": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ],
+   "9": [
+    "a = symbol:reg_$2<int a>",
+    "b = symbol:reg_$3<int b>",
+    "p = integer:0",
+    "several_contexts::a = symbol:reg_$2<int a>",
+    "several_contexts::b = symbol:reg_$3<int b>",
+    "several_contexts::p = integer:0"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 6}, \"frame\": 0, \"id\": 16, \"kind\": \"CallEnter\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 13}, \"path_position\": 15, \"smt_declarations\": {\"insert\": [[0, 10], [1, 11], [2, 12]]}, \"state_id\": 759, \"variables\": {\"insert\": [[0, 0, 1, 2, 3, 1], [1, 4, 5, 2, 6, 1], [2, 7, 8, 2, 9, 0]]}}, {\"caller_variables\": {\"insert\": [[0, 0, 0, 1, 2, 3, 1], [1, 0, 4, 5, 2, 6, 1], [2, 0, 7, 8, 2, 9, 0]]}, \"cfg_position\": {\"block\": 3, \"cfg\": 1, \"terminator\": true}, \"frame\": 1, \"id\": 24, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 5}, \"path_condition\": {\"insert\": [[0, 1, 13, 18]]}, \"path_position\": 23, \"state_id\": 952, \"symbol_ranges\": {\"insert\": [[0, 1, 13]]}, \"variables\": {\"insert\": [[0, 14, 1, 2, 3, 1], [1, 15, 16, 17]], \"remove\": [0, 1, 2]}}, {\"caller_variables\": {\"replace\": [[2, 0, 7, 19, 20]]}, \"cfg_position\": {\"block\": 2, \"cfg\": 1, \"element\": 5}, \"frame\": 1, \"id\": 127, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 6}, \"path_position\": 35, \"smt_declarations\": {\"remove\": [0]}, \"state_id\": 4880, \"variables\": {\"remove\": [0, 1]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 1, \"element\": 5}, \"frame\": 1, \"id\": 128, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 6}, \"path_position\": 36, \"state_id\": 4880}, {\"cfg_position\": {\"block\": 2, \"cfg\": 1, \"element\": 7}, \"frame\": 1, \"id\": 134, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 7}, \"path_position\": 42, \"state_id\": 5024}, {\"caller_variables\": {\"remove\": [0, 1, 2]}, \"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 6}, \"frame\": 0, \"id\": 136, \"kind\": \"CallExitEnd\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 13}, \"path_position\": 44, \"state_id\": 5024, \"variables\": {\"insert\": [[0, 0, 1, 2, 3, 1], [1, 4, 5, 2, 6, 1], [2, 7, 19, 20]]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 13}, \"frame\": 0, \"id\": 148, \"kind\": \"CallEnter\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 14}, \"path_position\": 56, \"state_id\": 5541, \"symbol_ranges\": {\"remove\": [0]}}, {\"caller_variables\": {\"insert\": [[0, 0, 0, 1, 2, 3, 1], [1, 0, 4, 5, 2, 6, 1], [2, 0, 7, 19, 20]]}, \"cfg_position\": {\"block\": 3, \"cfg\": 1, \"terminator\": true}, \"frame\": 2, \"id\": 157, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 5}, \"path_condition\": {\"insert\": [[1, 5, 21, 22]]}, \"path_position\": 64, \"state_id\": 5789, \"symbol_ranges\": {\"insert\": [[0, 5, 21]]}, \"variables\": {\"insert\": [[0, 14, 5, 2, 6, 1], [1, 15, 16, 17]], \"remove\": [0, 1, 2]}}, {\"cfg_position\": {\"block\": 1, \"cfg\": 1, \"element\": 5}, \"frame\": 2, \"id\": 189, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 9}, \"path_position\": 75, \"state_id\": 6398, \"variables\": {\"remove\": [0]}}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"several_contexts\"}, {\"call_site\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 13}, \"function\": \"take\", \"parent\": 0}, {\"call_site\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/several_contexts/$FILE_PATH$/several_contexts.c\", \"line\": 14}, \"function\": \"take\", \"parent\": 0}], \"steps\": [{\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 1, \"kind\": \"event\", \"order\": 1}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"control\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"event\", \"order\": 4}, {\"exploded_node\": 3, \"index\": 3, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"event\", \"order\": 6}, {\"exploded_node\": 4, \"index\": 4, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 5, \"index\": 4, \"kind\": \"event\", \"order\": 8}, {\"exploded_node\": 6, \"index\": 6, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 6, \"index\": 7, \"kind\": \"control\", \"order\": 10}, {\"exploded_node\": 6, \"index\": 5, \"kind\": \"event\", \"order\": 11}, {\"exploded_node\": 6, \"index\": 6, \"kind\": \"event\", \"order\": 12}, {\"exploded_node\": 7, \"index\": 9, \"kind\": \"control\", \"order\": 13}, {\"exploded_node\": 7, \"index\": 10, \"kind\": \"control\", \"order\": 14}, {\"exploded_node\": 7, \"index\": 7, \"kind\": \"event\", \"order\": 15}, {\"exploded_node\": 8, \"index\": 11, \"kind\": \"control\", \"order\": 16}, {\"exploded_node\": 8, \"index\": 12, \"kind\": \"control\", \"order\": 17}, {\"exploded_node\": 8, \"index\": 8, \"kind\": \"event\", \"order\": 18}], \"strings\": [\"a\", \"reg_$2<int a>\", \"symbol\", \"reg_$2\", \"b\", \"reg_$3<int b>\", \"reg_$3\", \"p\", \"reg_$1<int * p>\", \"reg_$1\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"(declare-fun reg_$3 () (_ BitVec 32))\", \"{ [-2147483648, -1], [1, 2147483647] }\", \"flag\", \"pp\", \"&p\", \"address\", \"(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))\\n    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))\", \"0\", \"integer\", \"{ [0, 0] }\", \"(assert (= reg_$3 #x00000000))\", \"int *\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 7, \"pointer\": true, \"smt\": 9, \"smt_signed\": false, \"symbol\": 8, \"type\": 23}, {\"kind\": \"region_value\", \"name\": 0, \"smt\": 3, \"smt_signed\": true, \"symbol\": 1, \"type\": 24}, {\"kind\": \"region_value\", \"name\": 4, \"smt\": 6, \"smt_signed\": true, \"symbol\": 5, \"type\": 24}], \"version\": 2}"
+ },
+ "unit_callers": {
+  "anchored": {
+   "1": [
+    "m = symbol:reg_$2<int m>",
+    "n = symbol:reg_$1<int n>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "2": [
+    "m = symbol:reg_$2<int m>",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "3": [
+    "inner::n = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ]
+  },
+  "throughout": {
+   "1": [
+    "m = symbol:reg_$2<int m>",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "2": [
+    "m = symbol:reg_$2<int m>",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ],
+   "3": [
+    "inner::n = integer:7",
+    "m = symbol:reg_$2<int m>",
+    "middle::m = symbol:reg_$2<int m>",
+    "middle::n = integer:6",
+    "top::m = symbol:reg_$2<int m>",
+    "top::n = symbol:reg_$1<int n>"
+   ]
+  },
+  "trace": "{\"version\": 2, \"steps\": [{\"kind\": \"event\", \"index\": 0, \"order\": 1, \"exploded_node\": 0}, {\"kind\": \"event\", \"index\": 1, \"order\": 2, \"exploded_node\": 1}, {\"kind\": \"event\", \"index\": 2, \"order\": 3, \"exploded_node\": 2}], \"exploded_nodes\": [{\"frame\": 0, \"variables\": {\"insert\": [[0, 0, 1, 2, 3, 1], [1, 4, 5, 2, 6, 1]]}, \"path_condition\": {\"insert\": [[0, 7, 8, 7]]}, \"smt_declarations\": {\"insert\": [[0, 9], [1, 10]]}}, {\"frame\": 1, \"variables\": {\"replace\": [[0, 0, 11, 12]]}, \"caller_variables\": {\"insert\": [[0, 0, 0, 1, 2, 3, 1], [1, 0, 4, 5, 2, 6, 1]]}}, {\"frame\": 2, \"variables\": {\"replace\": [[0, 0, 13, 12]], \"remove\": [1]}, \"caller_variables\": {\"insert\": [[0, 1, 0, 11, 12], [1, 1, 4, 5, 2, 6, 1]]}}], \"strings\": [\"n\", \"reg_$1<int n>\", \"symbol\", \"reg_$1\", \"m\", \"reg_$2<int m>\", \"reg_$2\", \"(assert (= reg_$1 #x00000002))\", \"\", \"(declare-fun reg_$1 () (_ BitVec 32))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"6\", \"integer\", \"7\"], \"smtlib\": true, \"stack_frames\": [{\"function\": \"top\"}, {\"function\": \"(anonymous namespace)::middle\", \"parent\": 0, \"call_site\": {\"file\": \"f.c\", \"line\": 20, \"col\": 3}}, {\"function\": \"inner\", \"parent\": 1, \"call_site\": {\"file\": \"f.c\", \"line\": 12, \"col\": 3}}]}"
+ },
+ "unit_memory": {
+  "anchored": {
+   "1": [
+    "k = integer:3",
+    "p = symbol:reg_$1<int p>",
+    "p->len = symbol:reg_$2<int Element{SymRegion{reg_$1<int * p>},0 S64b,int}.len>"
+   ],
+   "2": [
+    "k = integer:3",
+    "p = symbol:reg_$1<int p>"
+   ]
+  },
+  "throughout": {
+   "1": [
+    "k = integer:3",
+    "p = symbol:reg_$1<int p>",
+    "p->len = symbol:reg_$2<int Element{SymRegion{reg_$1<int * p>},0 S64b,int}.len>"
+   ],
+   "2": [
+    "k = integer:3",
+    "p = symbol:reg_$1<int p>",
+    "p->len = symbol:derived_$4{conj_$3{int, LC1, S1, #1},len} | symbol:reg_$2<int Element{SymRegion{reg_$1<int * p>},0 S64b,int}.len>"
+   ]
+  },
+  "trace": "{\"version\": 2, \"steps\": [{\"kind\": \"event\", \"index\": 0, \"order\": 1, \"exploded_node\": 0}, {\"kind\": \"event\", \"index\": 1, \"order\": 2, \"exploded_node\": 1}], \"exploded_nodes\": [{\"frame\": null, \"variables\": {\"insert\": [[0, 0, 1, 2, 3, 0], [1, 4, 5, 6]]}, \"path_condition\": {\"insert\": [[0, 7, 8, 7]]}, \"smt_declarations\": {\"insert\": [[0, 9], [1, 10]]}}, {\"frame\": null, \"path_condition\": {\"insert\": [[1, 11, 8, 11]]}, \"smt_declarations\": {\"insert\": [[2, 12]]}}], \"strings\": [\"p\", \"reg_$1<int p>\", \"symbol\", \"reg_$1\", \"k\", \"3\", \"integer\", \"(assert (= reg_$2 #x00000000))\", \"\", \"(declare-fun reg_$1 () (_ BitVec 32))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"(assert (not (= derived_$4 #x00000000)))\", \"(declare-fun derived_$4 () (_ BitVec 32))\", \"conj_$3{int, LC1, S1, #1}\", \"conj_$3\", \"refresh(p)\", \"f\", \"derived_$4{conj_$3{int, LC1, S1, #1},len}\", \"p->len\", \"derived_$4\", \"reg_$1<int * p>\", \"reg_$2<int Element{SymRegion{reg_$1<int * p>},0 S64b,int}.len>\", \"reg_$2\", \"reg_$5<int k>\", \"reg_$5\", \"reg_$6<float x>\", \"x\"], \"symbols\": [{\"symbol\": 13, \"kind\": \"conjured\", \"smt\": 14, \"smt_signed\": true, \"origin\": {\"reason\": \"invalidation\", \"statement\": 15, \"function\": 16, \"location\": {\"file\": \"f.c\", \"line\": 5, \"col\": 3}}}, {\"symbol\": 17, \"kind\": \"derived\", \"parent\": 13, \"region\": 18, \"smt\": 19, \"smt_signed\": true}, {\"symbol\": 20, \"kind\": \"region_value\", \"name\": 0, \"smt\": 3, \"smt_signed\": false}, {\"symbol\": 21, \"kind\": \"region_value\", \"name\": 18, \"smt\": 22, \"smt_signed\": true}, {\"symbol\": 23, \"kind\": \"region_value\", \"name\": 4, \"smt\": 24, \"smt_signed\": true}, {\"symbol\": 25, \"kind\": \"region_value\", \"name\": 26}], \"smtlib\": true, \"stack_frames\": []}"
+ },
+ "widened_loop": {
+  "anchored": {
+   "0": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "1": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "10": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "11": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "12": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "13": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "14": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "15": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "16": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "17": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "18": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "19": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "2": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "20": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "21": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "22": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "23": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:3",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:3",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "24": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:3",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:3",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "25": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "26": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "27": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "28": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "29": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "3": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "30": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "31": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "32": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "33": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "34": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "4": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "5": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "6": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "7": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "8": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "9": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "1": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "10": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "11": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "12": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "13": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "14": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "15": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "16": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "17": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "18": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "19": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "2": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "20": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "21": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "22": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:2",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:2",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "23": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:3",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:3",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "24": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:3",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:3",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "25": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "26": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "i = symbol:conj_$14{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "27": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "28": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "29": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "3": [
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "30": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "31": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "hits = symbol:conj_$15{unsigned int, LC1, S2097, #3}",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "32": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "33": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "34": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "count::p = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "items[1] = symbol:reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>",
+    "items[2] = symbol:reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>",
+    "n = symbol:reg_$2<unsigned int n>",
+    "p = integer:0"
+   ],
+   "4": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "5": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "6": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:0",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:0",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "7": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "8": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ],
+   "9": [
+    "*items = symbol:reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>",
+    "count::hits = integer:0",
+    "count::i = integer:1",
+    "count::items = symbol:reg_$1<const int * items>",
+    "count::n = symbol:reg_$2<unsigned int n>",
+    "hits = integer:0",
+    "i = integer:1",
+    "items = symbol:reg_$1<const int * items>",
+    "n = symbol:reg_$2<unsigned int n>"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 4}, \"frame\": 0, \"id\": 27, \"kind\": \"PostStmt\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_condition\": {\"insert\": [[0, 0, 1, 12]]}, \"path_position\": 26, \"smt_declarations\": {\"insert\": [[0, 13], [1, 14]]}, \"state_id\": 975, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 3, 4], [1, 5, 3, 4], [2, 6, 7, 8, 9, 0], [3, 10, 0, 8, 11, 0]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 54, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 27, \"state_id\": 975}, {\"cfg_position\": {\"block\": 6, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 72, \"kind\": \"BlockEdge\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[0, 7, 15, 18], [2, 16, 17, 19]]}, \"path_position\": 43, \"smt_declarations\": {\"insert\": [[2, 20]]}, \"state_id\": 2426, \"symbol_ranges\": {\"insert\": [[0, 7, 15], [2, 16, 17]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0}, \"frame\": 0, \"id\": 82, \"kind\": \"BlockEdge\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 53, \"state_id\": 2687, \"variables\": {\"replace\": [[1, 5, 21, 4]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 4}, \"frame\": 0, \"id\": 115, \"kind\": \"PostStmt\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_condition\": {\"replace\": [[1, 0, 22, 23]]}, \"path_position\": 65, \"state_id\": 3627, \"symbol_ranges\": {\"replace\": [[1, 0, 22]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 119, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 66, \"state_id\": 3627}, {\"cfg_position\": {\"block\": 6, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 135, \"kind\": \"BlockEdge\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[3, 24, 17, 25]]}, \"path_position\": 81, \"smt_declarations\": {\"insert\": [[3, 26]]}, \"state_id\": 4208, \"symbol_ranges\": {\"insert\": [[3, 24, 17]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0}, \"frame\": 0, \"id\": 173, \"kind\": \"BlockEdge\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 91, \"state_id\": 5129, \"variables\": {\"replace\": [[1, 5, 27, 4]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 4}, \"frame\": 0, \"id\": 245, \"kind\": \"PostStmt\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_condition\": {\"replace\": [[1, 0, 28, 29]]}, \"path_position\": 103, \"state_id\": 7044, \"symbol_ranges\": {\"replace\": [[1, 0, 28]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 249, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 104, \"state_id\": 7044}, {\"cfg_position\": {\"block\": 6, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 265, \"kind\": \"BlockEdge\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[0, 30, 17, 31]]}, \"path_position\": 119, \"smt_declarations\": {\"insert\": [[4, 32]]}, \"state_id\": 7653, \"symbol_ranges\": {\"insert\": [[0, 30, 17]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0}, \"frame\": 0, \"id\": 496, \"kind\": \"BlockEdge\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_position\": 129, \"state_id\": 12719, \"variables\": {\"replace\": [[1, 5, 33, 4]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 4}, \"frame\": 0, \"id\": 509, \"kind\": \"PostStmt\", \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"path_condition\": {\"insert\": [[0, 34, 17, 39]]}, \"path_position\": 141, \"smt_declarations\": {\"insert\": [[5, 40], [6, 41]]}, \"state_id\": 13419, \"symbol_ranges\": {\"insert\": [[0, 34, 17]]}, \"variables\": {\"replace\": [[0, 2, 35, 8, 36, 0], [1, 5, 37, 8, 38, 0]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 545, \"kind\": \"PostLValue\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 10}, \"path_position\": 150, \"state_id\": 14320, \"symbol_ranges\": {\"remove\": [0, 1, 2, 4, 5]}, \"variables\": {\"insert\": [[3, 42, 3, 4]], \"remove\": [1]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 7}, \"frame\": 0, \"id\": 554, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 10}, \"path_condition\": {\"insert\": [[1, 43, 44, 45]]}, \"path_position\": 159, \"state_id\": 14760, \"symbol_ranges\": {\"insert\": [[0, 43, 44]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 566, \"kind\": \"PreLoad\", \"location\": {\"col\": 12, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 11}, \"path_position\": 168, \"state_id\": 15150, \"symbol_ranges\": {\"remove\": [0, 1]}, \"variables\": {\"remove\": [0]}}], \"expressions\": [{\"symbol\": 34, \"type\": 49}, {\"symbol\": 43, \"type\": 49}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"count\"}], \"steps\": [{\"exploded_node\": 1, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 4, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 2, \"kind\": \"event\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 5, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 3, \"index\": 3, \"kind\": \"event\", \"order\": 8}, {\"exploded_node\": 5, \"index\": 6, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 4, \"index\": 4, \"kind\": \"event\", \"order\": 10}, {\"exploded_node\": 5, \"index\": 5, \"kind\": \"event\", \"order\": 11}, {\"exploded_node\": 6, \"index\": 7, \"kind\": \"control\", \"order\": 12}, {\"exploded_node\": 6, \"index\": 8, \"kind\": \"control\", \"order\": 13}, {\"exploded_node\": 6, \"index\": 6, \"kind\": \"event\", \"order\": 14}, {\"exploded_node\": 7, \"index\": 9, \"kind\": \"control\", \"order\": 15}, {\"exploded_node\": 7, \"index\": 7, \"kind\": \"event\", \"order\": 16}, {\"exploded_node\": 9, \"index\": 10, \"kind\": \"control\", \"order\": 17}, {\"exploded_node\": 8, \"index\": 8, \"kind\": \"event\", \"order\": 18}, {\"exploded_node\": 9, \"index\": 9, \"kind\": \"event\", \"order\": 19}, {\"exploded_node\": 10, \"index\": 11, \"kind\": \"control\", \"order\": 20}, {\"exploded_node\": 10, \"index\": 12, \"kind\": \"control\", \"order\": 21}, {\"exploded_node\": 10, \"index\": 10, \"kind\": \"event\", \"order\": 22}, {\"exploded_node\": 11, \"index\": 13, \"kind\": \"control\", \"order\": 23}, {\"exploded_node\": 11, \"index\": 11, \"kind\": \"event\", \"order\": 24}, {\"exploded_node\": 12, \"index\": 14, \"kind\": \"control\", \"order\": 25}, {\"exploded_node\": 12, \"index\": 12, \"kind\": \"event\", \"order\": 26}, {\"exploded_node\": 13, \"index\": 15, \"kind\": \"control\", \"order\": 27}, {\"exploded_node\": 13, \"index\": 13, \"kind\": \"event\", \"order\": 28}, {\"exploded_node\": 14, \"index\": 16, \"kind\": \"control\", \"order\": 29}, {\"exploded_node\": 14, \"index\": 17, \"kind\": \"control\", \"order\": 30}, {\"exploded_node\": 14, \"index\": 14, \"kind\": \"event\", \"order\": 31}, {\"exploded_node\": 15, \"index\": 18, \"kind\": \"control\", \"order\": 32}, {\"exploded_node\": 15, \"index\": 19, \"kind\": \"control\", \"order\": 33}, {\"exploded_node\": 15, \"index\": 15, \"kind\": \"event\", \"order\": 34}], \"strings\": [\"reg_$2<unsigned int n>\", \"{ [1, 4294967295] }\", \"hits\", \"0\", \"integer\", \"i\", \"items\", \"reg_$1<const int * items>\", \"symbol\", \"reg_$1\", \"n\", \"reg_$2\", \"(assert (and (bvuge reg_$2 #x00000001) (bvule reg_$2 #xffffffff)))\", \"(declare-fun reg_$1 () (_ BitVec 64))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"{ [1, 18446744073709551615] }\", \"reg_$6<int Element{SymRegion{reg_$1<const int * items>},0 S64b,int}>\", \"{ [0, 0] }\", \"(assert (and (bvuge reg_$1 #x0000000000000001) (bvule reg_$1 #xffffffffffffffff)))\", \"(assert (= reg_$6 #x00000000))\", \"(declare-fun reg_$6 () (_ BitVec 32))\", \"1\", \"{ [2, 4294967295] }\", \"(assert (and (bvuge reg_$2 #x00000002) (bvule reg_$2 #xffffffff)))\", \"reg_$9<int Element{SymRegion{reg_$1<const int * items>},1 S64b,int}>\", \"(assert (= reg_$9 #x00000000))\", \"(declare-fun reg_$9 () (_ BitVec 32))\", \"2\", \"{ [3, 4294967295] }\", \"(assert (and (bvuge reg_$2 #x00000003) (bvule reg_$2 #xffffffff)))\", \"reg_$12<int Element{SymRegion{reg_$1<const int * items>},2 S64b,int}>\", \"(assert (= reg_$12 #x00000000))\", \"(declare-fun reg_$12 () (_ BitVec 32))\", \"3\", \"(conj_$14{unsigned int, LC1, S2097, #3}) < (reg_$2<unsigned int n>)\", \"conj_$15{unsigned int, LC1, S2097, #3}\", \"conj_$15\", \"conj_$14{unsigned int, LC1, S2097, #3}\", \"conj_$14\", \"(assert (= (ite (bvult conj_$14 reg_$2) #x00000001 #x00000000) #x00000000))\", \"(declare-fun conj_$14 () (_ BitVec 32))\", \"(declare-fun conj_$15 () (_ BitVec 32))\", \"p\", \"(conj_$15{unsigned int, LC1, S2097, #3}) > (reg_$2<unsigned int n>)\", \"{ [-2147483648, -1], [1, 2147483647] }\", \"(assert (or (and (bvsge (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #x80000000)\\n         (bvsle (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #xffffffff))\\n    (and (bvsge (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #x00000001)\\n         (bvsle (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #x7fffffff))))\", \"unsigned int\", \"count\", \"items[2]\", \"int\", \"reg_$12\", \"const int *\", \"*items\", \"reg_$6\", \"items[1]\", \"reg_$9\"], \"symbols\": [{\"kind\": \"conjured\", \"origin\": {\"frame\": 0, \"function\": 47, \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"loop\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"reason\": \"loop_widening\", \"region\": 5, \"statement\": 5}, \"smt\": 38, \"smt_signed\": false, \"symbol\": 37, \"type\": 46}, {\"kind\": \"conjured\", \"origin\": {\"frame\": 0, \"function\": 47, \"location\": {\"col\": 24, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"loop\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/widened_loop/$FILE_PATH$/widened_loop.c\", \"line\": 6}, \"reason\": \"loop_widening\", \"region\": 2, \"statement\": 5}, \"smt\": 36, \"smt_signed\": false, \"symbol\": 35, \"type\": 46}, {\"kind\": \"region_value\", \"name\": 48, \"smt\": 50, \"smt_signed\": true, \"symbol\": 30, \"type\": 49}, {\"kind\": \"region_value\", \"name\": 6, \"pointer\": true, \"smt\": 9, \"smt_signed\": false, \"symbol\": 7, \"type\": 51}, {\"kind\": \"region_value\", \"name\": 10, \"smt\": 11, \"smt_signed\": false, \"symbol\": 0, \"type\": 46}, {\"kind\": \"region_value\", \"name\": 52, \"smt\": 53, \"smt_signed\": true, \"symbol\": 16, \"type\": 49}, {\"kind\": \"region_value\", \"name\": 54, \"smt\": 55, \"smt_signed\": true, \"symbol\": 24, \"type\": 49}], \"version\": 2}"
+ },
+ "with_snapshots": {
+  "anchored": {
+   "0": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "1": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "10": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "11": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "13": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "14": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "15": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "16": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "17": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "2": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "3": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "4": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "5": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "6": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "7": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "9": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "1": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "10": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "11": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "13": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "14": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "15": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "16": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "17": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "2": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "3": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "4": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "5": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "6": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "7": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ],
+   "9": [
+    "a = symbol:reg_$1<int a>",
+    "b = symbol:reg_$2<int b>",
+    "f::a = symbol:reg_$1<int a>",
+    "f::b = symbol:reg_$2<int b>",
+    "f::p = integer:0",
+    "f::x = symbol:reg_$9<int x>",
+    "p = integer:0",
+    "x = symbol:reg_$9<int x>"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 9, \"cfg\": 0, \"element\": 6}, \"frame\": 0, \"id\": 17, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 7}, \"path_condition\": {\"insert\": [[0, 0, 1, 14]]}, \"path_position\": 15, \"smt_declarations\": {\"insert\": [[0, 15], [1, 16], [2, 17]]}, \"state_id\": 700, \"symbol_ranges\": {\"insert\": [[0, 0, 1]]}, \"variables\": {\"insert\": [[0, 2, 0, 3, 4, 1], [1, 5, 6, 3, 7, 1], [2, 8, 9, 10], [3, 11, 12, 3, 13, 1]]}}, {\"cfg_position\": {\"block\": 7, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 28, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 9}, \"path_condition\": {\"insert\": [[1, 6, 18, 19]]}, \"path_position\": 25, \"state_id\": 1111, \"symbol_ranges\": {\"insert\": [[1, 6, 18]]}}, {\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 37, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 11}, \"path_position\": 34, \"state_id\": 1402}, {\"cfg_position\": {\"block\": 5, \"cfg\": 0, \"terminator\": true}, \"frame\": 0, \"id\": 38, \"kind\": \"BlockEdge\", \"location\": {\"col\": 3, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 11}, \"path_position\": 35, \"state_id\": 1402}, {\"cfg_position\": {\"block\": 4, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 48, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 12}, \"path_position\": 45, \"state_id\": 1641, \"symbol_ranges\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 57, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 13}, \"path_position\": 54, \"state_id\": 1899}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 58, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 13}, \"path_position\": 55, \"state_id\": 1964}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 68, \"kind\": \"PostStore\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 14}, \"path_position\": 65, \"state_id\": 2239, \"symbol_ranges\": {\"remove\": [0]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 69, \"kind\": \"PostStmt\", \"location\": {\"col\": 5, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 14}, \"path_position\": 66, \"state_id\": 2239}, {\"cfg_position\": {\"block\": 1, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 78, \"kind\": \"PreLoad\", \"location\": {\"col\": 10, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/with_snapshots/$FILE_PATH$/two_path.c\", \"line\": 15}, \"path_position\": 75, \"state_id\": 2472}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"f\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 1, \"kind\": \"control\", \"order\": 0}, {\"exploded_node\": 0, \"index\": 2, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 3, \"kind\": \"control\", \"order\": 3}, {\"exploded_node\": 1, \"index\": 4, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 5, \"kind\": \"control\", \"order\": 6}, {\"exploded_node\": 3, \"index\": 6, \"kind\": \"control\", \"order\": 7}, {\"exploded_node\": 4, \"index\": 7, \"kind\": \"control\", \"order\": 9}, {\"exploded_node\": 5, \"index\": 8, \"kind\": \"control\", \"order\": 10}, {\"exploded_node\": 6, \"index\": 9, \"kind\": \"control\", \"order\": 11}, {\"exploded_node\": 8, \"index\": 10, \"kind\": \"control\", \"order\": 13}, {\"exploded_node\": 7, \"index\": 2, \"kind\": \"event\", \"order\": 14}, {\"exploded_node\": 9, \"index\": 11, \"kind\": \"control\", \"order\": 15}, {\"exploded_node\": 9, \"index\": 12, \"kind\": \"control\", \"order\": 16}, {\"exploded_node\": 9, \"index\": 3, \"kind\": \"event\", \"order\": 17}], \"strings\": [\"reg_$1<int a>\", \"{ [0, 0] }\", \"a\", \"symbol\", \"reg_$1\", \"b\", \"reg_$2<int b>\", \"reg_$2\", \"p\", \"0\", \"integer\", \"x\", \"reg_$9<int x>\", \"reg_$9\", \"(assert (= reg_$1 #x00000000))\", \"(declare-fun reg_$1 () (_ BitVec 32))\", \"(declare-fun reg_$2 () (_ BitVec 32))\", \"(declare-fun reg_$9 () (_ BitVec 32))\", \"{ [-2147483648, -1], [1, 2147483647] }\", \"(assert (or (and (bvsge reg_$2 #x80000000) (bvsle reg_$2 #xffffffff))\\n    (and (bvsge reg_$2 #x00000001) (bvsle reg_$2 #x7fffffff))))\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 2, \"smt\": 4, \"smt_signed\": true, \"symbol\": 0, \"type\": 20}, {\"kind\": \"region_value\", \"name\": 5, \"smt\": 7, \"smt_signed\": true, \"symbol\": 6, \"type\": 20}, {\"kind\": \"region_value\", \"name\": 11, \"smt\": 13, \"smt_signed\": true, \"symbol\": 12, \"type\": 20}], \"version\": 2}"
+ },
+ "z3_refuted": {
+  "anchored": {
+   "0": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "1": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "2": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "3": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "4": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "5": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "6": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ]
+  },
+  "throughout": {
+   "0": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "1": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "2": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "3": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "4": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "5": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ],
+   "6": [
+    "p = integer:0",
+    "square_is_minus_one::p = integer:0",
+    "square_is_minus_one::x = symbol:reg_$1<int x>",
+    "x = symbol:reg_$1<int x>"
+   ]
+  },
+  "trace": "{\"exploded_nodes\": [{\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 10, \"kind\": \"PostLValue\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/z3_refuted/$FILE_PATH$/z3_refuted.c\", \"line\": 6}, \"path_position\": 9, \"smt_declarations\": {\"insert\": [[0, 7]]}, \"state_id\": 327, \"variables\": {\"insert\": [[0, 0, 1, 2], [1, 3, 4, 5, 6, 1]]}}, {\"cfg_position\": {\"block\": 3, \"cfg\": 0, \"element\": 10}, \"frame\": 0, \"id\": 22, \"kind\": \"PostStmt\", \"location\": {\"col\": 7, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/z3_refuted/$FILE_PATH$/z3_refuted.c\", \"line\": 6}, \"path_condition\": {\"insert\": [[0, 8, 9, 10]]}, \"path_position\": 21, \"state_id\": 962, \"symbol_ranges\": {\"insert\": [[0, 8, 9]]}}, {\"cfg_position\": {\"block\": 2, \"cfg\": 0, \"element\": 3}, \"frame\": 0, \"id\": 40, \"kind\": \"PreLoad\", \"location\": {\"col\": 12, \"file\": \"/Users/efulop/codechecker/web/tests/projects/constraint_trace/z3_refuted/$FILE_PATH$/z3_refuted.c\", \"line\": 7}, \"path_position\": 30, \"state_id\": 1398, \"symbol_ranges\": {\"remove\": [0]}}], \"expressions\": [{\"symbol\": 8, \"type\": 11}], \"smtlib\": true, \"stack_frames\": [{\"function\": \"square_is_minus_one\"}], \"steps\": [{\"exploded_node\": 0, \"index\": 0, \"kind\": \"event\", \"order\": 0}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"control\", \"order\": 1}, {\"exploded_node\": 1, \"index\": 2, \"kind\": \"control\", \"order\": 2}, {\"exploded_node\": 1, \"index\": 1, \"kind\": \"event\", \"order\": 3}, {\"exploded_node\": 2, \"index\": 3, \"kind\": \"control\", \"order\": 4}, {\"exploded_node\": 2, \"index\": 4, \"kind\": \"control\", \"order\": 5}, {\"exploded_node\": 2, \"index\": 2, \"kind\": \"event\", \"order\": 6}], \"strings\": [\"p\", \"0\", \"integer\", \"x\", \"reg_$1<int x>\", \"symbol\", \"reg_$1\", \"(declare-fun reg_$1 () (_ BitVec 32))\", \"(reg_$1<int x>) * (reg_$1<int x>)\", \"{ [-1, -1] }\", \"(assert (= (bvmul reg_$1 reg_$1) #xffffffff))\", \"int\"], \"symbols\": [{\"kind\": \"region_value\", \"name\": 3, \"smt\": 6, \"smt_signed\": true, \"symbol\": 4, \"type\": 11}], \"version\": 2}"
+ }
+}
