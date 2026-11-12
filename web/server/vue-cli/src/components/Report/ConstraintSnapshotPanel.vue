@@ -105,13 +105,13 @@
               What the analyzer held at this step.
             </p>
 
-            <div v-if="variableRows.length" class="panel-group">
+            <div v-if="rows.variables.length" class="panel-group">
               <h5 class="panel-group-title text-caption">
                 Variables
               </h5>
               <div
-                v-for="row in variableRows"
-                :key="row.name"
+                v-for="row in rows.variables"
+                :key="row.key"
                 class="panel-row"
                 :class="changeClass(row.change)"
               >
@@ -139,30 +139,28 @@
               </div>
             </div>
 
-            <div v-if="otherSymbols.length" class="panel-group">
+            <div v-if="rows.others.length" class="panel-group">
               <h5 class="panel-group-title text-caption">
                 Other symbols
               </h5>
               <div
-                v-for="range in otherSymbols"
-                :key="range.symbol"
+                v-for="range in rows.others"
+                :key="range.key"
                 class="panel-row panel-row-raw"
-                :class="changeClass(changeOf('symbol_ranges', range.symbol))"
+                :class="changeClass(range.change)"
               >
                 <div class="panel-name panel-raw-symbol" :title="range.symbol">
                   <symbol-text :symbol="range.symbol" />
                 </div>
                 <div class="panel-value">
                   <range-text :range="range.range" :symbol="range.symbol" />
-                  <change-tag
-                    :change="changeOf('symbol_ranges', range.symbol)"
-                  />
+                  <change-tag :change="range.change" />
                 </div>
               </div>
             </div>
 
             <p
-              v-if="!variableRows.length && !otherSymbols.length"
+              v-if="!rows.variables.length && !rows.others.length"
               class="panel-empty ma-0 text-body-2 text-medium-emphasis"
             >
               No variables or symbol ranges are known at this step.
@@ -179,8 +177,8 @@
             </p>
 
             <div
-              v-for="row in accumulatedRows"
-              :key="row.symbol"
+              v-for="row in rows.accumulated"
+              :key="row.key"
               class="panel-row"
               :class="[
                 { 'panel-row-raw': !row.name }, changeClass(row.change)
@@ -217,7 +215,7 @@
             </div>
 
             <p
-              v-if="!accumulatedRows.length"
+              v-if="!rows.accumulated.length"
               class="panel-empty ma-0 text-body-2 text-medium-emphasis"
             >
               No constraints have been collected on this path yet.
@@ -246,7 +244,8 @@ import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
-import { compareNames, readableRange, shortenPaths } from "./ConstraintTrace";
+import { labelPlace, readableRange, shortenPaths } from "./ConstraintTrace";
+import { snapshotRows } from "./SnapshotRows";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
@@ -287,11 +286,6 @@ const CHANGE_HINTS = {
 };
 const CHANGE_LABELS = { added: "new", narrowed: "narrowed" };
 
-// What this step did to a symbol's entry in one list, or undefined.
-function changeOf(field, symbol) {
-  return props.step.changes?.[field].get(symbol);
-}
-
 function changeClass(change) {
   return change ? [ "panel-row-changed", `panel-row-${change}` ] : [];
 }
@@ -309,24 +303,11 @@ const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
 const body = ref(null);
 const { canScrollUp, canScrollDown } = useScrollShadows(body);
 
-// A symbol dump starts with its type, as in reg_$1<int * g> or
-// conj_$2{void *, ...}. The type stops at a brace or angle bracket, so a
-// pointer inside the region of a non-pointer field does not count.
-const POINTER_SYMBOL = /^[a-z]+_\$\d+[<{][^,{}<>]*\*/;
-const POINTER_WORDS = new Map([
-  [ "{ [0, 0] }", "null" ],
-  [ "{ [1, 18446744073709551615] }", "non-null" ]
-]);
-
 // One span per interval, so a long range set wraps only between intervals.
 // A pointer's null and non-null ranges, and an integer range that readableRange
 // can say in words, read as words; the title keeps the analyzer's range.
 function RangeText({ range, symbol }) {
-  const _word = symbol && POINTER_SYMBOL.test(symbol)
-    ? POINTER_WORDS.get(range) : undefined;
-  if (_word) return h("span", { title: range }, _word);
-
-  const _readable = readableRange(range, symbol);
+  const _readable = readableRange(range, symbol, props.step.typeOf?.(symbol));
   if (_readable) return h("span", { title: range }, _readable);
 
   const _intervals = range.match(/\[[^\]]*\]/g);
@@ -351,6 +332,36 @@ function DumpText({ text, fullPaths }) {
 }
 DumpText.props = [ "text", "fullPaths" ];
 
+const SAME_CALL_HINT = "The analyzer does not assume that two calls return " +
+  "the same value, so it treats these as unrelated values.";
+
+// The small tag on a call result that the analyzer also made for the same call
+// text elsewhere, with the Path Step of the nearest other one, which it links
+// to. With several others they are all in the title.
+function sameCallTag(others) {
+  const _step = order => order === null
+    ? "a place with no Path Step"
+    : props.resolveStep(order)?.label ?? `Step ${order}`;
+  const [ _first ] = others;
+  const _title = others.length === 1
+    ? `${SAME_CALL_HINT} The other is at ${_step(_first.order)}.`
+    : `${SAME_CALL_HINT} The others are at ` +
+      `${others.map(other => _step(other.order)).join(", ")}.`;
+  const _children = [ "another ", h("code", { class: "panel-label-code" },
+    h(DumpText, { text: _first.call })), " result" ];
+  if (_first.order !== null) {
+    _children.push(", ", h("button", {
+      type: "button",
+      class: "panel-label-link",
+      title: "Select the Path Step of the other one",
+      onClick: () => emit("select-step", _first.order)
+    }, _step(_first.order)));
+  }
+  if (others.length > 1) _children.push(` +${others.length - 1}`);
+  return h("span", { class: "panel-same-call text-caption", title: _title },
+    _children);
+}
+
 // A symbol as its label when the trace has one, and as its dump otherwise.
 // The row keeps the dump in its title, and the label's own title adds what
 // the label means. The label's line selects the Path Step nearest to the
@@ -364,9 +375,7 @@ function SymbolText({ symbol }) {
     : h("code", { class: "panel-label-code" }, h(DumpText, {
       text: part.code
     })));
-  const _where = _label.location && (_label.otherFile
-    ? `${shortenPaths(_label.location.file)}:${_label.location.line}`
-    : `line ${_label.location.line}`);
+  const _where = labelPlace(_label);
   if (_where) {
     _parts.push(", ", _label.order === null
       ? h("span", { class: "panel-label-line" }, _where)
@@ -377,6 +386,7 @@ function SymbolText({ symbol }) {
         onClick: () => emit("select-step", _label.order)
       }, _where));
   }
+  if (_label.sameCall?.length) _parts.push(" ", sameCallTag(_label.sameCall));
   if (_label.function) {
     // "in" stays with the name, which may still break inside.
     _parts.push(" in\u00a0", h("code", { class: "panel-label-code" },
@@ -389,47 +399,7 @@ function SymbolText({ symbol }) {
 }
 SymbolText.props = [ "symbol" ];
 
-const knownRanges = computed(() =>
-  new Map(props.step.symbolRanges.map(range => [ range.symbol, range.range ]))
-);
-
-const variableRows = computed(() =>
-  [ ...props.step.variables ]
-    .sort((a, b) => compareNames(a.name, b.name))
-    .map(variable => {
-      const _isSymbol = variable.kind === "symbol";
-      return {
-        name: variable.name,
-        range: _isSymbol ? knownRanges.value.get(variable.value) : undefined,
-        display: _isSymbol ? "no known range" : variable.value,
-        symbol: _isSymbol ? variable.value : null,
-        muted: _isSymbol && !knownRanges.value.has(variable.value),
-        change: _isSymbol
-          ? changeOf("symbol_ranges", variable.value) : undefined
-      };
-    })
-);
-
-const otherSymbols = computed(() => {
-  const _named = new Set(props.step.variables.map(variable => variable.value));
-  return props.step.symbolRanges
-    .filter(range => !_named.has(range.symbol))
-    .sort((a, b) => compareNames(a.symbol, b.symbol));
-});
-
-// Named rows first, as variables come before other symbols above, each in
-// the order variables are.
-const accumulatedRows = computed(() =>
-  props.step.pathCondition.map(range => ({
-    symbol: range.symbol,
-    range: range.range,
-    name: props.step.symbolNames.get(range.symbol),
-    dropped: !knownRanges.value.has(range.symbol),
-    change: changeOf("path_condition", range.symbol)
-  })).sort((a, b) =>
-    (a.name === undefined) - (b.name === undefined) ||
-    compareNames(a.name ?? a.symbol, b.name ?? b.symbol))
-);
+const rows = computed(() => snapshotRows(props.step));
 </script>
 
 <style lang="scss">
@@ -641,6 +611,22 @@ const accumulatedRows = computed(() =>
     &:focus-visible {
       text-decoration-style: solid;
     }
+  }
+
+  // Quiet beside the label, so that it does not read as part of a range or
+  // compete with the change tags.
+  .panel-same-call {
+    display: inline-block;
+    padding: 0 5px;
+    border-radius: 3px;
+    color: rgba(0, 0, 0, 0.6);
+    background-color: #eceff3;
+    font-family: sans-serif;
+    line-height: 1.5;
+    max-width: 100%;
+    // A long call or step name wraps inside the tag rather than past the row.
+    overflow-wrap: break-word;
+    cursor: help;
   }
 
   .panel-dropped {

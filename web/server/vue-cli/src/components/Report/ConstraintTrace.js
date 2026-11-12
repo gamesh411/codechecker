@@ -25,7 +25,7 @@ const SHOWN_LISTS = [ "symbol_ranges", "variables", "path_condition" ];
 // The keys of a symbol's origin, and of the symbol itself, that name a
 // string.
 const ORIGIN_STRINGS = [ "statement", "callee", "function", "region" ];
-const SYMBOL_STRINGS = [ "parent", "region" ];
+const SYMBOL_STRINGS = [ "parent", "region", "type" ];
 
 // Whole raw lists kept on the way, so that reading any node replays at most
 // this many deltas.
@@ -97,6 +97,7 @@ export class ConstraintTrace {
     this._changes = new Map();
     this._silentChanges = null;
     this._symbols = null;
+    this._calls = null;
   }
 
   // The symbol table as a Map from symbol dump to its entry: `kind`, `smt`
@@ -105,6 +106,9 @@ export class ConstraintTrace {
   // `statement`, `location`, `callee` and `frame` (into `stack_frames`), and
   // for memory a call or a loop replaced, `region` or `globals`, and `loop`.
   // A derived symbol has its `parent`'s dump and its `region`'s access path.
+  // A symbol has its `type`, the canonical type's name, and `pointer` when the
+  // analyzer treats it as an address; a trace from a Clang before those has
+  // neither.
   get symbols() {
     if (this._symbols) return this._symbols;
 
@@ -114,6 +118,7 @@ export class ConstraintTrace {
       SYMBOL_STRINGS.forEach(key => {
         if (entry[key] !== undefined) _symbol[key] = _s[entry[key]];
       });
+      if (entry.pointer) _symbol.pointer = true;
       if (entry.smt !== undefined) {
         _symbol.smt = _s[entry.smt];
         _symbol.smt_signed = !!entry.smt_signed;
@@ -136,10 +141,34 @@ export class ConstraintTrace {
     return this.symbols.get(dump);
   }
 
+  // The other symbols whose origin is a call with the same statement text as
+  // this symbol's: each { symbol, origin }, in the order of the table. The
+  // analyzer made them from different calls, or the same call at different
+  // times, and does not assume the calls returned the same value. Only a
+  // symbol the Bug Path mentions has an entry. A statement Clang cut is not
+  // compared, since two longer ones may share its start.
+  sameCall(dump) {
+    if (!this._calls) {
+      this._calls = new Map();
+      this.symbols.forEach((entry, symbol) => {
+        const _statement = entry.origin?.reason === "call_result"
+          ? entry.origin.statement : undefined;
+        if (!_statement || _statement.endsWith("...")) return;
+        if (!this._calls.has(_statement)) this._calls.set(_statement, []);
+        this._calls.get(_statement).push({ symbol, origin: entry.origin });
+      });
+    }
+    const _own = this.symbols.get(dump)?.origin;
+    if (_own?.reason !== "call_result") return [];
+    return (this._calls.get(_own.statement) ?? []).filter(call =>
+      call.symbol !== dump);
+  }
+
   // The `order` of the Path Step nearest to a source location: of the steps
   // whose node is in its file, those in `frame` if there are any, then the
-  // closest line, then the earliest on the Bug Path. Null when no step is in
-  // that file.
+  // closest line, then the closest column, which tells two calls on one line
+  // apart, then an event over the arrow into it, then the earliest on the Bug
+  // Path. Null when no step is in that file.
   nearestStep(location, frame) {
     if (!location) return null;
 
@@ -148,11 +177,16 @@ export class ConstraintTrace {
     const _inFrame = _inFile.filter(step =>
       frame !== undefined && this.nodes[step.exploded_node].frame === frame);
     let _best = null;
-    let _distance = Infinity;
+    let _distance = null;
     (_inFrame.length ? _inFrame : _inFile).forEach(step => {
-      const _d = Math.abs(
-        this.nodes[step.exploded_node].location.line - location.line);
-      if (_d < _distance) {
+      const _at = this.nodes[step.exploded_node].location;
+      const _d = [
+        Math.abs(_at.line - location.line),
+        Math.abs((_at.col ?? 0) - (location.col ?? 0)),
+        step.kind === "event" ? 0 : 1
+      ];
+      const _differs = _d.findIndex((value, at) => value !== _distance?.[at]);
+      if (!_distance || _d[_differs] < _distance[_differs]) {
         _best = step.order;
         _distance = _d;
       }
@@ -413,20 +447,47 @@ export class ConstraintTrace {
   }
 }
 
-// Calls longer than this are shortened in a label, which says which call it
-// is, and the source is one click away.
-const LABEL_CALL_LENGTH = 32;
+// Statement text longer than this is shortened wherever it is shown.
+const STATEMENT_LENGTH = 40;
 
-// A call as a label shows it: its statement, or when that is long its
-// callee, and the whole statement for the hint when it was shortened.
+// A statement as every view shows it, with the whole text kept for a hover.
+// A short one stays whole. A longer call keeps what it calls, receiver
+// included, and drops its arguments; when even that is long, or it is not a
+// call, it is cut. Callers keep the statement for the title.
+export function shortenStatement(statement, callee) {
+  if (!statement || statement.length <= STATEMENT_LENGTH) return statement;
+
+  // What the outermost call calls: the text before the parenthesis that
+  // closes the statement's last one.
+  let _head = "";
+  if (statement.endsWith(")")) {
+    let _depth = 0;
+    for (let _i = statement.length - 1; _i > 0; --_i) {
+      if (statement[_i] === ")") ++_depth;
+      else if (statement[_i] === "(" && --_depth === 0) {
+        _head = statement.slice(0, _i).trimEnd();
+        break;
+      }
+    }
+  }
+  // A template argument list cut in two is not a name.
+  const _plain = _head.replaceAll("->", ".");
+  const _whole = _plain.split("<").length === _plain.split(">").length;
+  if (_head && _whole && _head.length <= STATEMENT_LENGTH - 3) {
+    return `${_head}(\u2026)`;
+  }
+  if (callee) return `${callee}(\u2026)`;
+  return `${statement.slice(0, STATEMENT_LENGTH - 1)}\u2026`;
+}
+
+// A call as a label shows it: its statement shortened, and the whole
+// statement for the hint.
 function labelCall(origin) {
   const _statement = origin.statement ?? null;
-  if (!_statement || _statement.length <= LABEL_CALL_LENGTH)
-    return { code: _statement, full: _statement };
-  const _short = origin.callee
-    ? `${origin.callee}(\u2026)`
-    : `${_statement.slice(0, LABEL_CALL_LENGTH - 1)}\u2026`;
-  return { code: _short, full: _statement };
+  return {
+    code: _statement ? shortenStatement(_statement, origin.callee) : null,
+    full: _statement
+  };
 }
 
 // The words of a label about the conjured symbol `origin` describes: `parts`,
@@ -436,14 +497,16 @@ function labelCall(origin) {
 function originWords(origin, memory) {
   const _reason = origin.reason;
   if (_reason === "call_result") {
-    const _code =
-      origin.callee ? `${origin.callee}()` : origin.statement ?? null;
+    const _call = labelCall(origin);
+    const _code = origin.callee ? `${origin.callee}()` : _call.code;
     if (!_code) return null;
+    const _whole = origin.callee ? origin.statement : _call.full;
     return {
       parts: memory
         ? [ ...memory, " of the result of ", { code: _code } ]
         : [ "result of ", { code: _code } ],
-      hint: "The analyzer did not see inside this call."
+      hint: "The analyzer did not see inside " +
+        (_whole && _whole !== _code ? _whole : "this call") + "."
     };
   }
   if (_reason === "invalidation" || _reason === "loop_widening") {
@@ -525,6 +588,168 @@ export function symbolLabel(entry, stepFrame, symbolOf = () => undefined) {
   };
 }
 
+// A symbolic expression's dump, read into a tree, or null when it is not one
+// this can read to the end. The dumps are the analyzer's:
+//   (L) op R         R an integer, as 7U or -1, or (R) for a symbol
+//   N op (R)         N an integer
+//   (TYPE) (X)       a cast
+//   -X, ~X, !X       X a symbol, or (X) for an expression
+// where L, R and X are in turn expressions, and a symbol is an atom such as
+// reg_$1<int n> or conj_$2{int, LC1, S3, #1}. Whatever else it meets, such as
+// an operator or an atom it does not know the end of, makes the whole read
+// fail: a half-read expression would be a wrong label.
+const ATOM_START = /^[a-z]+_\$\d+(?=[<{])/;
+const INTEGER = /^-?\d+U?(?![\w$])/;
+const OPERATOR = /^ (<<|>>|<=|>=|==|!=|&&|\|\||[*/%+\-<>&^|]) /;
+const BRACKETS = { "<": ">", "{": "}", "(": ")" };
+
+// The index after the bracket that closes the one at `at`, or -1. A "->" is
+// no angle bracket.
+function closingBracket(text, at) {
+  const _open = text[at];
+  const _close = BRACKETS[_open];
+  let _depth = 0;
+  for (let _i = at; _i < text.length; ++_i) {
+    if (text[_i] === _open) ++_depth;
+    else if (text[_i] === _close && !(_open === "<" && text[_i - 1] === "-")) {
+      if (--_depth === 0) return _i + 1;
+    }
+  }
+  return -1;
+}
+
+// One operand at `at` in `text`: { node, end }, or null.
+function readOperand(text, at) {
+  const _rest = text.slice(at);
+  const _integer = INTEGER.exec(_rest);
+  if (_integer) {
+    return { node: { integer: _integer[0].replace(/U$/, "") },
+      end: at + _integer[0].length };
+  }
+  const _atom = ATOM_START.exec(_rest);
+  if (_atom) {
+    const _end = closingBracket(text, at + _atom[0].length);
+    return _end < 0
+      ? null : { node: { atom: text.slice(at, _end) }, end: _end };
+  }
+  if (/^[-~!]/.test(_rest)) {
+    const _operand = readOperand(text, at + 1);
+    return _operand && { node: { unary: _rest[0], operand: _operand.node },
+      end: _operand.end };
+  }
+  if (_rest[0] !== "(") return null;
+
+  const _end = closingBracket(text, at);
+  if (_end < 0) return null;
+  const _inner = text.slice(at + 1, _end - 1);
+  // "(TYPE) (X)" is a cast; a group beside an operator is not.
+  if (text[_end] === " " && text[_end + 1] === "(") {
+    const _cast = readOperand(text, _end + 1);
+    return _cast && _inner
+      ? { node: { cast: _inner, operand: _cast.node }, end: _cast.end }
+      : null;
+  }
+  const _node = readExpression(_inner);
+  return _node && { node: _node, end: _end };
+}
+
+function readExpression(text) {
+  const _left = readOperand(text, 0);
+  if (!_left) return null;
+  if (_left.end === text.length) return _left.node;
+
+  const _operator = OPERATOR.exec(text.slice(_left.end));
+  if (!_operator) return null;
+  const _right = readOperand(text, _left.end + _operator[0].length);
+  return _right && _right.end === text.length
+    ? { operator: _operator[1], left: _left.node, right: _right.node }
+    : null;
+}
+
+export function parseSymbolExpression(dump) {
+  return typeof dump === "string" ? readExpression(dump) : null;
+}
+
+// The name a region value atom goes by when no variable names it: the last
+// word of its region, as in reg_$1<unsigned int n>.
+function regionValueName(atom) {
+  const _match = /^reg_\$\d+<(.*)>$/.exec(atom);
+  const _word = _match?.[1].split(/\s+/).pop();
+  return _word && /^[A-Za-z_~][\w.:]*$/.test(_word) ? _word : null;
+}
+
+// The label of a symbolic expression, in the shape symbolLabel returns, built
+// from the labels of its atoms; null when the dump is not an expression this
+// can read or an atom has neither a label nor a name. `symbolOf` gives an
+// atom's entry by dump, and `nameOf` the variable that held it, if any.
+export function expressionLabel(dump, stepFrame, symbolOf, nameOf = () => {}) {
+  const _tree = parseSymbolExpression(dump);
+  if (!_tree || _tree.atom === dump) return null;
+
+  // The parts of a node, or null when one atom cannot be told.
+  const _parts = (node, outer) => {
+    if (node.integer !== undefined) return [ node.integer ];
+    if (node.atom !== undefined) {
+      const _label = symbolLabel(symbolOf(node.atom), stepFrame, symbolOf);
+      if (_label) return _label.parts;
+      const _name = node.atom.startsWith("reg_$")
+        ? nameOf(node.atom) ?? regionValueName(node.atom) : null;
+      return _name ? [ { code: _name } ] : null;
+    }
+    if (node.cast !== undefined) {
+      const _operand = _parts(node.operand, "cast");
+      return _operand && [ ..._operand, " as ", { code: node.cast } ];
+    }
+    if (node.unary !== undefined) {
+      const _operand = _parts(node.operand, "unary");
+      return _operand && [ node.unary, ..._operand ];
+    }
+    const _left = _parts(node.left, node.operator);
+    const _right = _parts(node.right, node.operator);
+    if (!_left || !_right) return null;
+    const _body = [ ..._left, ` ${node.operator} `, ..._right ];
+    // An operator inside a different one, a cast or a minus needs its
+    // brackets to read the same.
+    return outer && outer !== node.operator ? [ "(", ..._body, ")" ] : _body;
+  };
+  const _all = _parts(_tree);
+  if (!_all) return null;
+
+  // Neighbouring strings are one.
+  const parts = _all.reduce((joined, part) => {
+    if (typeof part === "string" &&
+        typeof joined[joined.length - 1] === "string") {
+      joined[joined.length - 1] += part;
+    } else {
+      joined.push(part);
+    }
+    return joined;
+  }, []);
+  return {
+    text: parts.map(part => part.code ?? part).join(""),
+    parts,
+    hint: "Worked out from the values named here.",
+    location: null,
+    frame: undefined,
+    function: null
+  };
+}
+
+// What a variable is shown as where a line has several visits, and what the
+// analyzer has for it. `entry` is its symbol's entry, which gives the type.
+export function describeVariable(variable, snapshot, entry) {
+  if (variable.kind !== "symbol") {
+    return { text: variable.value, raw: variable.value };
+  }
+  const _range = (snapshot.symbol_ranges ?? []).find(range =>
+    range.symbol === variable.value)?.range;
+  if (!_range) return { text: "(symbolic)", raw: "(symbolic)" };
+  return {
+    text: readableRange(_range, variable.value, symbolType(entry)) ?? _range,
+    raw: _range
+  };
+}
+
 const NAME_COLLATOR = new Intl.Collator("en", { numeric: true });
 
 // Orders variable names as a reader counts, a2 before a10, and the same in
@@ -538,10 +763,25 @@ export function compareNames(a, b) {
 const ABSOLUTE_PATH = /(?<![^\s(<{[,])(?:\/[^\s/:()<>{}[\],]+){2,}/g;
 
 // Text with each absolute path cut to its file name, as the States view shows
-// locations. Callers keep the whole text for a title.
+// locations. Callers keep the whole text for a title. Anything but text, such
+// as a number, has no path in it.
 export function shortenPaths(text) {
-  return (text ?? "").replace(ABSOLUTE_PATH,
+  return (typeof text === "string" ? text : "").replace(ABSOLUTE_PATH,
     path => path.slice(path.lastIndexOf("/") + 1));
+}
+
+// Where a label's value came from, as the panel writes it after the label:
+// the line, with the file when that is another than the step's. A location
+// whose file is not a path, such as a plist index left in a trace that was
+// stored unmapped, is written without the file.
+export function labelPlace(label) {
+  const _location = label.location;
+  if (!_location) return null;
+
+  const _file = typeof _location.file === "string"
+    ? shortenPaths(_location.file) : "";
+  return label.otherFile && _file
+    ? `${_file}:${_location.line}` : `line ${_location.line}`;
 }
 
 // The integer type at the start of a symbol dump, as in reg_$1<int a> or
@@ -556,18 +796,30 @@ const TYPE_WORDS = new Set([
   "const", "volatile"
 ]);
 
-function integerType(symbol) {
-  const _match = SYMBOL_TYPE.exec(symbol ?? "");
-  if (!_match) return null;
-
-  const _words = _match[2].trim().split(/\s+/);
+// `typeName` is the canonical type the symbol table names, which tells a
+// typedef and a derived symbol too; without it the type is read from the dump.
+function integerType(symbol, typeName) {
   const _type = [];
-  while (_words.length && TYPE_WORDS.has(_words[0])) _type.push(_words.shift());
-  // The dump of a region symbol names the region after its type. A conjured
-  // symbol has nothing after the type.
-  const _named = _match[1] === "<" && _words.length === 1 &&
-    /^[A-Za-z_]\w*$/.test(_words[0]);
-  if (!_type.length || _words.length && !_named) return null;
+  if (typeName !== undefined) {
+    const _words = typeName.trim().split(/\s+/);
+    while (_words.length && TYPE_WORDS.has(_words[0])) {
+      _type.push(_words.shift());
+    }
+    if (!_type.length || _words.length) return null;
+  } else {
+    const _match = SYMBOL_TYPE.exec(symbol ?? "");
+    if (!_match) return null;
+
+    const _words = _match[2].trim().split(/\s+/);
+    while (_words.length && TYPE_WORDS.has(_words[0])) {
+      _type.push(_words.shift());
+    }
+    // The dump of a region symbol names the region after its type. A
+    // conjured symbol has nothing after the type.
+    const _named = _match[1] === "<" && _words.length === 1 &&
+      /^[A-Za-z_]\w*$/.test(_words[0]);
+    if (!_type.length || _words.length && !_named) return null;
+  }
 
   const _count = word => _type.filter(_word => _word === word).length;
   const _unsigned = _count("unsigned") > 0;
@@ -593,12 +845,37 @@ function integerType(symbol) {
 
 const RANGE_SET = /^\{\s*(?:\[-?\d+, -?\d+\],?\s*)+\}$/;
 
+// A symbol dump starts with its type, as in reg_$1<int * g> or
+// conj_$2{void *, ...}. The type stops at a brace or angle bracket, so a
+// pointer inside the region of a non-pointer field does not count. Only for a
+// trace whose table does not say.
+const POINTER_SYMBOL = /^[a-z]+_\$\d+[<{][^,{}<>]*\*/;
+
+// What a symbol's entry says about its type: `{ type, pointer }`, or
+// undefined for a trace without the table's types. Then the dump is read.
+export function symbolType(entry) {
+  return entry && entry.type !== undefined
+    ? { type: entry.type, pointer: !!entry.pointer } : undefined;
+}
+
+// Whether a range is every address but null, whatever the address width.
+function isNonNull(range) {
+  return /^\{ \[1, (?:4294967295|18446744073709551615)\] \}$/.test(range);
+}
+
 // A range of integers as a person would say it, or null to show the
 // analyzer's own range. `symbol` is the dump the range is for, which gives the
 // type. A single value needs no type, and the other forms are about the
 // type's extremes, so they need it.
-export function readableRange(range, symbol) {
+export function readableRange(range, symbol, info) {
   if (!RANGE_SET.test(range)) return null;
+
+  // An address is null or not, whatever else is known of its range.
+  const _pointer = info ? info.pointer : POINTER_SYMBOL.test(symbol ?? "");
+  if (_pointer) {
+    if (range === "{ [0, 0] }") return "null";
+    if (isNonNull(range)) return "non-null";
+  }
 
   const _intervals = [ ...range.matchAll(/\[(-?\d+), (-?\d+)\]/g) ]
     .map(match => [ BigInt(match[1]), BigInt(match[2]) ]);
@@ -612,7 +889,7 @@ export function readableRange(range, symbol) {
     return String(_first[0]);
   }
 
-  const _type = integerType(symbol);
+  const _type = _pointer ? null : integerType(symbol, info?.type);
   if (!_type || _first[0] < _type.min || _last[1] > _type.max) return null;
 
   // The values of the type that the range leaves out.

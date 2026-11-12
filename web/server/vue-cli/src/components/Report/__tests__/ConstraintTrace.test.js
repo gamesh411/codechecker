@@ -1,6 +1,7 @@
 import {
-  ConstraintTrace, compareNames, readConstraintTrace, readableRange,
-  shortenPaths, symbolLabel
+  ConstraintTrace, compareNames, describeVariable, expressionLabel,
+  labelPlace, parseSymbolExpression, readConstraintTrace, readableRange,
+  shortenPaths, shortenStatement, symbolLabel, symbolType
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -452,13 +453,46 @@ describe("symbol table", () => {
     // Line 12 in frame 0 is nearer than line 9, and line 12 in frame 1 is
     // not the frame the value was made in.
     expect(trace.nearestStep(LOCATION(11, 7), 0)).toBe(2);
-    // Without a frame of its own, any step in the file counts, earliest first.
-    expect(trace.nearestStep(LOCATION(30), undefined)).toBe(2);
+    // Without a frame of its own, any step in the file counts, and of two
+    // equally near the event wins over the arrow.
+    expect(trace.nearestStep(LOCATION(30), undefined)).toBe(3);
     expect(trace.nearestStep({ ...LOCATION(1), file: "/src/b.h" }, 0))
       .toBe(4);
     expect(trace.nearestStep({ ...LOCATION(1), file: "/src/c.c" }, 0))
       .toBeNull();
     expect(trace.nearestStep(undefined, 0)).toBeNull();
+  });
+
+  test("two origins on one line are told apart by their column", () => {
+    const trace = new ConstraintTrace({
+      ...SYMBOLS,
+      exploded_nodes: [
+        { location: LOCATION(12, 3), frame: 0 },
+        { location: LOCATION(12, 20), frame: 0 },
+        { location: LOCATION(12, 35), frame: 0 },
+        { location: LOCATION(13, 7), frame: 0 }
+      ]
+    });
+    // Steps 1 to 4 are on nodes 0 to 3.
+    expect(trace.nearestStep(LOCATION(12, 21), 0)).toBe(2);
+    expect(trace.nearestStep(LOCATION(12, 4), 0)).toBe(1);
+    expect(trace.nearestStep(LOCATION(12, 90), 0)).toBe(3);
+    // An event wins over the arrow into the same place, whichever is first.
+    const arrow = new ConstraintTrace({
+      ...SYMBOLS,
+      steps: [
+        { kind: "control", index: 0, order: 1, exploded_node: 0 },
+        { kind: "event", index: 0, order: 2, exploded_node: 1 },
+        { kind: "control", index: 1, order: 3, exploded_node: 1 }
+      ],
+      exploded_nodes: [
+        { location: LOCATION(12, 3), frame: 0 },
+        { location: LOCATION(12, 3), frame: 0 }
+      ]
+    });
+    expect(arrow.nearestStep(LOCATION(12, 3), 0)).toBe(2);
+    // A nearer line wins over a nearer column.
+    expect(trace.nearestStep(LOCATION(13, 90), 0)).toBe(4);
   });
 });
 
@@ -586,5 +620,298 @@ describe("labels of replaced values", () => {
     const shown = symbolLabel({ kind: "conjured", origin }, 0);
     expect(shown.text).toBe("Tok after Lex(…) may have changed it");
     expect(shown.hint).toContain(LONG_CALL);
+  });
+});
+
+describe("symbolic expressions", () => {
+  const trace = new ConstraintTrace(REPLACING);
+  const lookup = dump => trace.symbol(dump);
+  const label = (dump, names = {}) =>
+    expressionLabel(dump, 0, lookup, symbol => names[symbol]);
+  const WIDENED_ATOM = "conj_$6{int, LC1, S60, #3}";
+
+  test("an expression reads from the labels of its atoms", () => {
+    expect(label(`(${CALL}) + 1`)).toEqual({
+      text: "result of get() + 1",
+      parts: [ "result of ", { code: "get()" }, " + 1" ],
+      hint: "Worked out from the values named here.",
+      location: null, frame: undefined, function: null
+    });
+  });
+
+  test("a region value is named by its variable or by its region", () => {
+    const dump = `(${WIDENED_ATOM}) > (reg_$1<unsigned int n>)`;
+    expect(label(dump).text)
+      .toBe("x after the loop may have changed it > n");
+    expect(label(dump, { "reg_$1<unsigned int n>": "count" }).text)
+      .toBe("x after the loop may have changed it > count");
+    expect(label(dump).parts).toEqual([
+      { code: "x" }, " after the loop may have changed it > ", { code: "n" }
+    ]);
+  });
+
+  test("integers lose their suffix, casts and negation are told", () => {
+    expect(label(`(${CALL}) & 7U`).text).toBe("result of get() & 7");
+    expect(label(`(int) (${CALL})`).text).toBe("result of get() as int");
+    expect(label(`-${CALL}`).text).toBe("-result of get()");
+    expect(label(`5 - (${CALL})`).text).toBe("5 - result of get()");
+    expect(label("(unsigned long) (reg_$1<int n>)").text)
+      .toBe("n as unsigned long");
+  });
+
+  test("an operator inside another keeps its brackets", () => {
+    expect(label(`((${CALL}) + 1) * (reg_$1<int n>)`).text)
+      .toBe("(result of get() + 1) * n");
+    expect(label(`((${CALL}) + 1) + (reg_$1<int n>)`).text)
+      .toBe("result of get() + 1 + n");
+    expect(label(`(int) ((${CALL}) + 1)`).text)
+      .toBe("(result of get() + 1) as int");
+  });
+
+  test("an expression it cannot read to the end stays raw", () => {
+    [
+      `(${CALL}) + `, `(${CALL}`, `${CALL}) + 1`, `(${CALL}) ?? 1`,
+      `(${CALL}) + 1 + 2`, "(reg_$1<int n>) + (reg_$2<int", "()",
+      // An atom nothing can name: no label and not a region value.
+      "(extent_$3{SymRegion{reg_$1<char * p>}}) + 1",
+      `(${CALL}) + (conj_$99{int, LC1, S1, #1})`,
+      // A region value with no readable name.
+      "(reg_$1<int Element{p,0 S64b,int}>) + 1",
+      "", "not a symbol"
+    ].forEach(dump => {
+      expect(label(dump)).toBeNull();
+    });
+  });
+
+  test("an atom alone is no expression", () => {
+    expect(label(CALL)).toBeNull();
+    expect(parseSymbolExpression(CALL)).toEqual({ atom: CALL });
+    expect(parseSymbolExpression(undefined)).toBeNull();
+  });
+
+  test("the tree keeps what the dump says", () => {
+    expect(parseSymbolExpression("(reg_$1<int n>) - -3")).toEqual({
+      operator: "-", left: { atom: "reg_$1<int n>" }, right: { integer: "-3" }
+    });
+    expect(parseSymbolExpression("4U << (reg_$1<int n>)")).toEqual({
+      operator: "<<", left: { integer: "4" }, right: { atom: "reg_$1<int n>" }
+    });
+    // Brackets inside an atom, a type in a cast and an arrow in a region.
+    expect(parseSymbolExpression(
+      "(void (*)(int)) (conj_$2{int (*)(int), LC1, S2, #1})"))
+      .toEqual({ cast: "void (*)(int)",
+        operand: { atom: "conj_$2{int (*)(int), LC1, S2, #1}" } });
+    expect(parseSymbolExpression("(reg_$1<int p->x>) + 1").left)
+      .toEqual({ atom: "reg_$1<int p->x>" });
+  });
+});
+
+describe("statement text", () => {
+  test("a short statement stays whole", () => {
+    expect(shortenStatement("get()", "get")).toBe("get()");
+    expect(shortenStatement("x".repeat(40), undefined)).toBe("x".repeat(40));
+  });
+
+  test("a long call keeps what it calls and drops its arguments", () => {
+    expect(shortenStatement(
+      "this->parse(prec::LogicalOr, /*Recover=*/true, Opts.Strict)", "parse"))
+      .toBe("this->parse(\u2026)");
+    expect(shortenStatement(LONG_CALL, "Lex")).toBe("Lex(\u2026)");
+  });
+
+  test("a call on a long receiver is shortened to its callee", () => {
+    expect(shortenStatement(
+      "Context.getTranslationUnitDecl()->getASTContext().lookup(Name, Kind)",
+      "lookup")).toBe("lookup(\u2026)");
+  });
+
+  test("what is not a call is cut", () => {
+    const cut = shortenStatement(
+      "State.Table[Index] + State.Offset * Scale + Event");
+    expect(cut).toHaveLength(40);
+    expect(cut.endsWith("\u2026")).toBe(true);
+    // An indirect call keeps what it calls through.
+    expect(shortenStatement("(*callbacks[Index])(State, Event, Argument)"))
+      .toBe("(*callbacks[Index])(\u2026)");
+    expect(shortenStatement("make<Tag, decltype(f(1))>(State, Event, Argument)",
+      "make")).toBe("make<Tag, decltype(f(1))>(\u2026)");
+  });
+
+  test("nothing stays nothing", () => {
+    expect(shortenStatement(undefined)).toBeUndefined();
+    expect(shortenStatement("")).toBe("");
+  });
+});
+
+describe("types of symbols", () => {
+  const pointer = { type: "int *", pointer: true };
+  const unsigned = { type: "unsigned int", pointer: false };
+
+  test("the table reads a symbol's type and pointer-ness", () => {
+    const trace = new ConstraintTrace({
+      ...SYMBOLS,
+      strings: [ ...SYMBOL_STRINGS, "unsigned long" ],
+      symbols: [
+        { symbol: 0, kind: "conjured", type: 12, pointer: true },
+        { symbol: 7, kind: "conjured" }
+      ]
+    });
+    expect(symbolType(trace.symbol(CALL)))
+      .toEqual({ type: "unsigned long", pointer: true });
+    expect(trace.symbol(CALL)).toMatchObject({ pointer: true });
+    expect(symbolType(trace.symbol(PRUNED))).toBeUndefined();
+    expect(symbolType(undefined)).toBeUndefined();
+  });
+
+  test("a pointer reads as null or non-null from its entry", () => {
+    // Derived symbols have no type in their dump.
+    const derived = "derived_$9{conj_$4{int, LC1, S50, #1},p.next}";
+    expect(readableRange("{ [0, 0] }", derived, pointer)).toBe("null");
+    expect(readableRange("{ [1, 18446744073709551615] }", derived, pointer))
+      .toBe("non-null");
+    expect(readableRange("{ [1, 4294967295] }", derived, pointer))
+      .toBe("non-null");
+    expect(readableRange("{ [8, 8] }", derived, pointer)).toBe("8");
+    expect(readableRange("{ [5, 18446744073709551615] }", derived, pointer))
+      .toBeNull();
+  });
+
+  test("the dump tells a pointer when the table does not", () => {
+    expect(readableRange("{ [0, 0] }", "reg_$1<int * p>")).toBe("null");
+    expect(readableRange("{ [1, 18446744073709551615] }",
+      "conj_$2{void *, LC1, S2, #1}")).toBe("non-null");
+    expect(readableRange("{ [3, 4294967295] }", "reg_$1<unsigned int n>"))
+      .toBe("at least 3");
+    expect(readableRange("{ [1, 4294967295] }", "reg_$1<unsigned int n>"))
+      .toBe("not 0");
+    // The table wins over the dump.
+    expect(readableRange("{ [0, 0] }", "reg_$1<int * p>", unsigned))
+      .toBe("0");
+  });
+
+  test("the type names the width of a derived or typedef'd integer", () => {
+    const derived = "derived_$9{conj_$4{int, LC1, S50, #1},t.Kind}";
+    expect(readableRange("{ [3, 4294967295] }", derived, unsigned))
+      .toBe("at least 3");
+    expect(readableRange("{ [-2147483648, 9] }", derived,
+      { type: "int", pointer: false })).toBe("at most 9");
+    expect(readableRange("{ [3, 18446744073709551615] }", derived,
+      { type: "unsigned long", pointer: false })).toBe("at least 3");
+    // Neither the dump nor the table says: left alone.
+    expect(readableRange("{ [3, 4294967295] }", derived)).toBeNull();
+    expect(readableRange("{ [3, 4294967295] }", derived,
+      { type: "float", pointer: false })).toBeNull();
+    expect(readableRange("{ [3, 4294967295] }", derived,
+      { type: "char", pointer: false })).toBeNull();
+  });
+
+  test("a variable is described by its range and the entry's type", () => {
+    const snapshot = { symbol_ranges: [
+      { symbol: "derived_$9{c,p.next}", range: "{ [1, 18446744073709551615] }" }
+    ] };
+    const variable = { name: "q", value: "derived_$9{c,p.next}",
+      kind: "symbol" };
+    expect(describeVariable(variable, snapshot, { type: "int *",
+      pointer: true })).toEqual({
+      text: "non-null", raw: "{ [1, 18446744073709551615] }"
+    });
+    expect(describeVariable(variable, snapshot).text)
+      .toBe("{ [1, 18446744073709551615] }");
+    expect(describeVariable({ ...variable, value: "x" }, snapshot))
+      .toEqual({ text: "(symbolic)", raw: "(symbolic)" });
+    expect(describeVariable({ name: "k", value: "5", kind: "integer" },
+      snapshot)).toEqual({ text: "5", raw: "5" });
+  });
+});
+
+describe("the same call twice", () => {
+  const FIRST = "conj_$10{int, LC1, S11, #1}";
+  const SECOND = "conj_$12{int, LC1, S13, #1}";
+  const THIRD = "conj_$14{int, LC1, S15, #1}";
+  const MODELLED_SAME = "conj_$16{int, LC1, S17, #1}";
+  const strings = [
+    FIRST, "Cells.size()", "size", "f", SECOND, THIRD, MODELLED_SAME,
+    "a_much_longer_statement_that_was_cut_by_clang_at_the...", "other()"
+  ];
+  const table = [
+    { symbol: 0, kind: "conjured", origin: { reason: "call_result",
+      statement: 1, callee: 2, function: 3, frame: 0, location: LOCATION(8) } },
+    { symbol: 4, kind: "conjured", origin: { reason: "call_result",
+      statement: 1, callee: 2, function: 3, frame: 0,
+      location: LOCATION(12) } },
+    { symbol: 5, kind: "conjured", origin: { reason: "call_result",
+      statement: 1, callee: 2, function: 3, location: LOCATION(30) } },
+    // A checker modelled it: not known to be a call result.
+    { symbol: 6, kind: "conjured", origin: { reason: "other", statement: 1,
+      callee: 2, function: 3, frame: 0, location: LOCATION(9) } },
+    { symbol: 7, kind: "conjured", origin: { reason: "call_result",
+      statement: 7, function: 3 } },
+    { symbol: 8, kind: "conjured", origin: { reason: "call_result",
+      statement: 8, function: 3 } }
+  ];
+  const build = symbols => new ConstraintTrace({
+    ...SYMBOLS, strings, symbols
+  });
+
+  test("lists the other results of one call text", () => {
+    const trace = build(table);
+    expect(trace.sameCall(FIRST).map(call => call.symbol))
+      .toEqual([ SECOND, THIRD ]);
+    expect(trace.sameCall(SECOND).map(call => call.symbol))
+      .toEqual([ FIRST, THIRD ]);
+    expect(trace.sameCall(FIRST)[0].origin.location).toEqual(LOCATION(12));
+  });
+
+  test("a lone call, a modelled one and an unknown symbol have none", () => {
+    const trace = build(table);
+    expect(trace.sameCall(MODELLED_SAME)).toEqual([]);
+    expect(trace.sameCall("conj_$8")).toEqual([]);
+    expect(trace.sameCall(undefined)).toEqual([]);
+    expect(build(table.slice(0, 1)).sameCall(FIRST)).toEqual([]);
+  });
+
+  test("statements Clang cut are not compared", () => {
+    const cut = "a_much_longer_statement_that_was_cut_by_clang_at_the...";
+    const trace = build([
+      { symbol: 0, kind: "conjured", origin: { reason: "call_result",
+        statement: 7, function: 3 } },
+      { symbol: 4, kind: "conjured", origin: { reason: "call_result",
+        statement: 7, function: 3 } }
+    ]);
+    expect(cut.endsWith("...")).toBe(true);
+    expect(trace.sameCall(FIRST)).toEqual([]);
+  });
+});
+
+describe("a location whose file is not a path", () => {
+  const label = (file, otherFile) =>
+    ({ location: { file, line: 7, col: 1 }, otherFile });
+
+  test("is told by its line alone", () => {
+    expect(labelPlace(label(3, true))).toBe("line 7");
+    expect(labelPlace(label(undefined, true))).toBe("line 7");
+    expect(labelPlace(label(null, false))).toBe("line 7");
+  });
+
+  test("a path names its file only when it is another file", () => {
+    expect(labelPlace(label("/src/dir/a.c", true))).toBe("a.c:7");
+    expect(labelPlace(label("/src/dir/a.c", false))).toBe("line 7");
+    expect(labelPlace({ location: null })).toBeNull();
+  });
+
+  test("shortening paths takes text only", () => {
+    expect(shortenPaths(3)).toBe("");
+    expect(shortenPaths(undefined)).toBe("");
+    expect(shortenPaths("in /a/b/c.h")).toBe("in c.h");
+  });
+
+  test("the nearest step of a numbered file is a step of that number", () => {
+    const trace = new ConstraintTrace({
+      ...SYMBOLS,
+      exploded_nodes: SYMBOLS.exploded_nodes.map(node =>
+        ({ ...node, location: { ...node.location, file: 0 } }))
+    });
+    expect(trace.nearestStep({ file: 0, line: 12, col: 1 }, 0)).toBe(2);
+    expect(trace.nearestStep({ file: 1, line: 12, col: 1 }, 0)).toBeNull();
   });
 });

@@ -430,8 +430,11 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import {
   ConstraintTrace,
   compareNames,
-  readableRange,
-  symbolLabel
+  describeVariable,
+  expressionLabel,
+  shortenStatement,
+  symbolLabel,
+  symbolType as symbolTypeOf
 } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
@@ -632,14 +635,16 @@ const selectedConstraintStep = computed(() => {
 
   const _control = selectedControlStep.value;
   if (_control) {
+    const symbolNames = constraintTrace.value.symbolNames(_control.order);
     return {
       heading: _control.label,
       message: _control.message,
       symbolRanges: _control.snapshot.symbol_ranges ?? [],
       variables: _control.snapshot.variables ?? [],
       pathCondition: _control.snapshot.path_condition ?? [],
-      symbolNames: constraintTrace.value.symbolNames(_control.order),
-      labelOf: symbolLabels(_control.node),
+      symbolNames,
+      labelOf: symbolLabels(_control.node, symbolNames),
+      typeOf: symbolType,
       order: _control.order,
       smtlib: constraintTrace.value.smtlib,
       changes: constraintTrace.value.changedAt(_control.order),
@@ -654,6 +659,8 @@ const selectedConstraintStep = computed(() => {
     step.kind === "event" && step.index === _event.$index - 1);
   const _snapshot = _traceStep &&
     constraintTrace.value.snapshot(_traceStep.exploded_node);
+  const symbolNames =
+    constraintTrace.value.symbolNames(_traceStep?.order ?? -1);
 
   return {
     heading: `Step ${_event.$index}`,
@@ -661,28 +668,43 @@ const selectedConstraintStep = computed(() => {
     symbolRanges: _snapshot?.symbol_ranges ?? [],
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
-    symbolNames: constraintTrace.value.symbolNames(_traceStep?.order ?? -1),
-    labelOf: symbolLabels(_traceStep?.exploded_node),
+    symbolNames,
+    labelOf: symbolLabels(_traceStep?.exploded_node, symbolNames),
+    typeOf: symbolType,
     order: _traceStep?.order ?? -1,
     smtlib: constraintTrace.value.smtlib,
     changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
     silent: false
   };
 });
+// What the symbol table says of a symbol's type, for the range words.
+function symbolType(symbol) {
+  return symbolTypeOf(constraintTrace.value.symbol(symbol));
+}
+
 // Labels of symbols as a Path Step on `node` shows them, each with the Path
 // Step nearest to its origin, made the first time a symbol is shown.
-function symbolLabels(node) {
+// `symbolNames` are the variables that held the symbols, which name the parts
+// of a symbolic expression that have no label.
+function symbolLabels(node, symbolNames) {
   const _trace = constraintTrace.value;
   const _node = node === undefined ? undefined : _trace.nodes[node];
   const _labels = new Map();
+  const _entry = dump => _trace.symbol(dump);
   return symbol => {
     if (!_labels.has(symbol)) {
-      const _label = symbolLabel(_trace.symbol(symbol), _node?.frame,
-        dump => _trace.symbol(dump));
+      const _label = symbolLabel(_entry(symbol), _node?.frame, _entry) ??
+        (_entry(symbol) ? null : expressionLabel(
+          symbol, _node?.frame, _entry, dump => symbolNames.get(dump)));
       if (_label) {
         _label.order = _trace.nearestStep(_label.location, _label.frame);
         _label.otherFile = !!_label.location &&
           _label.location.file !== _node?.location?.file;
+        _label.sameCall = _trace.sameCall(symbol).map(other => ({
+          call: shortenStatement(other.origin.statement, other.origin.callee),
+          order: _trace.nearestStep(other.origin.location, other.origin.frame)
+        })).sort((a, b) =>
+          (a.order === null) - (b.order === null) || a.order - b.order);
       }
       _labels.set(symbol, _label);
     }
@@ -1198,11 +1220,22 @@ function sameSnapshot(a, b) {
 // Picker rows are told apart by the values that actually differ between them,
 // which is what separates one loop iteration from the next.
 function describePickerSteps(steps) {
-  const _values = steps.map(step => new Map(
-    (step.snapshot.variables ?? []).map(variable => [
-      variable.name,
-      describeVariable(variable, step.snapshot)
-    ])));
+  const _trace = constraintTrace.value;
+  const _values = steps.map(step => {
+    const _label = symbolLabels(step.node, _trace.symbolNames(step.order));
+    return new Map((step.snapshot.variables ?? []).map(variable => {
+      const _described = describeVariable(
+        variable, step.snapshot, _trace.symbol(variable.value));
+      // The hover tells what the value is, beside the analyzer's range.
+      const _what = variable.kind === "symbol"
+        ? _label(variable.value)?.text : undefined;
+      return [
+        variable.name,
+        _what ? { ..._described, raw: `${_described.raw} (${_what})` }
+          : _described
+      ];
+    }));
+  });
   const _names = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ]
     .filter(name =>
       new Set(_values.map(values => values.get(name)?.text)).size > 1)
@@ -1219,17 +1252,6 @@ function describePickerSteps(steps) {
       valuesTitle: _line("raw")
     };
   });
-}
-
-// What a variable is shown as in the picker, and what the analyzer has for it.
-function describeVariable(variable, snapshot) {
-  if (variable.kind !== "symbol") {
-    return { text: variable.value, raw: variable.value };
-  }
-  const _range = (snapshot.symbol_ranges ?? []).find(range =>
-    range.symbol === variable.value)?.range;
-  if (!_range) return { text: "(symbolic)", raw: "(symbolic)" };
-  return { text: readableRange(_range, variable.value) ?? _range, raw: _range };
 }
 
 let lineHintTimer = null;
