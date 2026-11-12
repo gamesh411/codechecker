@@ -55,7 +55,10 @@ if sys.platform in ["darwin", "win32"]:
             self.close()
             self.join()
 else:
-    from concurrent.futures import ProcessPoolExecutor as Pool
+    # mypy does not narrow `sys.platform in [...]`, so it sees both Pools.
+    from concurrent.futures import (  # type: ignore[assignment]
+        ProcessPoolExecutor as Pool
+    )
     from multiprocessing import (
         Pipe,
         Process,
