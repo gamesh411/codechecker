@@ -86,15 +86,23 @@ The panel can be closed with the cross in its header.
   A variable that holds a symbol shows the range of values the analyzer knows for it, and under it the symbol's label, or the symbol itself, such as `reg_$1<int a>`, when the label would only repeat the variable's name.
   A symbol without a known range reads "no known range".
   A variable that holds a concrete value shows the value, such as `&x`.
+* Inside a call the analyzer followed, **Variables** has one group per function on the call stack.
+  The function of the selected step comes first, headed by its name and the line it was called at, and each function that called it follows, innermost first, so that `n` of the caller and `n` of the callee are two rows under two headings.
+  The line in a heading is a link that selects the step nearest to that call.
+  A caller's group can be closed and opened with the arrow beside its name; with more than three callers they start closed, and a closed group says how many variables it has.
+  A caller shows a local variable only while the analyzer still keeps it, which is while the caller reads it after the call; the parameters of the function the analysis started in keep the values it was called with.
+  A global shows only under the innermost function that uses it, since it is the same memory in every function.
+  A step in the function the analysis started in has no callers, and the list looks as it did before callers were shown.
 * A pointer symbol whose range is exactly zero reads **null**, and one whose range is everything except zero reads **non-null**.
   Whether a symbol is a pointer comes from the type Clang records for it, so a pointer that is a field of a replaced value reads this way too.
   Hovering over the word shows the analyzer's own range.
-* **Other symbols** lists symbols the analyzer has a range for that no listed variable holds, for example the value of an expression.
+* **Other symbols** lists symbols the analyzer has a range for that no listed variable of any function holds, for example the value of an expression.
 
 **Accumulated path condition** is everything the analyzer assumed from the start of the path up to that step, as a range for each symbol.
 It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
-Rows are named by the variable that held the symbol when there was one.
+Rows are named by the variable that holds the symbol at the selected step, one of the step's own function first and of the innermost caller otherwise, and else by the variable of the step's function that last held it before.
+A name from another function is written `function::name`, as a debugger writes it, when a variable of that name in another function holds something else at that step, such as `top::n` inside a function whose own `n` is 7.
 
 A symbol reads as what it stands for, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
 
@@ -130,6 +138,7 @@ A statement that Clang had to cut is not compared.
 
 The same labels show wherever a view names a symbol.
 The line picker shows each variable that differs between visits of a line as a range in words, and its tooltip adds the label of the value.
+When the variables of the line's own function are the same in two visits, the picker adds the callers' variables that differ, as `function::name`.
 The control flow graph and the analyzer states views show statements and states, not symbols, so they have none to label; the panel they open shows the labels.
 Rows of the panel are told apart by their symbol, never by their label or name, so two symbols with the same label are two rows.
 
