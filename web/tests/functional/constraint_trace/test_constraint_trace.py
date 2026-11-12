@@ -67,7 +67,8 @@ class TestConstraintTrace(unittest.TestCase):
                              'concrete_value', 'opaque_call',
                              'call_result', 'no_symbols',
                              'replaced_field', 'widened_loop',
-                             'access_path', 'several_contexts']:
+                             'access_path', 'caller_frames',
+                             'several_contexts']:
                 report_dir = os.path.join(
                     TEST_WORKSPACE, 'test_proj', run_name)
                 shutil.copytree(
@@ -549,6 +550,39 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertEqual(trace.expressions()[masked],
                          {'type': 'unsigned int'})
         self.assertNotIn(masked, trace.symbols())
+
+    def test_stored_trace_keeps_caller_variables(self):
+        """
+        Hand-derived from demo/caller-frames.c: inside `inner`, two calls
+        deep, the step's own variables are inner's, and each calling frame's
+        follow with their frame, so the three `n` stay apart. `top` leaves out
+        `g`, which `middle` shows already.
+        """
+        details = self._details('caller_frames')
+        raw = json.loads(details.constraintTrace)
+        trace = ConstraintTrace(raw)
+        index = [event.msg for event in details.pathEvents].index(
+            "Dereference of null pointer (loaded from variable 'p')")
+        step = next(step for step in raw['steps']
+                    if step['kind'] == 'event' and step['index'] == index)
+        snapshot = trace.snapshot(step['exploded_node'])
+
+        self.assertEqual([v['name'] for v in snapshot['variables']], ['h'])
+        callers = [(trace.frame(v['frame'])['function'], v['name'],
+                    v['value'] if v['kind'] == 'integer' else v['kind'])
+                   for v in snapshot['caller_variables']]
+        self.assertEqual(callers, [
+            ('middle', 'g', 'symbol'), ('middle', 'k', '7'),
+            ('middle', 'm', 'symbol'), ('middle', 'n', '6'),
+            ('top', 'm', 'symbol'), ('top', 'n', 'symbol')])
+        middle_m, top_m = (v['value'] for v in snapshot['caller_variables']
+                           if v['name'] == 'm')
+        self.assertEqual(middle_m, top_m)
+        self.assertTrue(all('smt' in v for v in snapshot['caller_variables']
+                            if v['kind'] == 'symbol'))
+        top = trace.frame(snapshot['caller_variables'][-1]['frame'])
+        self.assertNotIn('parent', top)
+        self.assertEqual(trace.symbols()[top_m]['name'], 'm')
 
     def test_stored_trace_keeps_globals_a_call_replaced(self):
         """
