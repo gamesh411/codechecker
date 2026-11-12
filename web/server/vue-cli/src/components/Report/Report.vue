@@ -640,6 +640,11 @@ const selectedConstraintStep = computed(() => {
       message: _control.message,
       symbolRanges: _control.snapshot.symbol_ranges ?? [],
       variables: _control.snapshot.variables ?? [],
+      callerVariables: _control.snapshot.caller_variables ?? [],
+      frame: constraintTrace.value.nodes[_control.node]?.frame,
+      frames: constraintTrace.value.frames,
+      file: constraintTrace.value.nodes[_control.node]?.location?.file,
+      callSiteOrder,
       pathCondition: _control.snapshot.path_condition ?? [],
       symbolNames,
       labelOf: symbolLabels(_control.node, symbolNames),
@@ -666,6 +671,15 @@ const selectedConstraintStep = computed(() => {
     message: _event.msg,
     symbolRanges: _snapshot?.symbol_ranges ?? [],
     variables: _snapshot?.variables ?? [],
+    callerVariables: _snapshot?.caller_variables ?? [],
+    frame: _traceStep
+      ? constraintTrace.value.nodes[_traceStep.exploded_node]?.frame
+      : undefined,
+    frames: constraintTrace.value.frames,
+    file: _traceStep
+      ? constraintTrace.value.nodes[_traceStep.exploded_node]?.location?.file
+      : undefined,
+    callSiteOrder,
     pathCondition: _snapshot?.path_condition ?? [],
     symbolNames,
     labelOf: symbolLabels(_traceStep?.exploded_node, symbolNames),
@@ -676,6 +690,15 @@ const selectedConstraintStep = computed(() => {
     silent: false
   };
 });
+// The Path Step nearest to the call that entered the frame at `frame`, among
+// the steps of the frame that made the call, or null.
+function callSiteOrder(frame) {
+  const _frame = constraintTrace.value.frame(frame);
+  return _frame?.call_site
+    ? constraintTrace.value.nearestStep(_frame.call_site, _frame.parent)
+    : null;
+}
+
 // What the trace says of the type of a symbol or an expression, for the
 // range words.
 function symbolType(symbol) {
@@ -1218,12 +1241,22 @@ function sameSnapshot(a, b) {
 }
 
 // Picker rows are told apart by the values that actually differ between them,
-// which is what separates one loop iteration from the next.
+// which is what separates one loop iteration from the next. Callers' variables
+// count only when the step's own ones leave two rows alike, since a call made
+// from two places usually differs in its own variables already.
 function describePickerSteps(steps) {
   const _trace = constraintTrace.value;
   const _values = steps.map(step => {
     const _label = symbolLabels(step.node, _trace.symbolNames(step.order));
-    return new Map((step.snapshot.variables ?? []).map(variable => {
+    // A caller's variable goes by its function, so that `n` of two frames
+    // stays two values.
+    const _variables = [ ...step.snapshot.variables ?? [],
+      ...(step.snapshot.caller_variables ?? []).map(variable => ({
+        ...variable,
+        name: `${_trace.frame(variable.frame)?.function ?? "function"}::` +
+          variable.name
+      })) ];
+    return new Map(_variables.map(variable => {
       const _value = variable.value;
       const _described = describeVariable(variable, step.snapshot,
         _trace.symbol(_value) ?? _trace.expressions.get(_value));
@@ -1237,10 +1270,14 @@ function describePickerSteps(steps) {
       ];
     }));
   });
-  const _names = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ]
-    .filter(name =>
-      new Set(_values.map(values => values.get(name)?.text)).size > 1)
+  const _differing = names => names.filter(name =>
+    new Set(_values.map(values => values.get(name)?.text)).size > 1)
     .sort(compareNames);
+  const _all = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ];
+  const _own = _differing(_all.filter(name => !name.includes("::")));
+  const _apart = new Set(_values.map(values => _own
+    .map(name => values.get(name)?.text).join("\n"))).size === steps.length;
+  const _names = _apart ? _own : _differing(_all);
 
   return steps.map((step, index) => {
     const _shown = _names.filter(name => _values[index].has(name));

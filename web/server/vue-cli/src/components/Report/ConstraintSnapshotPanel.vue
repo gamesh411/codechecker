@@ -105,37 +105,103 @@
               What the analyzer held at this step.
             </p>
 
-            <div v-if="rows.variables.length" class="panel-group">
+            <div v-if="variableSections.length" class="panel-group">
               <h5 class="panel-group-title text-caption">
                 Variables
               </h5>
               <div
-                v-for="row in rows.variables"
-                :key="row.key"
-                class="panel-row"
-                :class="changeClass(row.change)"
+                v-for="section in variableSections"
+                :key="section.key"
+                class="panel-frame"
               >
-                <div class="panel-name" :title="row.name">
-                  <dump-text :text="row.name" />
-                </div>
-                <div class="panel-value">
-                  <span :class="{ 'text-medium-emphasis': row.muted }">
-                    <range-text
-                      v-if="row.range"
-                      :range="row.range"
-                      :symbol="row.symbol"
-                    />
-                    <dump-text v-else :text="row.display" />
-                  </span>
-                  <change-tag :change="row.change" />
-                  <div
-                    v-if="row.symbol"
-                    class="panel-symbol"
-                    :title="row.symbol"
+                <div
+                  v-if="section.group"
+                  class="panel-frame-heading text-caption"
+                  :class="{ 'panel-frame-current': !section.caller }"
+                  :title="section.group.function"
+                >
+                  <button
+                    v-if="section.caller"
+                    type="button"
+                    class="panel-frame-toggle"
+                    :aria-expanded="section.expanded ? 'true' : 'false'"
+                    :title="section.expanded
+                      ? 'Hide the variables of this calling function'
+                      : 'Show the variables of this calling function'"
+                    @click="toggleFrame(section)"
                   >
-                    <symbol-text :symbol="row.symbol" :unless="row.name" />
-                  </div>
+                    <v-icon
+                      class="panel-frame-chevron"
+                      size="small"
+                      :icon="section.expanded
+                        ? 'mdi-chevron-down' : 'mdi-chevron-right'"
+                    />
+                    <code class="panel-frame-function">
+                      <dump-text :text="section.name" />
+                    </code>
+                  </button>
+                  <code v-else class="panel-frame-function">
+                    <dump-text :text="section.name" />
+                  </code>
+                  <span
+                    v-if="section.place"
+                    class="panel-frame-where text-medium-emphasis"
+                  >
+                    called at
+                    <button
+                      v-if="section.callOrder !== null"
+                      type="button"
+                      class="panel-label-link"
+                      title="Select the Path Step nearest to this call"
+                      @click="emit('select-step', section.callOrder)"
+                    >{{ section.place }}</button>
+                    <span v-else>{{ section.place }}</span>
+                  </span>
+                  <span
+                    v-if="section.caller && !section.expanded"
+                    class="panel-frame-count text-medium-emphasis"
+                  >
+                    {{ section.rows.length }}
+                    {{ section.rows.length === 1 ? "variable" : "variables" }}
+                  </span>
                 </div>
+                <template v-if="section.expanded">
+                  <p
+                    v-if="!section.rows.length"
+                    class="panel-frame-empty ma-0 text-caption
+                      text-medium-emphasis"
+                  >
+                    No variable of this function is known here.
+                  </p>
+                  <div
+                    v-for="row in section.rows"
+                    :key="row.key"
+                    class="panel-row"
+                    :class="changeClass(row.change)"
+                  >
+                    <div class="panel-name" :title="row.name">
+                      <dump-text :text="row.name" />
+                    </div>
+                    <div class="panel-value">
+                      <span :class="{ 'text-medium-emphasis': row.muted }">
+                        <range-text
+                          v-if="row.range"
+                          :range="row.range"
+                          :symbol="row.symbol"
+                        />
+                        <dump-text v-else :text="row.display" />
+                      </span>
+                      <change-tag :change="row.change" />
+                      <div
+                        v-if="row.symbol"
+                        class="panel-symbol"
+                        :title="row.symbol"
+                      >
+                        <symbol-text :symbol="row.symbol" :unless="row.name" />
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
 
@@ -160,7 +226,7 @@
             </div>
 
             <p
-              v-if="!rows.variables.length && !rows.others.length"
+              v-if="!variableSections.length && !rows.others.length"
               class="panel-empty ma-0 text-body-2 text-medium-emphasis"
             >
               No variables or symbol ranges are known at this step.
@@ -239,13 +305,13 @@
 </template>
 
 <script setup>
-import { computed, h, ref } from "vue";
+import { computed, h, reactive, ref } from "vue";
 import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
 import { labelPlace, readableRange, shortenPaths } from "./ConstraintTrace";
-import { snapshotRows } from "./SnapshotRows";
+import { EXPANDED_CALLERS, snapshotRows } from "./SnapshotRows";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
@@ -369,10 +435,11 @@ function sameCallTag(others) {
 // what it means and the dump, which the row's title also keeps. The label's
 // line selects the Path Step nearest to the statement or loop the value came
 // from. A label that only repeats `unless`, such as a parameter's name beside
-// the parameter, shows the dump.
+// the parameter, or `top::n` beside top's `n`, shows the dump.
 function SymbolText({ symbol, unless }) {
   const _label = props.step.labelOf?.(symbol);
-  if (!_label || unless !== undefined && _label.text === unless) {
+  if (!_label || unless !== undefined && (_label.text === unless ||
+      unless.endsWith(`::${_label.text}`))) {
     return h(DumpText, { text: symbol });
   }
 
@@ -406,6 +473,49 @@ function SymbolText({ symbol, unless }) {
 SymbolText.props = [ "symbol", "unless" ];
 
 const rows = computed(() => snapshotRows(props.step));
+
+// Callers a reader opened or closed, by frame, which outlives the step: the
+// next step in the same call shows them the same way.
+const frameOpen = reactive(new Map());
+
+// The groups of the Variables section. Without callers it is one group with
+// no heading, as before there were any. With them, the step's own frame comes
+// first and stays open, and each caller follows, open unless there are more
+// than a few or the reader closed it.
+const variableSections = computed(() => {
+  const { variables, current, callers } = rows.value;
+  if (!callers.length) {
+    return variables.length
+      ? [ { key: "own", rows: variables, expanded: true } ] : [];
+  }
+  const _place = group => group.callSite && labelPlace({
+    location: group.callSite,
+    otherFile: group.callSite.file !== props.step.file
+  });
+  const _section = (group, sectionRows, caller) => ({
+    key: group.key,
+    group,
+    // Most of a long C++ name is the anonymous namespace it is in; the
+    // heading's title keeps it.
+    name: group.function.replaceAll("(anonymous namespace)::", ""),
+    rows: sectionRows,
+    caller,
+    expanded: !caller ||
+      (frameOpen.get(group.frame) ?? callers.length <= EXPANDED_CALLERS),
+    place: _place(group),
+    callOrder: group.callSite
+      ? props.step.callSiteOrder?.(group.frame) ?? null : null
+  });
+  return [
+    _section(current ?? { key: "own", function: "function" }, variables,
+      false),
+    ...callers.map(group => _section(group, group.rows, true))
+  ];
+});
+
+function toggleFrame(section) {
+  frameOpen.set(section.group.frame, !section.expanded);
+}
 </script>
 
 <style lang="scss">
@@ -470,6 +580,77 @@ const rows = computed(() => snapshotRows(props.step));
     margin-bottom: 2px;
     font-weight: 500;
     color: rgba(0, 0, 0, 0.6);
+  }
+
+  // A frame's heading is a caption of the rows under it. A long C++ name
+  // wraps inside it rather than past the panel, and the call site keeps its
+  // line whole.
+  .panel-frame + .panel-frame {
+    margin-top: 6px;
+  }
+
+  .panel-frame-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 6px;
+    padding: 2px 0;
+    border-bottom: 1px solid #e3e7ec;
+    color: rgba(0, 0, 0, 0.6);
+    line-height: 1.4;
+  }
+
+  // The own frame has no chevron, so its name lines up with the callers'.
+  .panel-frame-current {
+    padding-left: 20px;
+  }
+
+  .panel-frame-toggle {
+    display: inline-flex;
+    align-items: baseline;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid #1f5fae;
+      outline-offset: 1px;
+    }
+  }
+
+  // On the first line of a name that wraps.
+  .panel-frame-chevron {
+    flex: 0 0 auto;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+
+  .panel-frame-function {
+    min-width: 0;
+    padding: 0;
+    background: none;
+    color: rgba(0, 0, 0, 0.87);
+    font-family: monospace;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .panel-frame-where,
+  .panel-frame-count {
+    white-space: nowrap;
+  }
+
+  .panel-frame-count {
+    margin-left: auto;
+  }
+
+  .panel-frame-empty {
+    padding: 3px 0 3px 20px;
+    line-height: 1.35;
   }
 
   .panel-accumulated {

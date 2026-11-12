@@ -69,6 +69,7 @@ describe("ConstraintTrace", () => {
       ],
       smt_declarations: [ STRINGS[6], STRINGS[6] ],
       smt_assertions: [ STRINGS[5], STRINGS[11] ],
+      caller_variables: [],
       exploded_node: 1
     });
     expect(trace.snapshot(0).cfg_position).toEqual(
@@ -983,5 +984,102 @@ describe("a location whose file is not a path", () => {
     });
     expect(trace.nearestStep({ file: 0, line: 12, col: 1 }, 0)).toBe(2);
     expect(trace.nearestStep({ file: 1, line: 12, col: 1 }, 0)).toBeNull();
+  });
+});
+
+// A bug two calls deep, `top` calling `middle` calling `inner`, where each
+// frame has an `n`: top's holds its initial value, middle's 6, inner's 7.
+// `m` is passed down, so top's and middle's hold one symbol.
+const CALLER_STRINGS = [
+  "reg_$0<int n>", "n", "symbol", "7", "integer", "{ [2, 2] }",
+  "reg_$1<int m>", "m", "{ [6, 2147483647] }", "6", "8",
+  "(reg_$0<int n>) + 1"
+];
+const CALLERS = {
+  version: 2,
+  strings: CALLER_STRINGS,
+  steps: [
+    { kind: "event", index: 0, order: 1, exploded_node: 0 },
+    { kind: "event", index: 1, order: 2, exploded_node: 1 },
+    { kind: "event", index: 2, order: 3, exploded_node: 2 },
+    { kind: "event", index: 3, order: 4, exploded_node: 3 }
+  ],
+  exploded_nodes: [
+    {
+      frame: 0,
+      variables: { insert: [ [ 0, 7, 6, 2 ], [ 1, 1, 0, 2 ] ] },
+      symbol_ranges: { insert: [ [ 0, 0, 5 ], [ 1, 6, 8 ] ] },
+      path_condition: { insert: [ [ 0, 0, 5 ], [ 1, 6, 8 ] ] }
+    },
+    {
+      frame: 2,
+      variables: { remove: [ 0, 1 ], insert: [ [ 0, 1, 3, 4 ] ] },
+      caller_variables: { insert: [
+        [ 0, 1, 7, 6, 2 ], [ 1, 1, 1, 9, 4 ],
+        [ 2, 0, 7, 6, 2 ], [ 3, 0, 1, 0, 2 ] ] }
+    },
+    { frame: 2, caller_variables: { replace: [ [ 1, 1, 1, 10, 4 ] ] } },
+    { frame: 2 }
+  ],
+  stack_frames: [
+    { function: "top" },
+    { function: "middle", parent: 0,
+      call_site: { line: 19, col: 5, file: "/src/a.c" } },
+    { function: "inner", parent: 1,
+      call_site: { line: 13, col: 5, file: "/src/a.c" } }
+  ]
+};
+
+describe("variables of calling frames", () => {
+  test("read back with their frame, innermost first", () => {
+    const trace = new ConstraintTrace(CALLERS);
+    expect(trace.snapshot(1).variables).toEqual(
+      [ { name: "n", value: "7", kind: "integer" } ]);
+    expect(trace.snapshot(1).caller_variables).toEqual([
+      { frame: 1, name: "m", value: "reg_$1<int m>", kind: "symbol" },
+      { frame: 1, name: "n", value: "6", kind: "integer" },
+      { frame: 0, name: "m", value: "reg_$1<int m>", kind: "symbol" },
+      { frame: 0, name: "n", value: "reg_$0<int n>", kind: "symbol" }
+    ]);
+    expect(trace.snapshot(2).caller_variables[1])
+      .toEqual({ frame: 1, name: "n", value: "8", kind: "integer" });
+    expect(trace.snapshot(0).caller_variables).toEqual([]);
+    expect(trace.frame(1).function).toBe("middle");
+  });
+
+  test("a caller's variable alone tells two snapshots apart", () => {
+    const trace = new ConstraintTrace(CALLERS);
+    expect(trace.sameSnapshot(1, 2)).toBe(false);
+    expect(trace.sameSnapshot(2, 3)).toBe(true);
+  });
+
+  test("a symbol takes the name the innermost caller gives it", () => {
+    const trace = new ConstraintTrace(CALLERS);
+    expect(trace.symbolNames(1)).toEqual(new Map([
+      [ "reg_$1<int m>", "m" ], [ "reg_$0<int n>", "n" ] ]));
+    // Inside `inner`, `n` is inner's 7, so top's `n` says whose it is, while
+    // `m` holds one value in both frames that have it.
+    expect(trace.symbolNames(2)).toEqual(new Map([
+      [ "reg_$1<int m>", "m" ], [ "reg_$0<int n>", "top::n" ] ]));
+  });
+
+  test("a region value inside an expression goes by that name", () => {
+    const trace = new ConstraintTrace(CALLERS);
+    const _names = trace.symbolNames(2);
+    expect(expressionLabel("(reg_$0<int n>) + 1", 2,
+      dump => trace.symbol(dump), dump => _names.get(dump)).text)
+      .toBe("top::n + 1");
+  });
+
+  test("a name of the step's own frame needs no function", () => {
+    const trace = new ConstraintTrace({
+      ...CALLERS,
+      exploded_nodes: CALLERS.exploded_nodes.map((node, index) =>
+        index === 1
+          ? { ...node, variables: { remove: [ 0 ],
+            insert: [ [ 0, 1, 0, 2 ] ] } }
+          : node)
+    });
+    expect(trace.symbolNames(2).get("reg_$0<int n>")).toBe("n");
   });
 });

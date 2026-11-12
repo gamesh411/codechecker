@@ -11,16 +11,23 @@
 // A trace may also have a table of the atomic symbols its snapshots mention,
 // `symbols`, keyed by each symbol's dump, with the origin Clang recorded for a
 // conjured symbol. A trace from a Clang before the table has no entries.
+//
+// A node's `variables` are those of its own stack frame. A node inside an
+// inlined call also has `caller_variables`, the variables of every frame above
+// it, innermost first, each with its frame as an index into `stack_frames`.
 
 export const TRACE_VERSION = 2;
 
 // The snapshot lists, in the order a node lists their changes.
 const LISTS = [
-  "symbol_ranges", "variables", "path_condition", "smt_declarations"
+  "symbol_ranges", "variables", "path_condition", "smt_declarations",
+  "caller_variables"
 ];
 
 // What two steps on one line are compared by, to show them as one choice.
-const SHOWN_LISTS = [ "symbol_ranges", "variables", "path_condition" ];
+const SHOWN_LISTS = [
+  "symbol_ranges", "variables", "path_condition", "caller_variables"
+];
 
 // The keys of a symbol's origin, and of the symbol itself, that name a
 // string.
@@ -260,9 +267,15 @@ export class ConstraintTrace {
     return _lists;
   }
 
+  // A list entry as a snapshot shows it. A variable is `name`, `value` and
+  // `kind`, with `smt` and `smt_signed` when its symbol has a term, and a
+  // caller's variable also has its `frame`, an index into `stack_frames`.
   entry(field, raw) {
     const _s = this.strings;
     if (field === "smt_declarations") return _s[raw[0]];
+    if (field === "caller_variables") {
+      return { frame: raw[0], ...this.entry("variables", raw.slice(1)) };
+    }
     if (field === "variables") {
       const _variable = {
         name: _s[raw[0]], value: _s[raw[1]], kind: _s[raw[2]]
@@ -277,7 +290,9 @@ export class ConstraintTrace {
   }
 
   // The whole Constraint Snapshot of a node, with the keys a step showed
-  // before version 2. The same object every time, and never changed.
+  // before version 2, and `caller_variables`, which is empty in the analyzed
+  // function and for a trace from a Clang before the list. The same object
+  // every time, and never changed.
   snapshot(node) {
     let _snapshot = this._snapshots.get(node);
     if (_snapshot) return _snapshot;
@@ -429,22 +444,76 @@ export class ConstraintTrace {
     return _silent;
   }
 
-  // For each symbol, the name of the variable that last held it among the
-  // steps up to `order`, so that the path condition can name a symbol whose
-  // variable is gone by then. Of several variables holding it at one step,
-  // the last by name wins.
-  symbolNames(order) {
-    const _names = new Map();
-    for (const [ stepOrder, symbol, name ] of this.symbolNameLog()) {
-      if (stepOrder > order) break;
-      _names.set(symbol, name);
-    }
-    return _names;
+  // The stack frame at an index of `stack_frames`, as { function, parent,
+  // call_site }, or undefined.
+  frame(index) {
+    return this.frames[index];
   }
 
-  // The changes of that map step by step in Bug Path order, built once:
-  // a step only changes it for the symbols its variables hold, and only where
-  // the name differs from what the map held.
+  // For each symbol, the name of a variable that holds it at the step at
+  // `order`: one of the step's own frame, else one of the innermost caller
+  // that has one. A symbol no variable holds there keeps the name of the
+  // variable of the step's frame that last held it among the steps before, so
+  // that the path condition can name a symbol whose variable is gone by then.
+  // Of several variables of one frame holding it, the last by name wins.
+  // A name from another frame than the step's reads `function::name`, as a
+  // debugger writes it, when a variable of that name in another frame holds
+  // something else at the step, since `n` alone would then read as the wrong
+  // one.
+  symbolNames(order) {
+    // By string index, as the raw lists have them: { name, frame }.
+    const _names = new Map();
+    for (const [ stepOrder, symbol, name, frame ] of this.symbolNameLog()) {
+      if (stepOrder > order) break;
+      _names.set(symbol, { name, frame });
+    }
+
+    const _step = this.orderedSteps().find(step => step.order === order);
+    if (_step) {
+      const _lists = this.rawLists(_step.exploded_node);
+      const _own = this.nodes[_step.exploded_node].frame;
+      const _symbolKind = this.strings.indexOf("symbol");
+      // What every variable the step shows holds, by name.
+      const _shown = new Map();
+      const _show = (name, value) => {
+        if (!_shown.has(name)) _shown.set(name, new Set());
+        _shown.get(name).add(value);
+      };
+      const _ownSymbols = new Set();
+      _lists.variables.forEach(raw => {
+        _show(raw[0], raw[1]);
+        if (raw[2] === _symbolKind) _ownSymbols.add(raw[1]);
+      });
+      _lists.caller_variables.forEach(raw => _show(raw[1], raw[2]));
+      // Outermost first, so that the innermost caller's name is the one kept.
+      for (let _i = _lists.caller_variables.length - 1; _i >= 0; --_i) {
+        const [ frame, name, value, kind ] = _lists.caller_variables[_i];
+        if (kind === _symbolKind && !_ownSymbols.has(value)) {
+          _names.set(value, { name, frame });
+        }
+      }
+      _names.forEach((named, symbol) => {
+        const _held = _shown.get(named.name);
+        const _clash = named.frame !== _own && _held &&
+          [ ..._held ].some(value => value !== symbol);
+        const _function = this.frames[named.frame]?.function;
+        named.qualified = _clash && _function ? _function : null;
+      });
+    }
+
+    const _result = new Map();
+    _names.forEach(({ name, qualified }, symbol) => {
+      const _name = this.strings[name];
+      _result.set(this.strings[symbol],
+        qualified ? `${qualified}::${_name}` : _name);
+    });
+    return _result;
+  }
+
+  // The changes of the names the steps' own frames give, step by step in Bug
+  // Path order, as [ order, symbol, name, frame ] with string indices, built
+  // once: a step only changes them for the symbols its variables hold, and
+  // only where the name or its frame differs from what was held.
   symbolNameLog() {
     if (this._symbolNameLog) return this._symbolNameLog;
 
@@ -452,18 +521,20 @@ export class ConstraintTrace {
     const _current = new Map();
     const _log = [];
     let _previousNode = null;
-    [ ...this.steps ].sort((a, b) => a.order - b.order).forEach(step => {
+    this.orderedSteps().forEach(step => {
       // Steps on one node set the same names, so only the first counts.
       if (step.exploded_node === _previousNode) return;
       _previousNode = step.exploded_node;
+      const _frame = this.nodes[step.exploded_node].frame;
       const _held = new Map();
       this.rawLists(step.exploded_node).variables.forEach(raw => {
         if (raw[2] === _symbolKind) _held.set(raw[1], raw[0]);
       });
       _held.forEach((name, symbol) => {
-        if (_current.get(symbol) === name) return;
-        _current.set(symbol, name);
-        _log.push([ step.order, this.strings[symbol], this.strings[name] ]);
+        const _was = _current.get(symbol);
+        if (_was?.name === name && _was.frame === _frame) return;
+        _current.set(symbol, { name, frame: _frame });
+        _log.push([ step.order, symbol, name, _frame ]);
       });
     });
     this._symbolNameLog = _log;

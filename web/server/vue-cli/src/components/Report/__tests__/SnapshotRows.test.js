@@ -93,4 +93,54 @@ describe("rows of the snapshot panel", () => {
     expect(rows.others[0].change).toBe("narrowed");
     expect(rows.accumulated[0].change).toBe("added");
   });
+
+  test("each calling frame is a group of its own, innermost first", () => {
+    const rows = snapshotRows(stepWith({
+      frame: 2,
+      frames: [
+        { function: "top" },
+        { function: "middle", parent: 0, call_site: { line: 19 } },
+        { function: "inner", parent: 1, call_site: { line: 13 } }
+      ],
+      variables: [ { name: "n", value: "7", kind: "integer" } ],
+      callerVariables: [
+        { frame: 1, name: "n", value: "6", kind: "integer" },
+        { frame: 1, name: "m", value: FIRST, kind: "symbol" },
+        { frame: 0, name: "n", value: SECOND, kind: "symbol" }
+      ],
+      symbolRanges: [
+        { symbol: FIRST, range: "{ [6, 9] }" },
+        { symbol: SECOND, range: "{ [2, 2] }" }
+      ],
+      changes: {
+        symbol_ranges: new Map([ [ SECOND, "added" ] ]),
+        path_condition: new Map()
+      }
+    }));
+    expect(rows.current).toMatchObject(
+      { function: "inner", callSite: { line: 13 }, parent: 1 });
+    expect(rows.callers.map(group => group.function))
+      .toEqual([ "middle", "top" ]);
+    expect(rows.callers[0].callSite).toEqual({ line: 19 });
+    expect(rows.callers[1].callSite).toBeNull();
+    expect(rows.callers[0].rows.map(row => row.name)).toEqual([ "m", "n" ]);
+    expect(rows.callers[0].rows[0].range).toBe("{ [6, 9] }");
+    expect(rows.callers[1].rows[0]).toMatchObject(
+      { name: "n", symbol: SECOND, change: "added" });
+    // Three `n` rows, three keys.
+    const _keys = [ rows.variables, ...rows.callers.map(group => group.rows) ]
+      .flat().filter(row => row.name === "n").map(row => row.key);
+    expect(new Set(_keys).size).toBe(3);
+    // What a caller's variable holds is not an other symbol.
+    expect(rows.others).toEqual([]);
+  });
+
+  test("a step without callers has none", () => {
+    const rows = snapshotRows(stepWith({
+      variables: [ { name: "x", value: "5", kind: "integer" } ]
+    }));
+    expect(rows.callers).toEqual([]);
+    expect(rows.current).toBeNull();
+    expect(rows.variables.map(row => row.key)).toEqual([ "variable x" ]);
+  });
 });
