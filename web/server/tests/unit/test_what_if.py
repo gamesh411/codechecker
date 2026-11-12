@@ -553,3 +553,228 @@ class PreparedPathTest(unittest.TestCase):
 
         self.assertEqual(list(what_if._prepared_paths),
                          [*range(2, size), 0, size])
+
+
+def _frames_trace(nodes, frames, symbols=None):
+    """ The stored trace of `nodes`, whole snapshots with their `frame`,
+    each node one Path Step whose order is its index plus one. """
+    trace = constraint_trace.encode(
+        nodes, [{'kind': 'event', 'index': index, 'order': index + 1,
+                 'exploded_node': index} for index in range(len(nodes))],
+        symbols)
+    trace['stack_frames'] = frames
+    return json.dumps(trace)
+
+
+def _node(frame, variables, callers, declarations, assertions):
+    return {'frame': frame, 'symbol_ranges': [], 'variables': variables,
+            'caller_variables': callers,
+            'path_condition': [{'symbol': line, 'range': ''}
+                               for line in assertions],
+            'smt_declarations': declarations, 'smt_assertions': assertions}
+
+
+def _integer(name, value):
+    return {'name': name, 'value': str(value), 'kind': 'integer'}
+
+
+def _caller(frame, variable):
+    return {'frame': frame, **variable}
+
+
+TOP_N, TOP_M = _symbol('n', 'reg_$1'), _symbol('m', 'reg_$2')
+N_IS_TWO = '(assert (= reg_$1 #x00000002))'
+
+# top(n, m) calls middle(n * 3, m), which calls inner(7): each has an `n`,
+# and middle and top hold the same `m`. top's `n` is assumed 2.
+CALLERS = _frames_trace([
+    _node(0, [TOP_N, TOP_M], [], [DECLARE_1, DECLARE_2], [N_IS_TWO]),
+    _node(1, [_integer('n', 6), TOP_M],
+          [_caller(0, TOP_N), _caller(0, TOP_M)],
+          [DECLARE_1, DECLARE_2], [N_IS_TWO]),
+    _node(2, [_integer('n', 7)],
+          [_caller(1, _integer('n', 6)), _caller(1, TOP_M),
+           _caller(0, TOP_N), _caller(0, TOP_M)],
+          [DECLARE_1, DECLARE_2], [N_IS_TWO]),
+], [{'function': 'top'},
+    {'function': '(anonymous namespace)::middle', 'parent': 0,
+     'call_site': {'file': 'f.c', 'line': 20, 'col': 3}},
+    {'function': 'inner', 'parent': 1,
+     'call_site': {'file': 'f.c', 'line': 12, 'col': 3}}])
+
+
+class CallerVariablesTest(unittest.TestCase):
+
+    def test_caller_variable_is_written_with_its_function(self):
+        self.assertEqual(check(CALLERS, (3, 'top::n == 2')).verdict,
+                         PathVerdict.FEASIBLE)
+        self.assertEqual(check(CALLERS, (3, 'top::n == 3')).verdict,
+                         PathVerdict.INFEASIBLE)
+        self.assertEqual(check(CALLERS, (3, 'middle::n != 6')).verdict,
+                         PathVerdict.INFEASIBLE)
+        self.assertEqual(check(CALLERS, (3, 'inner::n == 7')).verdict,
+                         PathVerdict.FEASIBLE)
+
+    def test_name_held_in_several_frames_is_unknown(self):
+        result = check(CALLERS, (3, 'n == 7'))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(
+            result.reason,
+            '`n` names 3 values at this Path Step: `inner::n`, `middle::n` '
+            'and `top::n`. Write the one you mean.')
+        self.assertEqual(result.reasonConstraintIndex, 0)
+
+    def test_one_value_in_several_frames_is_one_value(self):
+        """ middle got top's `m` and holds the same symbol. """
+        self.assertEqual(check(CALLERS, (3, 'm > 5')).verdict,
+                         PathVerdict.FEASIBLE)
+
+    def test_caller_variable_alone_needs_no_function(self):
+        self.assertEqual(check(CALLERS, (1, 'n == 3')).verdict,
+                         PathVerdict.INFEASIBLE)
+
+    def test_function_not_on_the_stack_has_no_value(self):
+        result = check(CALLERS, (1, 'inner::n == 7'))
+        self.assertEqual(result.reason,
+                         '`inner::n` has no tracked value at this Path Step.')
+
+    def test_holds_throughout_needs_the_function_when_frames_differ(self):
+        result = check(CALLERS, (1, 'n == 2', True))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(
+            result.reason,
+            '`n` names 2 values at one Path Step of this path: `middle::n` '
+            'and `top::n`. Write the one you mean.')
+        self.assertEqual(check(CALLERS, (1, 'top::n == 3', True)).verdict,
+                         PathVerdict.INFEASIBLE)
+
+    def test_names_offer_every_value_once_or_by_function(self):
+        self.assertEqual(
+            [name for name, _ in what_if.constrainable_names(
+                what_if.PreparedPath(CALLERS), 3)],
+            ['inner::n', 'm', 'middle::m', 'middle::n', 'top::m', 'top::n'])
+        self.assertEqual(
+            what_if.constrainable_names(what_if.PreparedPath(CALLERS), 1),
+            [('m', ['symbol:reg_$2<int m>']),
+             ('n', ['symbol:reg_$1<int n>']),
+             ('top::m', ['symbol:reg_$2<int m>']),
+             ('top::n', ['symbol:reg_$1<int n>'])])
+
+    def test_names_throughout_leave_out_names_of_several_frames(self):
+        names = [name for name, _ in what_if.constrainable_names(
+            what_if.PreparedPath(CALLERS), 1, True)]
+        self.assertEqual(names, ['m', 'top::m', 'top::n'])
+
+    def test_recursive_call_says_where_each_was_called(self):
+        trace = _frames_trace([
+            _node(1, [_integer('n', 1)], [_caller(0, _integer('n', 2))],
+                  [], [])],
+            [{'function': 'f'},
+             {'function': 'f', 'parent': 0,
+              'call_site': {'file': 'f.c', 'line': 9, 'col': 3}}])
+        self.assertEqual(
+            check(trace, (1, 'f::n == 1')).reason,
+            '`f::n` names 2 values at this Path Step: `f::n` called at line '
+            '9 and `f::n`. Write the one you mean.')
+
+    def test_function_name_the_syntax_cannot_read_is_not_offered(self):
+        trace = _frames_trace([_node(0, [_integer('n', 1)], [], [], [])],
+                              [{'function': 'max<int>'}])
+        self.assertEqual(
+            what_if.constrainable_names(what_if.PreparedPath(trace), 1),
+            [('n', ['integer:1'])])
+
+
+LEN_IS_ZERO = '(assert (= reg_$2 #x00000000))'
+DECLARE_DERIVED = '(declare-fun derived_$4 () (_ BitVec 32))'
+NEW_LEN_NOT_ZERO = '(assert (not (= derived_$4 #x00000000)))'
+CONJ = 'conj_$3{int, LC1, S1, #1}'
+P = _symbol('p', 'reg_$1', False)
+
+# `p->len` is assumed 0, then `refresh(p)` replaces it with a value assumed
+# not 0. `k` is a variable and also memory the table names, holding another
+# value. There are no stack frames, as before the analyzer wrote them.
+MEMORY = _frames_trace([
+    _node(None, [P, _integer('k', 3)], [],
+          [DECLARE_1, DECLARE_2], [LEN_IS_ZERO]),
+    _node(None, [P, _integer('k', 3)], [],
+          [DECLARE_1, DECLARE_2, DECLARE_DERIVED],
+          [LEN_IS_ZERO, NEW_LEN_NOT_ZERO]),
+], [], {
+    'reg_$1<int * p>': {'kind': 'region_value', 'name': 'p',
+                        'smt': 'reg_$1', 'smt_signed': False},
+    'reg_$2<int Element{SymRegion{reg_$1<int * p>},0 S64b,int}.len>': {
+        'kind': 'region_value', 'name': 'p->len', 'smt': 'reg_$2',
+        'smt_signed': True},
+    CONJ: {'kind': 'conjured', 'smt': 'conj_$3', 'smt_signed': True,
+           'origin': {'reason': 'invalidation', 'statement': 'refresh(p)',
+                      'function': 'f',
+                      'location': {'file': 'f.c', 'line': 5, 'col': 3}}},
+    'derived_$4{conj_$3{int, LC1, S1, #1},len}': {
+        'kind': 'derived', 'parent': CONJ, 'region': 'p->len',
+        'smt': 'derived_$4', 'smt_signed': True},
+    'reg_$5<int k>': {'kind': 'region_value', 'name': 'k',
+                      'smt': 'reg_$5', 'smt_signed': True},
+    'reg_$6<float x>': {'kind': 'region_value', 'name': 'x'}})
+
+
+class AccessPathTest(unittest.TestCase):
+
+    def test_access_path_reads_as_one_name(self):
+        for text, name in [('p->len == 0', 'p->len'),
+                           ('*p != null', '*p'),
+                           ('a.b[2]->c >= -1', 'a.b[2]->c'),
+                           ('Op.Node->ValueList[Op.ResNo].V.SimpleTy==0',
+                            'Op.Node->ValueList[Op.ResNo].V.SimpleTy'),
+                           ('top::n<3', 'top::n'),
+                           ('x->y>3', 'x->y')]:
+            self.assertEqual(what_if.parse_constraint(text)[0].variable,
+                             name, text)
+
+    def test_memory_name_resolves_to_its_value(self):
+        self.assertEqual(check(MEMORY, (1, 'p->len == 0')).verdict,
+                         PathVerdict.FEASIBLE)
+        self.assertEqual(check(MEMORY, (1, 'p->len != 0')).verdict,
+                         PathVerdict.INFEASIBLE)
+
+    def test_memory_with_several_values_is_unknown(self):
+        result = check(MEMORY, (2, 'p->len == 0'))
+        self.assertEqual(result.verdict, PathVerdict.UNKNOWN)
+        self.assertEqual(
+            result.reason,
+            '`p->len` names 2 values at this Path Step: the one before the '
+            'path changed it; and the one after `refresh(p)` may have '
+            'changed it, line 5. Holds throughout the path constrains all of '
+            'them.')
+
+    def test_holds_throughout_constrains_every_value_of_memory(self):
+        result = check(MEMORY, (1, 'p->len == 0', True))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertEqual(result.firstDeadStep, 2)
+
+    def test_variable_hides_memory_of_its_name(self):
+        self.assertEqual(check(MEMORY, (1, 'k == 3')).verdict,
+                         PathVerdict.FEASIBLE)
+
+    def test_memory_without_a_solver_term_has_no_value(self):
+        self.assertIn('no tracked value', check(MEMORY, (1, 'x == 0')).reason)
+
+    def test_names_offer_memory_the_step_declares(self):
+        path = what_if.PreparedPath(MEMORY)
+        self.assertEqual([name for name, _ in
+                          what_if.constrainable_names(path, 1)],
+                         ['k', 'p', 'p->len'])
+        self.assertEqual([name for name, _ in
+                          what_if.constrainable_names(path, 2)], ['k', 'p'])
+        self.assertEqual(what_if.constrainable_names(path, 2, True)[2],
+                         ('p->len', [
+                             'symbol:derived_$4{conj_$3{int, LC1, S1, #1},'
+                             'len}',
+                             'symbol:reg_$2<int Element{SymRegion{reg_$1<int'
+                             ' * p>},0 S64b,int}.len>']))
+
+    def test_no_names_without_solver_input(self):
+        trace = json.loads(MEMORY)
+        del trace['smtlib']
+        self.assertEqual(what_if.constrainable_names(
+            what_if.PreparedPath(json.dumps(trace)), 1), [])

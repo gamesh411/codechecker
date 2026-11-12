@@ -71,7 +71,8 @@ class _Unanswerable(Exception):
 
 @dataclass(frozen=True)
 class Term:
-    """ `variable op value`, where a `null` value is 0. """
+    """ `variable op value`, where a `null` value is 0. `variable` is any
+    name of the step, as `_Path.values` resolves it. """
     variable: str
     op: str
     value: int
@@ -91,8 +92,19 @@ class _Token:
     offset: int
 
 
+# A name is a variable, optionally after the function whose variable it is,
+# as in `top::n`, or an access path as the panel names memory: identifiers
+# joined by `.` and `->`, after any `*`, with subscripts that are an integer
+# or a path themselves, as in `Op.Node->ValueList[Op.ResNo].V.SimpleTy`. It
+# is matched as text against the names of the step, never read as C.
+_IDENTIFIER = r'[A-Za-z_]\w*'
+_MEMBERS = rf'(?:(?:\.|->){_IDENTIFIER})'
+NAME = (rf'\**{_IDENTIFIER}(?:::{_IDENTIFIER})*'
+        rf'(?:{_MEMBERS}|\[(?:\d+|{_IDENTIFIER}{_MEMBERS}*)\])*')
+_NAME = re.compile(NAME)
+
 _TOKEN = re.compile(
-    r'\s*(?:(?P<number>-?\d+)|(?P<name>[A-Za-z_]\w*)|(?P<and>&&)'
+    rf'\s*(?:(?P<number>-?\d+)|(?P<name>{NAME})|(?P<and>&&)'
     r'|(?P<op>==|!=|<=|>=|<|>)|(?P<other>\S))')
 
 OPERATORS = ('==', '!=', '<', '<=', '>', '>=')
@@ -395,8 +407,54 @@ def _first_dead_step(path: '_Path',
     return path.steps[dead]['order'], dead - alive == 1 and not gave_up
 
 
+def constrainable_names(prepared: PreparedPath, order: int,
+                        throughout: bool = False) -> list[tuple[str, list]]:
+    """
+    Every name a What-If Constraint anchored at Path Step `order` can be
+    written on, as `_Path.names` gives them, or none for a path that cannot
+    be checked. The report page offers exactly these, which its tests compare
+    against.
+    """
+    if prepared.unchecked_reason or order not in prepared.path.by_order:
+        return []
+    return prepared.path.names(prepared.path.by_order[order], throughout)
+
+
 _DECLARED = re.compile(r'\(declare-fun\s+(\S+)')
 _SMT_SYMBOL = re.compile(r'[^\s()]+')
+
+
+def function_name(function: str) -> str:
+    """ A function as the report page writes it, also before `::` in a
+    name: most of a long C++ name is the anonymous namespace it is in. """
+    return function.replace('(anonymous namespace)::', '')
+
+
+@dataclass(frozen=True, eq=False)
+class _Held:
+    """
+    A value at a Path Step, as a variable entry has it (`kind`, `value`, and
+    `smt` and `smt_signed` for a symbol with a term), and what holds it: a
+    variable of the stack frame `frame`, written `spelling`, or memory that
+    the symbol table names, whose `symbol` entry it is.
+    """
+    value: dict
+    spelling: str
+    frame: int | None = None
+    symbol: dict | None = None
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return self.value['kind'], self.value['value']
+
+
+def _listing(items: list[str], separator: str = ",") -> str:
+    """ `a, b and c`, or with another separator `a; b; and c`, which keeps
+    items that have commas of their own apart. """
+    if len(items) == 1:
+        return items[0]
+    last = " and " if separator == "," else f"{separator} and "
+    return f"{separator} ".join(items[:-1]) + last + items[-1]
 
 
 class _Path:
@@ -407,6 +465,12 @@ class _Path:
     A step shows the snapshot of its analyzer node, and each value of the
     trace is kept once, with the span of nodes it holds for, so a long path
     costs what its trace does rather than its steps times their snapshots.
+
+    A name stands at a step for what the panel shows under it there: the
+    variable of that name in the step's own frame and in every calling frame,
+    each also written `function::name`, or else the values whose memory the
+    symbol table names so, with a solver term the step declares. A variable's
+    name hides memory of the same name, which is what the panel does too.
     """
 
     def __init__(self, trace: ConstraintTrace):
@@ -421,11 +485,17 @@ class _Path:
         self.by_order = {step['order']: index
                          for index, step in enumerate(self.steps)}
 
-        self._variables: dict[str, list] = {}
-        for life in trace.lifetimes('variables'):
-            variable = trace.entry('variables', life.entry)
-            self._variables.setdefault(variable['name'], []).append(
-                (variable, life.start, life.end))
+        self._node_frames = [node.get('frame') for node in trace.nodes]
+        self._frames = trace.trace.get('stack_frames') or []
+        # An own variable's frame is its node's, which a lifetime can span
+        # several of, so it is None here and told per node.
+        self._lives = [(trace.entry('variables', life.entry), None,
+                        life.start, life.end)
+                       for life in trace.lifetimes('variables')]
+        for life in trace.lifetimes('caller_variables'):
+            variable = trace.entry('caller_variables', life.entry)
+            self._lives.append((variable, variable['frame'], life.start,
+                                life.end))
         self._path_condition = [
             (trace.assertion(life.entry), life.start, life.end)
             for life in trace.lifetimes('path_condition')] \
@@ -444,6 +514,28 @@ class _Path:
             if match:
                 self._declared.setdefault(match.group(1), []).append(
                     (life.start, life.end))
+
+        # The memory names: a region value's access path, and that of a part
+        # of a value a call or a loop replaced.
+        self._memory = []
+        for dump, symbol in trace.symbols().items():
+            name = symbol.get('name') if symbol['kind'] == 'region_value' \
+                else symbol.get('region') if symbol['kind'] == 'derived' \
+                else None
+            if name and 'smt' in symbol:
+                self._memory.append(_Held(
+                    {'name': name, 'value': dump, 'kind': 'symbol',
+                     'smt': symbol['smt'], 'smt_signed': symbol['smt_signed']},
+                    name, None, symbol))
+        # In the order the path meets them, which is the order a reader is
+        # told several values of one memory in.
+        self._memory.sort(key=lambda held: (min(
+            (start for start, _ in self._declared.get(held.value['smt'], ())),
+            default=len(trace.nodes)), held.value['value']))
+        self._table = trace.symbols()
+
+        self._shown: list[list] | None = None
+        self._names: dict[int, dict[str, list[_Held]]] = {}
 
     def assertions(self, index: int):
         """ The path condition accumulated at step `index`, parsed. """
@@ -467,59 +559,194 @@ class _Path:
         return self._symbols[smt]
 
     def anchored(self, term: Term, order: int) -> list[_Applied]:
-        """ The term on the variable's value at the anchor step. """
+        """ The term on the value its name stands for at the anchor step. """
         index = self.by_order[order]
-        variable = self._variable(index, term.variable)
-        if variable is None:
-            raise _Unanswerable(
-                f"`{term.variable}` has no tracked value at this Path Step.")
-        return [_Applied(self._formula(term, variable),
-                         self.steps[self._since(index, variable)]['order'])]
+        held = self._one_value(index, term.variable)
+        return [_Applied(self._formula(term, held.value),
+                         self.steps[self._since(index, term.variable, held)]
+                         ['order'])]
 
     def throughout(self, term: Term) -> list[_Applied]:
-        """ The term on every value the variable takes along the path. """
-        applied = {}
-        for index in range(len(self.steps)):
-            variable = self._variable(index, term.variable)
-            if variable is None:
+        """ The term on every value its name stands for along the path. """
+        return [_Applied(self._formula(term, held.value),
+                         self.steps[self._since(index, term.variable, held)]
+                         ['order'])
+                for held, index in self._every_value(term.variable)]
+
+    def names(self, index: int, throughout: bool) -> list[tuple[str, list]]:
+        """
+        Every name a constraint at step `index` can be written on, sorted,
+        with the values it stands for there as `kind:value`: a name that
+        stands for one value the check can decide, or with `throughout`, a
+        name the step shows that stands for values the check can decide and,
+        wherever variables hold it, for one at a time. A name the syntax
+        cannot read, such as a function with template arguments before its
+        `::`, is left out.
+        """
+        result = []
+        for name, holders in self._names_at(self.steps[index]['node']).items():
+            if not _NAME.fullmatch(name):
                 continue
-            key = (variable['kind'], variable['value'])
-            if key not in applied:
-                applied[key] = _Applied(
-                    self._formula(term, variable),
-                    self.steps[self._since(index, variable)]['order'])
-        if not applied:
+            try:
+                values = [held for held, _ in self._every_value(name)] \
+                    if throughout else [self._one_value(index, name)]
+            except _Unanswerable:
+                continue
+            if all(self._decidable(held.value) for held in values):
+                here = sorted({f'{held.key[0]}:{held.key[1]}'
+                               for held in holders})
+                result.append((name, here))
+        return sorted(result)
+
+    @staticmethod
+    def _decidable(value: dict) -> bool:
+        return value['kind'] != 'symbol' or 'smt' in value
+
+    def _one_value(self, index: int, name: str) -> _Held:
+        values = self._values(index, name)
+        if not values:
             raise _Unanswerable(
-                f"`{term.variable}` has no tracked value at any Path Step.")
-        return list(applied.values())
+                f"`{name}` has no tracked value at this Path Step.")
+        if len(values) > 1:
+            raise _Unanswerable(self._ambiguous(name, values,
+                                                "at this Path Step"))
+        return values[0]
 
-    def _variable(self, index: int, name: str) -> dict | None:
-        node = self.steps[index]['node']
-        return next((variable for variable, start, end
-                     in self._variables.get(name, ())
-                     if start <= node < end), None)
+    def _every_value(self, name: str) -> list[tuple[_Held, int]]:
+        """ Each value the name stands for along the path, with the first
+        step it does. Memory can hold several at one step, one after the
+        other; variables of several frames cannot be told apart, and give
+        Unknown. """
+        found: dict[tuple, tuple[_Held, int]] = {}
+        for index in range(len(self.steps)):
+            values = self._values(index, name)
+            if sum(1 for held in values if held.symbol is None) > 1:
+                raise _Unanswerable(self._ambiguous(
+                    name, values, "at one Path Step of this path"))
+            for held in values:
+                found.setdefault(held.key, (held, index))
+        if not found:
+            raise _Unanswerable(
+                f"`{name}` has no tracked value at any Path Step.")
+        return list(found.values())
 
-    def _is_declared(self, name: str, index: int) -> bool:
-        node = self.steps[index]['node']
+    def _values(self, index: int, name: str) -> list[_Held]:
+        """ The values the name stands for at step `index`, each once. """
+        distinct: dict[tuple, _Held] = {}
+        for held in self._names_at(self.steps[index]['node']).get(name, ()):
+            distinct.setdefault(held.key, held)
+        return list(distinct.values())
+
+    def _function(self, frame: int | None) -> str | None:
+        if frame is None or not 0 <= frame < len(self._frames):
+            return None
+        return function_name(self._frames[frame].get('function', '')) or None
+
+    def _names_at(self, node: int) -> dict[str, list[_Held]]:
+        """ Every name of the node, with what holds a value under it. """
+        names = self._names.get(node)
+        if names is not None:
+            return names
+
+        names = {}
+        own = self._node_frames[node]
+        for variable, frame in self._shown_at(node):
+            frame = own if frame is None else frame
+            function = self._function(frame)
+            name = variable['name']
+            held = _Held(variable, f'{function}::{name}' if function
+                         else name, frame)
+            names.setdefault(name, []).append(held)
+            if function:
+                names.setdefault(held.spelling, []).append(held)
+        variables = set(names)
+        for held in self._memory:
+            if held.spelling not in variables and self._is_declared(
+                    held.value['smt'], node):
+                names.setdefault(held.spelling, []).append(held)
+        self._names[node] = names
+        return names
+
+    def _shown_at(self, node: int) -> list[tuple[dict, int | None]]:
+        """ The variables of every frame at the node, from one pass over
+        their lifetimes the first time a node is asked for. """
+        if self._shown is None:
+            self._shown = [[] for _ in self._node_frames]
+            for variable, frame, start, end in self._lives:
+                for at in range(start, end):
+                    self._shown[at].append((variable, frame))
+        return self._shown[node]
+
+    def _ambiguous(self, name: str, values: list[_Held], where: str) -> str:
+        if all(held.symbol is None for held in values):
+            spellings = [held.spelling for held in values]
+            return f"`{name}` names {len(values)} values {where}: " + \
+                _listing([f"`{spelling}`" + self._call_site(held)
+                          if spellings.count(spelling) > 1
+                          else f"`{spelling}`"
+                          for spelling, held in zip(spellings, values)]) + \
+                ". Write the one you mean."
+        return f"`{name}` names {len(values)} values {where}: " + \
+            _listing([self._describe(held) for held in values], ";") + \
+            ". Holds throughout the path constrains all of them."
+
+    def _call_site(self, held: _Held) -> str:
+        """ Where a frame was called, which tells two calls of one function
+        apart. """
+        site = self._frames[held.frame].get('call_site') \
+            if held.frame is not None and held.frame < len(self._frames) \
+            else None
+        return f" called at line {site['line']}" if site else ""
+
+    def _describe(self, held: _Held) -> str:
+        """ A value of memory as its label tells it, in short. """
+        if held.symbol is None:
+            return f"`{held.spelling}`"
+        if held.symbol['kind'] == 'region_value':
+            return "the one before the path changed it"
+        origin = self._table.get(held.symbol.get('parent'), {}).get('origin')
+        if not origin:
+            return f"`{held.value['value']}`"
+        line = f", line {origin['location']['line']}" \
+            if 'location' in origin else ""
+        statement = origin.get('statement')
+        if origin['reason'] == 'loop_widening':
+            line = f", line {origin['loop']['line']}" if 'loop' in origin \
+                else line
+            return f"the one after the loop may have changed it{line}"
+        if not statement:
+            return f"`{held.value['value']}`"
+        if origin['reason'] == 'invalidation':
+            return f"the one after `{statement}` may have changed it{line}"
+        if origin['reason'] == 'call_result':
+            return f"the one of the result of `{statement}`{line}"
+        return f"the one from `{statement}`{line}"
+
+    def _is_declared(self, name: str, node: int) -> bool:
         return any(start <= node < end
                    for start, end in self._declared.get(name, ()))
 
-    def _since(self, index: int, variable: dict) -> int:
+    def _since(self, index: int, name: str, held: _Held) -> int:
         """
-        Where the value the variable holds at step `index` appears: a symbol
+        Where the value the name stands for at step `index` appears: a symbol
         at the first step that declares all of its term's symbols, since a
         symbol never changes value; a concrete value at the start of the run
-        of steps up to `index` where the variable holds it.
+        of steps up to `index` where the same variable holds it.
         """
-        if variable['kind'] == 'symbol' and 'smt' in variable:
-            names = {name for name in _SMT_SYMBOL.findall(variable['smt'])
-                     if self._is_declared(name, index)}
+        value = held.value
+        if value['kind'] == 'symbol' and 'smt' in value:
+            node = self.steps[index]['node']
+            names = {symbol for symbol in _SMT_SYMBOL.findall(value['smt'])
+                     if self._is_declared(symbol, node)}
             return next(earlier for earlier in range(index + 1)
-                        if all(self._is_declared(name, earlier)
-                               for name in names))
+                        if all(self._is_declared(
+                            symbol, self.steps[earlier]['node'])
+                            for symbol in names))
 
-        while index > 0 and self._variable(index - 1, variable['name']) \
-                == variable:
+        while index > 0 and any(
+                other.value == value and other.frame == held.frame
+                for other in self._names_at(
+                    self.steps[index - 1]['node']).get(name, ())):
             index -= 1
         return index
 
