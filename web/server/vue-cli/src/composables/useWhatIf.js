@@ -15,15 +15,30 @@ export function useWhatIf() {
   // list that was checked.
   const result = ref(null);
   const checking = ref(false);
+  // One example of the path under the listed constraints, asked for apart
+  // from a check: { loading, values, reason }, where `values` maps a symbol
+  // of the requires list to the decimal the server gave it, and `reason` says
+  // why there are none. It matches the list it was made for only, so any
+  // change to the list drops it. It is never stored.
+  const example = ref(null);
 
   let _nextKey = 0;
   // A reply to a request made before the list last changed is dropped.
   let _generation = 0;
+  // Counts changes to the list alone, which the example depends on; a check
+  // that adds nothing leaves it.
+  let _listVersion = 0;
+
+  function _listChanged() {
+    _listVersion += 1;
+    example.value = null;
+  }
 
   function _changed() {
     _generation += 1;
     result.value = null;
     checking.value = false;
+    _listChanged();
   }
 
   function reset() {
@@ -55,6 +70,7 @@ export function useWhatIf() {
           expression: c.expression,
           holdsThroughout: !!c.holdsThroughout
         })),
+        false,
         handleThriftError(response => {
           if (_generationAtStart !== _generation) return resolve(null);
           checking.value = false;
@@ -68,6 +84,7 @@ export function useWhatIf() {
             });
           }
 
+          if (added) _listChanged();
           constraints.value = _candidates;
           result.value = { constraints: _candidates, response };
           resolve(null);
@@ -78,5 +95,41 @@ export function useWhatIf() {
     });
   }
 
-  return { constraints, result, checking, check, remove, reset };
+  // Asks for one example of the path under the listed constraints. The
+  // verdict that comes with it is the list's, which `result` already shows
+  // once the list was checked, so it is not shown again.
+  function askExample(reportId) {
+    const _version = _listVersion;
+    example.value = { loading: true, values: null, reason: null };
+
+    ccService.getClient().checkWhatIf(
+      reportId,
+      constraints.value.map(c => new WhatIfConstraint({
+        pathStep: c.order,
+        expression: c.expression,
+        holdsThroughout: !!c.holdsThroughout
+      })),
+      true,
+      handleThriftError(response => {
+        if (_version !== _listVersion) return;
+        example.value = {
+          loading: false,
+          values: response.example ? new Map(response.example.map(value =>
+            [ value.symbol, value.value ])) : null,
+          reason: response.example ? null : response.exampleReason ??
+            "The server gave no example."
+        };
+      }, () => {
+        if (_version === _listVersion) example.value = null;
+      }));
+  }
+
+  function hideExample() {
+    example.value = null;
+  }
+
+  return {
+    constraints, result, checking, example, check, remove, reset,
+    askExample, hideExample
+  };
 }

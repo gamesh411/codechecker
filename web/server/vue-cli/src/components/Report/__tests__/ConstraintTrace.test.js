@@ -1,7 +1,8 @@
 import {
   ConstraintTrace, compareNames, controlStepLabel, describeVariable,
-  expressionLabel, labelPlace, parseSymbolExpression, readConstraintTrace,
-  readableRange, shortenPaths, shortenStatement, symbolLabel, symbolType
+  exampleValue, expressionLabel, labelPlace, parseSymbolExpression,
+  readConstraintTrace, readableRange, shortenPaths, shortenStatement,
+  symbolLabel, symbolType
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -240,6 +241,33 @@ describe("readableRange", () => {
     expect(readableRange("{ [0, 0] }",
       "((reg_$1<int a>) < 5) + (reg_$2<int b>)")).toBe("0");
     expect(readableRange("{ [0, 0] }", "(reg_$1<int a>) & 4")).toBe("0");
+  });
+});
+
+describe("exampleValue", () => {
+  it("shows a number as the server read it", () => {
+    expect(exampleValue("-1", "reg_$1<int a>")).toBe("-1");
+    expect(exampleValue("4294967295", "reg_$2<unsigned int n>"))
+      .toBe("4294967295");
+    expect(exampleValue("0", "(reg_$3<unsigned int m>) + (reg_$4<n>)"))
+      .toBe("0");
+  });
+
+  it("shows an address as null or non-null, never its number", () => {
+    expect(exampleValue("0", "reg_$1<int * p>")).toBe("null");
+    expect(exampleValue("4096", "reg_$1<int * p>")).toBe("non-null");
+    // The table's word wins over the dump.
+    expect(exampleValue("8", "derived_$2{conj_$1{int, LC1, S1, #1},p}",
+      { type: "int *", pointer: true })).toBe("non-null");
+    expect(exampleValue("8", "reg_$1<int * p>",
+      { type: "long", pointer: false })).toBe("8");
+  });
+
+  it("shows a comparison as true or false", () => {
+    expect(exampleValue("0", "(reg_$2<u_int px>) >= (reg_$52<u_int c>)"))
+      .toBe("false");
+    expect(exampleValue("1", "(reg_$2<u_int px>) >= (reg_$52<u_int c>)"))
+      .toBe("true");
   });
 });
 

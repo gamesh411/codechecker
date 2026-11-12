@@ -1390,6 +1390,18 @@ export function readableRange(range, symbol, info) {
   return null;
 }
 
+// One value of an example of the path, as the reader is shown it: an address
+// is null or not, since its number means nothing to the reader, and a
+// comparison is true or false. `value` is the decimal the server read in the
+// signedness of the analyzer's range, and `symbol` and `info` are what
+// readableRange takes.
+export function exampleValue(value, symbol, info) {
+  if (isComparison(symbol)) return value === "0" ? "false" : "true";
+  const _pointer = info ? info.pointer : POINTER_SYMBOL.test(symbol ?? "");
+  if (_pointer) return value === "0" ? "null" : "non-null";
+  return value;
+}
+
 // A CFG with blocks and elements as objects, as the graph view reads them.
 function expandCfg(cfg) {
   const _edges = cfg.path_edges ?? [];

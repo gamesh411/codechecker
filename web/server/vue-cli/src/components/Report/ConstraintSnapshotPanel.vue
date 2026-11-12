@@ -271,6 +271,7 @@
           <section
             v-if="view === 'requires'"
             class="panel-section panel-requires px-3 py-2"
+            :class="{ 'panel-requires-narrow': compactHeader }"
           >
             <h4 class="panel-section-title text-overline">
               This path requires
@@ -279,6 +280,55 @@
               Everything the Bug Path assumes, from its first step to its
               last, grouped by where the value comes from.
             </p>
+
+            <div
+              v-if="requires.groups.length"
+              class="panel-example-bar text-caption"
+            >
+              <p
+                v-if="!requires.solverInput"
+                class="panel-example-note ma-0 text-medium-emphasis"
+              >
+                No example: this report has no solver input for this path.
+                Recording it needs a Clang built with Z3.
+              </p>
+              <template v-else-if="example?.values">
+                <p class="panel-example-note ma-0">
+                  <span class="panel-example-key">e.g.</span>
+                  One example of many: values that follow this
+                  path{{ exampleUnder }}. A model of what the analyzer
+                  recorded, not proof of a real execution.
+                </p>
+                <button
+                  type="button"
+                  class="panel-example-btn"
+                  title="Hide the example"
+                  @click="whatIf.hideExample()"
+                >
+                  Hide
+                </button>
+              </template>
+              <template v-else>
+                <button
+                  type="button"
+                  class="panel-example-btn"
+                  :disabled="example?.loading"
+                  :title="'Ask the solver for one set of values that follows ' +
+                    'this path' + exampleUnder"
+                  @click="whatIf.askExample(reportId)"
+                >
+                  {{ example?.loading
+                    ? "Finding an example" : "Show an example" }}
+                </button>
+                <p
+                  v-if="example?.reason"
+                  class="panel-example-note ma-0 text-medium-emphasis"
+                  role="status"
+                >
+                  {{ example.reason }}
+                </p>
+              </template>
+            </div>
 
             <div
               v-for="group in requires.groups"
@@ -322,6 +372,13 @@
                   >
                     dropped
                   </span>
+                  <span
+                    v-if="example?.values"
+                    class="panel-example"
+                    :class="{ 'panel-example-none': !example.values.has(
+                      row.symbol) }"
+                    :title="EXAMPLE_HINT"
+                  >{{ exampleText(row.symbol) }}</span>
                   <div v-if="row.name" class="panel-meta">
                     <span
                       class="panel-symbol"
@@ -444,7 +501,7 @@ import { useDisplay } from "vuetify";
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
 import {
-  functionName, labelPlace, readableRange, shortenPaths
+  exampleValue, functionName, labelPlace, readableRange, shortenPaths
 } from "./ConstraintTrace";
 import { EXPANDED_CALLERS, snapshotRows } from "./SnapshotRows";
 import WhatIfSection from "./WhatIfSection";
@@ -644,6 +701,31 @@ function changedWords(changedAt) {
 // A Path Step as the reader sees it, as a link names it.
 function stepLabel(order) {
   return props.resolveStep(order)?.label ?? `Step ${order}`;
+}
+
+// The example of the path, from useWhatIf: kept by the report view, and
+// dropped there whenever the What-If list changes.
+const example = computed(() => props.whatIf.example.value);
+
+const exampleUnder = computed(() => {
+  const _count = props.whatIf.constraints.value.length;
+  if (!_count) return "";
+  return _count === 1
+    ? " with the What-If Constraint below"
+    : ` with the ${_count} What-If Constraints below`;
+});
+
+const EXAMPLE_HINT = "This row's value in one example of many that follow " +
+  "this path. It is a model of what the analyzer recorded, not proof of a " +
+  "real execution.";
+
+// A row's value in the example. The solver gives one for every row, unless
+// it cannot read the row's term, which is said rather than left blank.
+function exampleText(symbol) {
+  const _value = example.value?.values?.get(symbol);
+  if (_value === undefined) return "e.g.\u00a0no value";
+  return `e.g.\u00a0${exampleValue(_value, symbol,
+    props.step.typeOf?.(symbol))}`;
 }
 
 // Callers a reader opened or closed, by frame, which outlives the step: the
@@ -876,6 +958,93 @@ function toggleFrame(section) {
   .panel-view-count {
     margin-left: 4px;
     font-weight: 400;
+  }
+
+  // Above the rows: the button that asks for an example, and once there is
+  // one, what it is.
+  .panel-example-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px 8px;
+    margin-bottom: 8px;
+    line-height: 1.35;
+  }
+
+  .panel-example-note {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  .panel-example-btn {
+    flex: 0 0 auto;
+    padding: 1px 10px;
+    border: 1px solid #c6ccd4;
+    border-radius: 4px;
+    color: #1f4e8c;
+    background-color: #ffffff;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background-color: #eef1f5;
+    }
+
+    &:disabled {
+      color: rgba(0, 0, 0, 0.5);
+      cursor: progress;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #1f5fae;
+      outline-offset: 1px;
+    }
+  }
+
+  // The example's colour, shared by the note's key and each row's value, so
+  // that a value reads as the example's and not as part of the range.
+  .panel-example-key,
+  .panel-example {
+    padding: 0 5px;
+    border-radius: 3px;
+    color: #4a2a7a;
+    background-color: #efe8f8;
+    font-family: sans-serif;
+  }
+
+  .panel-example-key {
+    font-weight: 600;
+  }
+
+  // Beside the range when the row has room, else on a line of its own. A
+  // 64-bit number breaks rather than run past a narrow panel.
+  .panel-value > .panel-example {
+    display: inline-block;
+    max-width: 100%;
+    margin-left: 6px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    cursor: help;
+  }
+
+  // A narrow panel has room beside a short range only, so every value takes
+  // a line of its own there, rather than some rows one way and some the
+  // other. So does the value of a row with no name: beside its range it made
+  // the range too wide to share a line with the label, which then stood
+  // alone on its line.
+  .panel-requires-narrow .panel-value > .panel-example,
+  .panel-row-raw .panel-value > .panel-example {
+    display: table;
+    margin: 1px 0 0;
+  }
+
+  .panel-row-raw .panel-value > .panel-example {
+    margin-left: auto;
+  }
+
+  .panel-example-none {
+    font-style: italic;
   }
 
   // Where the analyzer assumed the row takes a line of its own under it, so

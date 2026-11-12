@@ -697,7 +697,8 @@ const selectedConstraintStep = computed(() => {
   };
 });
 // What the whole Bug Path requires, which does not depend on the selected
-// step: the trace's list, with labels as the last step shows symbols.
+// step: the trace's list, with labels as the last step shows symbols, and
+// whether the trace has the solver input an example is made from.
 const pathRequires = computed(() => {
   if (!showConstraints.value || !hasConstraintTrace.value) return null;
 
@@ -705,7 +706,8 @@ const pathRequires = computed(() => {
   const _last = _trace.orderedSteps().at(-1);
   return {
     ..._trace.requirements(),
-    labelOf: symbolLabels(_last.exploded_node, _trace.symbolNames(_last.order))
+    labelOf: symbolLabels(_last.exploded_node, _trace.symbolNames(_last.order)),
+    solverInput: _trace.smtlib
   };
 });
 // The Path Step nearest to the call that entered the frame at `frame`, among
