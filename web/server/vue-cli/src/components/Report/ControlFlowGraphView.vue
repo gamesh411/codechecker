@@ -61,18 +61,22 @@
         aria-hidden="true"
       >
         <defs>
+          <!-- Sized in pixels rather than by the line's width, so that the
+            thicker Bug Path edges do not get heads big enough to cover a
+            block's border or an edge's label. -->
           <marker
             v-for="kind in [ 'path', 'other' ]"
             :id="`cfg-arrow-${kind}`"
             :key="kind"
-            viewBox="0 0 8 8"
-            refX="7"
-            refY="4"
-            markerWidth="7"
-            markerHeight="7"
+            viewBox="0 0 6 6"
+            refX="6"
+            refY="3"
+            markerUnits="userSpaceOnUse"
+            markerWidth="6"
+            markerHeight="6"
             orient="auto-start-reverse"
           >
-            <path d="M0,0 L8,4 L0,8 z" :class="`cfg-arrow-${kind}`" />
+            <path d="M0,0 L6,3 L0,6 z" :class="`cfg-arrow-${kind}`" />
           </marker>
         </defs>
         <g
@@ -204,6 +208,11 @@ const GRAPH_PADDING_BOTTOM = 16;
 // Rendered beyond each edge of the view, so a scroll shows no gap before the
 // next frame fills it.
 const OVERSCAN = 600;
+// Where edges join a block: incoming ones at its header, outgoing ones at its
+// last row, which is the terminator of a branch. Stubs of one block are this
+// far apart.
+const ENTRY_OFFSET = 5;
+const STUB_GAP = 8;
 
 const cfg = computed(() => props.cfgs[props.cfgIndex] ?? props.cfgs[0]);
 
@@ -475,31 +484,40 @@ const drawnEdges = computed(() => {
 
     if (edge.fallThrough) {
       const _x = _left + FALL_THROUGH_X;
+      // Beside the line, so the arrowhead below it stays clear.
       return {
         ...edge,
         title: _title,
         d: `M${_x},${_from.bottom} L${_x},${_to.top}`,
         labelX: _x + 5,
-        labelY: _from.bottom + 9,
+        labelY: _from.bottom + 11,
         low: _from.bottom,
         high: _to.top
       };
     }
 
     const _laneX = _left - 6 - edge.lane * LANE_GAP;
-    const _y1 = _from.bottom - 8 - _slot(_outSlots, edge.from) * 6;
+    // From the last row, or from below the entries of a block without rows.
+    const _base = _from.rowCount
+      ? _from.bottom - _from.border - ROW_HEIGHT / 2
+      : _from.rowsTop - 3;
+    const _outSlot = _slot(_outSlots, edge.from);
+    const _y1 = _base - _outSlot * STUB_GAP;
     if (!_entries.has(edge.group)) {
-      _entries.set(edge.group, _to.top + 10 + _slot(_inSlots, edge.to) * 6);
+      _entries.set(edge.group, _to.top + _to.border + ENTRY_OFFSET +
+        _slot(_inSlots, edge.to) * STUB_GAP);
     }
     const _y2 = _entries.get(edge.group);
+    // The first stub's label goes below it and later ones above theirs, so
+    // that no label sits on another stub.
     return {
       ...edge,
       title: _title,
       d: `M${_left},${_y1} H${_laneX} V${_y2} H${_left}`,
       labelX: _left - 9,
-      labelY: _y1 - 2,
-      low: Math.min(_y1, _y2) - 8,
-      high: Math.max(_y1, _y2) + 8
+      labelY: _outSlot ? _y1 - 2 : _y1 + 8,
+      low: Math.min(_y1, _y2) - STUB_GAP,
+      high: Math.max(_y1, _y2) + STUB_GAP
     };
   });
 
