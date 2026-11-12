@@ -30,18 +30,17 @@
           :style="{ marginLeft: `${group.depth * INDENT}px` }"
         >
           <div class="egraph-frame-header" :title="group.contextTitle">
-            <template
+            <div
               v-for="(crumb, index) in group.crumbs"
               :key="index"
+              class="egraph-crumb"
             >
               <span v-if="index" class="egraph-crumb-sep">›</span>
-              <span class="egraph-crumb">
-                <span class="egraph-crumb-function">{{ crumb.function }}</span>
-                <span v-if="crumb.callSite" class="egraph-crumb-call">
-                  called at {{ crumb.callSite }}
-                </span>
+              <span class="egraph-crumb-function">{{ crumb.function }}</span>
+              <span v-if="crumb.callSite" class="egraph-crumb-call">
+                called at {{ crumb.callSite }}
               </span>
-            </template>
+            </div>
           </div>
 
           <template v-for="state in group.states" :key="state.index">
@@ -257,27 +256,49 @@ watch(selectedState, scrollToSelection);
   }
 
   .egraph-frame-header {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px 6px;
-    align-items: baseline;
     padding: 2px 8px;
     border-bottom: 1px solid #e3e5e8;
     background-color: #f7f7f7;
   }
 
-  .egraph-crumb-function {
-    font-family: monospace;
-    font-weight: 600;
-  }
-
-  .egraph-crumb-call {
-    margin-left: 4px;
-    color: rgba(0, 0, 0, 0.6);
+  // One frame per line, so that a separator never wraps onto a line of its
+  // own. The call site is short and ends in its line number, so the function
+  // name gives up the width, and the header's title keeps the whole stack.
+  .egraph-crumb {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    overflow: hidden;
     white-space: nowrap;
   }
 
+  // The end of a qualified C++ name says which function it is, so the
+  // ellipsis takes its start, as for the file path above the source. The
+  // marks keep leading and trailing punctuation, such as a template's ">",
+  // where it is.
+  .egraph-crumb-function {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: rtl;
+    text-align: left;
+    font-family: monospace;
+    font-weight: 600;
+
+    &::before,
+    &::after {
+      content: "\200e";
+    }
+  }
+
+  .egraph-crumb-call {
+    flex: none;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
   .egraph-crumb-sep {
+    flex: none;
     color: rgba(0, 0, 0, 0.45);
   }
 
