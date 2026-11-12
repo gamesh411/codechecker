@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2ea8cfaee13f9a0fa346936b4158d87111f4dd63)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 7e0a2e00548d4625f43672d0197105c25d1649dc)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -664,127 +664,7 @@
     <key>cfgs</key>
     <array>
      <dict>
-      <key>function</key><string>f</string>
-      <key>entry</key><integer>10</integer>
-      <key>exit</key><integer>0</integer>
-      <key>blocks</key>
-      <array>
-       <array>
-        <integer>10</integer>
-        <string></string>
-        <array><integer>9</integer></array>
-        <array></array>
-       </array>
-       <array>
-        <integer>9</integer>
-        <string>if a != 0</string>
-        <array><integer>8</integer><integer>7</integer></array>
-        <array>
-         <array><string>0</string><integer>6</integer><integer>1</integer></array>
-         <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>6</integer><integer>2</integer></array>
-         <array><string>int *p = 0;</string><integer>6</integer><integer>-1</integer></array>
-         <array><string>a</string><integer>7</integer><integer>4</integer></array>
-         <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>7</integer><integer>6</integer></array>
-         <array><string>0</string><integer>7</integer><integer>6</integer></array>
-         <array><string>a != 0</string><integer>7</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>8</integer>
-        <string></string>
-        <array><integer>7</integer></array>
-        <array>
-         <array><string>x</string><integer>8</integer><integer>1</integer></array>
-         <array><string>&amp;x</string><integer>8</integer><integer>3</integer></array>
-         <array><string>p</string><integer>8</integer><integer>3</integer></array>
-         <array><string>p = &amp;x</string><integer>8</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>7</integer>
-        <string>if b == 0</string>
-        <array><integer>6</integer><integer>5</integer></array>
-        <array>
-         <array><string>b</string><integer>9</integer><integer>1</integer></array>
-         <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>9</integer><integer>3</integer></array>
-         <array><string>0</string><integer>9</integer><integer>3</integer></array>
-         <array><string>b == 0</string><integer>9</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>6</integer>
-        <string></string>
-        <array><integer>5</integer></array>
-        <array>
-         <array><string>x</string><integer>10</integer><integer>1</integer></array>
-         <array><string>&amp;x</string><integer>10</integer><integer>3</integer></array>
-         <array><string>p</string><integer>10</integer><integer>3</integer></array>
-         <array><string>p = &amp;x</string><integer>10</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>5</integer>
-        <string>if a == 0</string>
-        <array><integer>4</integer><integer>3</integer></array>
-        <array>
-         <array><string>a</string><integer>11</integer><integer>1</integer></array>
-         <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>11</integer><integer>3</integer></array>
-         <array><string>0</string><integer>11</integer><integer>3</integer></array>
-         <array><string>a == 0</string><integer>11</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>4</integer>
-        <string></string>
-        <array><integer>3</integer></array>
-        <array>
-         <array><string>0</string><integer>12</integer><integer>1</integer></array>
-         <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>12</integer><integer>3</integer></array>
-         <array><string>p</string><integer>12</integer><integer>3</integer></array>
-         <array><string>p = 0</string><integer>12</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>3</integer>
-        <string>if b != 0</string>
-        <array><integer>2</integer><integer>1</integer></array>
-        <array>
-         <array><string>b</string><integer>13</integer><integer>1</integer></array>
-         <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>13</integer><integer>3</integer></array>
-         <array><string>0</string><integer>13</integer><integer>3</integer></array>
-         <array><string>b != 0</string><integer>13</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>2</integer>
-        <string></string>
-        <array><integer>1</integer></array>
-        <array>
-         <array><string>0</string><integer>14</integer><integer>1</integer></array>
-         <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>14</integer><integer>3</integer></array>
-         <array><string>p</string><integer>14</integer><integer>3</integer></array>
-         <array><string>p = 0</string><integer>14</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>1</integer>
-        <string></string>
-        <array><integer>0</integer></array>
-        <array>
-         <array><string>p</string><integer>15</integer><integer>1</integer></array>
-         <array><string>p (ImplicitCastExpr, LValueToRValue, int *)</string><integer>15</integer><integer>2</integer></array>
-         <array><string>*p</string><integer>15</integer><integer>3</integer></array>
-         <array><string>*p (ImplicitCastExpr, LValueToRValue, int)</string><integer>15</integer><integer>4</integer></array>
-         <array><string>return *p;</string><integer>15</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>0</integer>
-        <string></string>
-        <array></array>
-        <array></array>
-       </array>
-      </array>
+      <key>graph</key><integer>0</integer>
       <key>path_blocks</key>
       <array><integer>1</integer><integer>2</integer><integer>3</integer><integer>4</integer><integer>5</integer><integer>7</integer><integer>9</integer><integer>10</integer></array>
       <key>path_edges</key>
@@ -1107,6 +987,132 @@
  <key>files</key>
  <array>
   <string>$FILE_PATH$/two_path.c</string>
+ </array>
+ <key>constraint_trace_cfgs</key>
+ <array>
+  <dict>
+   <key>function</key><string>f</string>
+   <key>entry</key><integer>10</integer>
+   <key>exit</key><integer>0</integer>
+   <key>blocks</key>
+   <array>
+    <array>
+     <integer>10</integer>
+     <string></string>
+     <array><integer>9</integer></array>
+     <array></array>
+    </array>
+    <array>
+     <integer>9</integer>
+     <string>if a != 0</string>
+     <array><integer>8</integer><integer>7</integer></array>
+     <array>
+      <array><string>0</string><integer>6</integer><integer>1</integer></array>
+      <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>6</integer><integer>2</integer></array>
+      <array><string>int *p = 0;</string><integer>6</integer><integer>-1</integer></array>
+      <array><string>a</string><integer>7</integer><integer>4</integer></array>
+      <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>7</integer><integer>6</integer></array>
+      <array><string>0</string><integer>7</integer><integer>6</integer></array>
+      <array><string>a != 0</string><integer>7</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>8</integer>
+     <string></string>
+     <array><integer>7</integer></array>
+     <array>
+      <array><string>x</string><integer>8</integer><integer>1</integer></array>
+      <array><string>&amp;x</string><integer>8</integer><integer>3</integer></array>
+      <array><string>p</string><integer>8</integer><integer>3</integer></array>
+      <array><string>p = &amp;x</string><integer>8</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>7</integer>
+     <string>if b == 0</string>
+     <array><integer>6</integer><integer>5</integer></array>
+     <array>
+      <array><string>b</string><integer>9</integer><integer>1</integer></array>
+      <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>9</integer><integer>3</integer></array>
+      <array><string>0</string><integer>9</integer><integer>3</integer></array>
+      <array><string>b == 0</string><integer>9</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>6</integer>
+     <string></string>
+     <array><integer>5</integer></array>
+     <array>
+      <array><string>x</string><integer>10</integer><integer>1</integer></array>
+      <array><string>&amp;x</string><integer>10</integer><integer>3</integer></array>
+      <array><string>p</string><integer>10</integer><integer>3</integer></array>
+      <array><string>p = &amp;x</string><integer>10</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>5</integer>
+     <string>if a == 0</string>
+     <array><integer>4</integer><integer>3</integer></array>
+     <array>
+      <array><string>a</string><integer>11</integer><integer>1</integer></array>
+      <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>11</integer><integer>3</integer></array>
+      <array><string>0</string><integer>11</integer><integer>3</integer></array>
+      <array><string>a == 0</string><integer>11</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>4</integer>
+     <string></string>
+     <array><integer>3</integer></array>
+     <array>
+      <array><string>0</string><integer>12</integer><integer>1</integer></array>
+      <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>12</integer><integer>3</integer></array>
+      <array><string>p</string><integer>12</integer><integer>3</integer></array>
+      <array><string>p = 0</string><integer>12</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>3</integer>
+     <string>if b != 0</string>
+     <array><integer>2</integer><integer>1</integer></array>
+     <array>
+      <array><string>b</string><integer>13</integer><integer>1</integer></array>
+      <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>13</integer><integer>3</integer></array>
+      <array><string>0</string><integer>13</integer><integer>3</integer></array>
+      <array><string>b != 0</string><integer>13</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>2</integer>
+     <string></string>
+     <array><integer>1</integer></array>
+     <array>
+      <array><string>0</string><integer>14</integer><integer>1</integer></array>
+      <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>14</integer><integer>3</integer></array>
+      <array><string>p</string><integer>14</integer><integer>3</integer></array>
+      <array><string>p = 0</string><integer>14</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>1</integer>
+     <string></string>
+     <array><integer>0</integer></array>
+     <array>
+      <array><string>p</string><integer>15</integer><integer>1</integer></array>
+      <array><string>p (ImplicitCastExpr, LValueToRValue, int *)</string><integer>15</integer><integer>2</integer></array>
+      <array><string>*p</string><integer>15</integer><integer>3</integer></array>
+      <array><string>*p (ImplicitCastExpr, LValueToRValue, int)</string><integer>15</integer><integer>4</integer></array>
+      <array><string>return *p;</string><integer>15</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>0</integer>
+     <string></string>
+     <array></array>
+     <array></array>
+    </array>
+   </array>
+  </dict>
  </array>
 </dict>
 </plist>

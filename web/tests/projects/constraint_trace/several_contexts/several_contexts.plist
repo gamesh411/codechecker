@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2ea8cfaee13f9a0fa346936b4158d87111f4dd63)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 7e0a2e00548d4625f43672d0197105c25d1649dc)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -667,108 +667,14 @@
     <key>cfgs</key>
     <array>
      <dict>
-      <key>function</key><string>several_contexts</string>
-      <key>entry</key><integer>2</integer>
-      <key>exit</key><integer>0</integer>
-      <key>blocks</key>
-      <array>
-       <array>
-        <integer>2</integer>
-        <string></string>
-        <array><integer>1</integer></array>
-        <array></array>
-       </array>
-       <array>
-        <integer>1</integer>
-        <string></string>
-        <array><integer>0</integer></array>
-        <array>
-         <array><string>take</string><integer>13</integer><integer>1</integer></array>
-         <array><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string><integer>13</integer><integer>6</integer></array>
-         <array><string>p</string><integer>13</integer><integer>3</integer></array>
-         <array><string>&amp;p</string><integer>13</integer><integer>6</integer></array>
-         <array><string>a</string><integer>13</integer><integer>5</integer></array>
-         <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>13</integer><integer>6</integer></array>
-         <array><string>take(&amp;p, a)</string><integer>13</integer><integer>-1</integer></array>
-         <array><string>take</string><integer>14</integer><integer>8</integer></array>
-         <array><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string><integer>14</integer><integer>13</integer></array>
-         <array><string>p</string><integer>14</integer><integer>10</integer></array>
-         <array><string>&amp;p</string><integer>14</integer><integer>13</integer></array>
-         <array><string>b</string><integer>14</integer><integer>12</integer></array>
-         <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>14</integer><integer>13</integer></array>
-         <array><string>take(&amp;p, b)</string><integer>14</integer><integer>14</integer></array>
-         <array><string>return take(&amp;p, b);</string><integer>14</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>0</integer>
-        <string></string>
-        <array></array>
-        <array></array>
-       </array>
-      </array>
+      <key>graph</key><integer>0</integer>
       <key>path_blocks</key>
       <array><integer>1</integer><integer>2</integer></array>
       <key>path_edges</key>
       <array><integer>2</integer><integer>1</integer></array>
      </dict>
      <dict>
-      <key>function</key><string>take</string>
-      <key>entry</key><integer>4</integer>
-      <key>exit</key><integer>0</integer>
-      <key>blocks</key>
-      <array>
-       <array>
-        <integer>4</integer>
-        <string></string>
-        <array><integer>3</integer></array>
-        <array></array>
-       </array>
-       <array>
-        <integer>3</integer>
-        <string>if flag</string>
-        <array><integer>2</integer><integer>1</integer></array>
-        <array>
-         <array><string>flag</string><integer>5</integer><integer>1</integer></array>
-         <array><string>flag (ImplicitCastExpr, LValueToRValue, int)</string><integer>5</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>2</integer>
-        <string></string>
-        <array><integer>0</integer></array>
-        <array>
-         <array><string>0</string><integer>6</integer><integer>1</integer></array>
-         <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>6</integer><integer>5</integer></array>
-         <array><string>pp</string><integer>6</integer><integer>3</integer></array>
-         <array><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string><integer>6</integer><integer>4</integer></array>
-         <array><string>*pp</string><integer>6</integer><integer>5</integer></array>
-         <array><string>*pp = 0</string><integer>6</integer><integer>-1</integer></array>
-         <array><string>0</string><integer>7</integer><integer>7</integer></array>
-         <array><string>return 0;</string><integer>7</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>1</integer>
-        <string></string>
-        <array><integer>0</integer></array>
-        <array>
-         <array><string>pp</string><integer>9</integer><integer>1</integer></array>
-         <array><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string><integer>9</integer><integer>2</integer></array>
-         <array><string>*pp</string><integer>9</integer><integer>3</integer></array>
-         <array><string>*pp (ImplicitCastExpr, LValueToRValue, int *)</string><integer>9</integer><integer>4</integer></array>
-         <array><string>**pp</string><integer>9</integer><integer>5</integer></array>
-         <array><string>**pp (ImplicitCastExpr, LValueToRValue, int)</string><integer>9</integer><integer>6</integer></array>
-         <array><string>return **pp;</string><integer>9</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>0</integer>
-        <string></string>
-        <array></array>
-        <array></array>
-       </array>
-      </array>
+      <key>graph</key><integer>1</integer>
       <key>path_blocks</key>
       <array><integer>0</integer><integer>1</integer><integer>2</integer><integer>3</integer><integer>4</integer></array>
       <key>path_edges</key>
@@ -864,7 +770,7 @@
      </dict>
      <dict>
       <key>id</key><integer>127</integer>
-      <key>state_id</key><integer>4913</integer>
+      <key>state_id</key><integer>4880</integer>
       <key>path_position</key><integer>35</integer>
       <key>kind</key><string>PostStore</string>
       <key>location</key>
@@ -888,7 +794,7 @@
      </dict>
      <dict>
       <key>id</key><integer>128</integer>
-      <key>state_id</key><integer>4913</integer>
+      <key>state_id</key><integer>4880</integer>
       <key>path_position</key><integer>36</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -907,7 +813,7 @@
      </dict>
      <dict>
       <key>id</key><integer>134</integer>
-      <key>state_id</key><integer>5057</integer>
+      <key>state_id</key><integer>5024</integer>
       <key>path_position</key><integer>42</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -926,7 +832,7 @@
      </dict>
      <dict>
       <key>id</key><integer>136</integer>
-      <key>state_id</key><integer>5057</integer>
+      <key>state_id</key><integer>5024</integer>
       <key>path_position</key><integer>44</integer>
       <key>kind</key><string>CallExitEnd</string>
       <key>location</key>
@@ -961,7 +867,7 @@
      </dict>
      <dict>
       <key>id</key><integer>148</integer>
-      <key>state_id</key><integer>5574</integer>
+      <key>state_id</key><integer>5541</integer>
       <key>path_position</key><integer>56</integer>
       <key>kind</key><string>CallEnter</string>
       <key>location</key>
@@ -985,7 +891,7 @@
      </dict>
      <dict>
       <key>id</key><integer>157</integer>
-      <key>state_id</key><integer>5826</integer>
+      <key>state_id</key><integer>5789</integer>
       <key>path_position</key><integer>64</integer>
       <key>kind</key><string>BlockEdge</string>
       <key>location</key>
@@ -1028,7 +934,7 @@
      </dict>
      <dict>
       <key>id</key><integer>189</integer>
-      <key>state_id</key><integer>6469</integer>
+      <key>state_id</key><integer>6398</integer>
       <key>path_position</key><integer>75</integer>
       <key>kind</key><string>PreLoad</string>
       <key>location</key>
@@ -1139,6 +1045,109 @@
  <key>files</key>
  <array>
   <string>$FILE_PATH$/several_contexts.c</string>
+ </array>
+ <key>constraint_trace_cfgs</key>
+ <array>
+  <dict>
+   <key>function</key><string>several_contexts</string>
+   <key>entry</key><integer>2</integer>
+   <key>exit</key><integer>0</integer>
+   <key>blocks</key>
+   <array>
+    <array>
+     <integer>2</integer>
+     <string></string>
+     <array><integer>1</integer></array>
+     <array></array>
+    </array>
+    <array>
+     <integer>1</integer>
+     <string></string>
+     <array><integer>0</integer></array>
+     <array>
+      <array><string>take</string><integer>13</integer><integer>1</integer></array>
+      <array><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string><integer>13</integer><integer>6</integer></array>
+      <array><string>p</string><integer>13</integer><integer>3</integer></array>
+      <array><string>&amp;p</string><integer>13</integer><integer>6</integer></array>
+      <array><string>a</string><integer>13</integer><integer>5</integer></array>
+      <array><string>a (ImplicitCastExpr, LValueToRValue, int)</string><integer>13</integer><integer>6</integer></array>
+      <array><string>take(&amp;p, a)</string><integer>13</integer><integer>-1</integer></array>
+      <array><string>take</string><integer>14</integer><integer>8</integer></array>
+      <array><string>take (ImplicitCastExpr, FunctionToPointerDecay, int (*)(int **, int))</string><integer>14</integer><integer>13</integer></array>
+      <array><string>p</string><integer>14</integer><integer>10</integer></array>
+      <array><string>&amp;p</string><integer>14</integer><integer>13</integer></array>
+      <array><string>b</string><integer>14</integer><integer>12</integer></array>
+      <array><string>b (ImplicitCastExpr, LValueToRValue, int)</string><integer>14</integer><integer>13</integer></array>
+      <array><string>take(&amp;p, b)</string><integer>14</integer><integer>14</integer></array>
+      <array><string>return take(&amp;p, b);</string><integer>14</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>0</integer>
+     <string></string>
+     <array></array>
+     <array></array>
+    </array>
+   </array>
+  </dict>
+  <dict>
+   <key>function</key><string>take</string>
+   <key>entry</key><integer>4</integer>
+   <key>exit</key><integer>0</integer>
+   <key>blocks</key>
+   <array>
+    <array>
+     <integer>4</integer>
+     <string></string>
+     <array><integer>3</integer></array>
+     <array></array>
+    </array>
+    <array>
+     <integer>3</integer>
+     <string>if flag</string>
+     <array><integer>2</integer><integer>1</integer></array>
+     <array>
+      <array><string>flag</string><integer>5</integer><integer>1</integer></array>
+      <array><string>flag (ImplicitCastExpr, LValueToRValue, int)</string><integer>5</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>2</integer>
+     <string></string>
+     <array><integer>0</integer></array>
+     <array>
+      <array><string>0</string><integer>6</integer><integer>1</integer></array>
+      <array><string>0 (ImplicitCastExpr, NullToPointer, int *)</string><integer>6</integer><integer>5</integer></array>
+      <array><string>pp</string><integer>6</integer><integer>3</integer></array>
+      <array><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string><integer>6</integer><integer>4</integer></array>
+      <array><string>*pp</string><integer>6</integer><integer>5</integer></array>
+      <array><string>*pp = 0</string><integer>6</integer><integer>-1</integer></array>
+      <array><string>0</string><integer>7</integer><integer>7</integer></array>
+      <array><string>return 0;</string><integer>7</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>1</integer>
+     <string></string>
+     <array><integer>0</integer></array>
+     <array>
+      <array><string>pp</string><integer>9</integer><integer>1</integer></array>
+      <array><string>pp (ImplicitCastExpr, LValueToRValue, int **)</string><integer>9</integer><integer>2</integer></array>
+      <array><string>*pp</string><integer>9</integer><integer>3</integer></array>
+      <array><string>*pp (ImplicitCastExpr, LValueToRValue, int *)</string><integer>9</integer><integer>4</integer></array>
+      <array><string>**pp</string><integer>9</integer><integer>5</integer></array>
+      <array><string>**pp (ImplicitCastExpr, LValueToRValue, int)</string><integer>9</integer><integer>6</integer></array>
+      <array><string>return **pp;</string><integer>9</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>0</integer>
+     <string></string>
+     <array></array>
+     <array></array>
+    </array>
+   </array>
+  </dict>
  </array>
 </dict>
 </plist>

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 2ea8cfaee13f9a0fa346936b4158d87111f4dd63)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 7e0a2e00548d4625f43672d0197105c25d1649dc)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -309,60 +309,7 @@
     <key>cfgs</key>
     <array>
      <dict>
-      <key>function</key><string>f</string>
-      <key>entry</key><integer>4</integer>
-      <key>exit</key><integer>0</integer>
-      <key>blocks</key>
-      <array>
-       <array>
-        <integer>4</integer>
-        <string></string>
-        <array><integer>3</integer></array>
-        <array></array>
-       </array>
-       <array>
-        <integer>3</integer>
-        <string>if !q</string>
-        <array><integer>2</integer><integer>1</integer></array>
-        <array>
-         <array><string>x</string><integer>5</integer><integer>1</integer></array>
-         <array><string>&amp;x</string><integer>5</integer><integer>2</integer></array>
-         <array><string>int *p = &amp;x;</string><integer>5</integer><integer>-1</integer></array>
-         <array><string>q</string><integer>6</integer><integer>4</integer></array>
-         <array><string>q (ImplicitCastExpr, LValueToRValue, int *)</string><integer>6</integer><integer>5</integer></array>
-         <array><string>!q</string><integer>6</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>2</integer>
-        <string></string>
-        <array><integer>1</integer></array>
-        <array>
-         <array><string>q</string><integer>7</integer><integer>1</integer></array>
-         <array><string>q (ImplicitCastExpr, LValueToRValue, int *)</string><integer>7</integer><integer>3</integer></array>
-         <array><string>p</string><integer>7</integer><integer>3</integer></array>
-         <array><string>p = q</string><integer>7</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>1</integer>
-        <string></string>
-        <array><integer>0</integer></array>
-        <array>
-         <array><string>p</string><integer>8</integer><integer>1</integer></array>
-         <array><string>p (ImplicitCastExpr, LValueToRValue, int *)</string><integer>8</integer><integer>2</integer></array>
-         <array><string>*p</string><integer>8</integer><integer>3</integer></array>
-         <array><string>*p (ImplicitCastExpr, LValueToRValue, int)</string><integer>8</integer><integer>4</integer></array>
-         <array><string>return *p;</string><integer>8</integer><integer>-1</integer></array>
-        </array>
-       </array>
-       <array>
-        <integer>0</integer>
-        <string></string>
-        <array></array>
-        <array></array>
-       </array>
-      </array>
+      <key>graph</key><integer>0</integer>
       <key>path_blocks</key>
       <array><integer>1</integer><integer>2</integer><integer>3</integer><integer>4</integer></array>
       <key>path_edges</key>
@@ -548,6 +495,65 @@
  <key>files</key>
  <array>
   <string>$FILE_PATH$/concrete_value.c</string>
+ </array>
+ <key>constraint_trace_cfgs</key>
+ <array>
+  <dict>
+   <key>function</key><string>f</string>
+   <key>entry</key><integer>4</integer>
+   <key>exit</key><integer>0</integer>
+   <key>blocks</key>
+   <array>
+    <array>
+     <integer>4</integer>
+     <string></string>
+     <array><integer>3</integer></array>
+     <array></array>
+    </array>
+    <array>
+     <integer>3</integer>
+     <string>if !q</string>
+     <array><integer>2</integer><integer>1</integer></array>
+     <array>
+      <array><string>x</string><integer>5</integer><integer>1</integer></array>
+      <array><string>&amp;x</string><integer>5</integer><integer>2</integer></array>
+      <array><string>int *p = &amp;x;</string><integer>5</integer><integer>-1</integer></array>
+      <array><string>q</string><integer>6</integer><integer>4</integer></array>
+      <array><string>q (ImplicitCastExpr, LValueToRValue, int *)</string><integer>6</integer><integer>5</integer></array>
+      <array><string>!q</string><integer>6</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>2</integer>
+     <string></string>
+     <array><integer>1</integer></array>
+     <array>
+      <array><string>q</string><integer>7</integer><integer>1</integer></array>
+      <array><string>q (ImplicitCastExpr, LValueToRValue, int *)</string><integer>7</integer><integer>3</integer></array>
+      <array><string>p</string><integer>7</integer><integer>3</integer></array>
+      <array><string>p = q</string><integer>7</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>1</integer>
+     <string></string>
+     <array><integer>0</integer></array>
+     <array>
+      <array><string>p</string><integer>8</integer><integer>1</integer></array>
+      <array><string>p (ImplicitCastExpr, LValueToRValue, int *)</string><integer>8</integer><integer>2</integer></array>
+      <array><string>*p</string><integer>8</integer><integer>3</integer></array>
+      <array><string>*p (ImplicitCastExpr, LValueToRValue, int)</string><integer>8</integer><integer>4</integer></array>
+      <array><string>return *p;</string><integer>8</integer><integer>-1</integer></array>
+     </array>
+    </array>
+    <array>
+     <integer>0</integer>
+     <string></string>
+     <array></array>
+     <array></array>
+    </array>
+   </array>
+  </dict>
  </array>
 </dict>
 </plist>
