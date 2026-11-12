@@ -16,6 +16,11 @@ trace's `strings`, so the trace grows with the length of the Bug Path rather
 than with its square. This module is the one place that turns that back into
 snapshots, whether whole or as the span of nodes each entry lives through.
 
+A node's `variables` are those of its own stack frame. A node inside an
+inlined call also has `caller_variables`, the variables of every frame above
+it, innermost first, each entry with its frame as an index into
+`stack_frames`, since several frames can have a variable of one name.
+
 A trace may also have a table of the atomic symbols its snapshots mention,
 `symbols`, keyed by the symbol's dump in `strings`, with the symbol's kind,
 its SMT-LIB term and, for a conjured symbol, the origin Clang recorded.
@@ -37,7 +42,12 @@ from dataclasses import dataclass
 VERSION = 2
 
 # The snapshot lists, in the order a node lists their changes.
-LISTS = ('symbol_ranges', 'variables', 'path_condition', 'smt_declarations')
+LISTS = ('symbol_ranges', 'variables', 'path_condition', 'smt_declarations',
+         'caller_variables')
+
+# How many of an entry's first values identify it in its list, as Clang
+# matches entries: a caller's variable is its frame and its name.
+_KEY_WIDTHS = {'caller_variables': 2}
 
 # The plist key of a file's control flow graph bodies.
 PLIST_GRAPHS = 'constraint_trace_cfgs'
@@ -118,9 +128,10 @@ class ConstraintTrace:
         """ Raise MalformedTrace unless every node and step decodes. Each
         entry is checked once, where a node adds it. """
         count = len(self.strings)
+        frames = len(self.trace.get('stack_frames', []))
         widths = {'symbol_ranges': (2,), 'variables': (3, 5),
                   'path_condition': (3,) if self.smtlib else (2,),
-                  'smt_declarations': (1,)}
+                  'smt_declarations': (1,), 'caller_variables': (4, 6)}
         lists: dict[str, list] = {field: [] for field in LISTS}
         try:
             for index, node in enumerate(self.nodes):
@@ -131,11 +142,17 @@ class ConstraintTrace:
                     for operation in delta.get('replace', []) + \
                             delta.get('insert', []):
                         entry = operation[1:]
-                        # A variable's fifth value is its signedness.
-                        names = entry[:4] if field == 'variables' else entry
+                        # A variable's fifth value is its signedness, and a
+                        # caller's variable starts with its frame.
+                        names = entry[:4] if field == 'variables' else \
+                            entry[1:5] if field == 'caller_variables' else \
+                            entry
                         if len(entry) not in widths[field] or not all(
                                 isinstance(value, int) and 0 <= value < count
-                                for value in names):
+                                for value in names) or \
+                                field == 'caller_variables' and not (
+                                    isinstance(entry[0], int) and
+                                    0 <= entry[0] < frames):
                             raise MalformedTrace(
                                 f"node {index}: {field} entry {entry} does "
                                 "not name its strings")
@@ -278,10 +295,15 @@ class ConstraintTrace:
         return lists
 
     def entry(self, field: str, raw: tuple):
-        """ A list entry as the dict or string a snapshot shows. """
+        """ A list entry as the dict or string a snapshot shows. A variable
+        is `name`, `value` and `kind`, with `smt` and `smt_signed` when its
+        symbol has a term, and a caller's variable has its `frame` too, an
+        index into `stack_frames`. """
         strings = self.strings
         if field == 'smt_declarations':
             return strings[raw[0]]
+        if field == 'caller_variables':
+            return {'frame': raw[0], **self.entry('variables', raw[1:])}
         if field == 'variables':
             variable = {'name': strings[raw[0]], 'value': strings[raw[1]],
                         'kind': strings[raw[2]]}
@@ -297,7 +319,8 @@ class ConstraintTrace:
 
     def snapshot(self, node: int) -> dict:
         """ The whole Constraint Snapshot of `node`, with the keys a version 1
-        step had. """
+        step had, and `caller_variables`, empty in the analyzed function's
+        own frame and in a trace from a Clang before the list. """
         lists = self._raw(node)
         snapshot = {field: [self.entry(field, raw) for raw in lists[field]]
                     for field in LISTS
@@ -342,6 +365,11 @@ class ConstraintTrace:
     def cfgs(self) -> list[dict]:
         """ The control flow graphs, with blocks and elements as dicts. """
         return [_expand_cfg(cfg) for cfg in self.trace.get('cfgs', [])]
+
+    def frame(self, index: int) -> dict:
+        """ The stack frame a caller's variable names: `function`, `parent`
+        when it was called, and `call_site`. """
+        return self.trace['stack_frames'][index]
 
 
 def read_graphs(graphs: list) -> list:
@@ -445,19 +473,19 @@ def _expand_cfg(cfg: dict) -> dict:
                            for i in range(0, len(edges), 2)]}
 
 
-def _diff(previous: list, following: list) -> dict:
+def _diff(previous: list, following: list, width: int = 1) -> dict:
     """ The delta from one raw list to the next, as Clang writes it: entries
-    are matched by their first value, kept entries stay in order, and the
-    whole list is written again when that does not hold. """
+    are matched by their first `width` values, kept entries stay in order,
+    and the whole list is written again when that does not hold. """
     delta: dict = {'replace': [], 'remove': [], 'insert': []}
-    by_key = {entry[0]: index for index, entry in enumerate(following)}
+    by_key = {entry[:width]: index for index, entry in enumerate(following)}
     kept = [False] * len(following)
     ordered = len(by_key) == len(following)
     last = -1
     for index, entry in enumerate(previous):
         if not ordered:
             break
-        match = by_key.get(entry[0])
+        match = by_key.get(entry[:width])
         if match is None or kept[match]:
             delta['remove'].append(index)
             continue
@@ -484,8 +512,9 @@ def encode(nodes: list[dict], steps: list[dict],
     A version 2 trace from whole snapshots, for tools and tests that make
     traces. Each node is a dict of the snapshot keys a version 1 step had
     (`symbol_ranges`, `variables`, `path_condition`, and with SMT-LIB
-    `smt_declarations` and `smt_assertions`) plus any node keys to keep, such
-    as `kind` or `cfg_position`. Steps are kept as they are and name their
+    `smt_declarations` and `smt_assertions`), `caller_variables` as
+    `ConstraintTrace.entry` reads them, plus any node keys to keep, such as
+    `kind` or `cfg_position`. Steps are kept as they are and name their
     node by `exploded_node`. `symbols` is a symbol table as
     `ConstraintTrace.symbols` reads one, written in the order of its dumps,
     and `expressions` the same for `ConstraintTrace.expressions`.
@@ -502,15 +531,18 @@ def encode(nodes: list[dict], steps: list[dict],
     smtlib = any('smt_assertions' in node for node in nodes)
     previous: dict[str, list] = {field: [] for field in LISTS}
     encoded_nodes = []
+
+    def variable(v: dict) -> tuple:
+        return (intern(v['name']), intern(v['value']), intern(v['kind'])) + \
+            ((intern(v['smt']), int(v['smt_signed'])) if 'smt' in v else ())
+
     for node in nodes:
         lists: dict[str, list] = {
             'symbol_ranges': [(intern(r['symbol']), intern(r['range']))
                               for r in node.get('symbol_ranges', [])],
-            'variables': [
-                (intern(v['name']), intern(v['value']), intern(v['kind'])) +
-                ((intern(v['smt']), int(v['smt_signed'])) if 'smt' in v
-                 else ())
-                for v in node.get('variables', [])],
+            'variables': [variable(v) for v in node.get('variables', [])],
+            'caller_variables': [(v['frame'],) + variable(v)
+                                 for v in node.get('caller_variables', [])],
             'path_condition': [
                 (intern(c['symbol']), intern(c['range'])) +
                 ((intern(a),) if smtlib else ())
@@ -522,7 +554,8 @@ def encode(nodes: list[dict], steps: list[dict],
         encoded = {key: value for key, value in node.items()
                    if key not in LISTS and key != 'smt_assertions'}
         for field in LISTS:
-            delta = _diff(previous[field], lists[field])
+            delta = _diff(previous[field], lists[field],
+                          _KEY_WIDTHS.get(field, 1))
             if delta:
                 encoded[field] = delta
         previous = lists

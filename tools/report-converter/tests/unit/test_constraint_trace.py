@@ -27,7 +27,8 @@ def _variable(name, value, kind='symbol', smt=None, signed=True):
 
 def make_snapshot(index):
     """ A long path where one more symbol is narrowed at every node, and a
-    variable changes value now and then. """
+    variable changes value now and then. Two calling frames each have an
+    `n`, and the inner one changes every ten nodes. """
     symbols = [f'reg_${i}<int a{i}>' for i in range(index + 1)]
     return {
         'symbol_ranges': [_range(symbols[-1], f'{{ [{index}, {index}] }}')],
@@ -40,7 +41,14 @@ def make_snapshot(index):
                              for i in (index - 1, index) if i >= 0],
         'smt_assertions': [f'(assert (= reg_${i} #x{i:08x}))'
                            for i in range(index + 1)],
+        'caller_variables': [
+            {'frame': 1, **_variable('n', str(index // 10), 'integer')},
+            {'frame': 0, **_variable('n', 'reg_$0<int a0>', smt='reg_$0')}],
         'cfg_position': {'cfg': 0, 'block': index, 'element': 0}}
+
+
+FRAMES = [{'function': 'top'}, {'function': 'middle', 'parent': 0},
+          {'function': 'inner', 'parent': 1}]
 
 
 class ConstraintTraceTest(unittest.TestCase):
@@ -50,6 +58,7 @@ class ConstraintTraceTest(unittest.TestCase):
         self.trace = constraint_trace.encode(
             deepcopy(self.snapshots),
             [{'path_index': i, 'exploded_node': i} for i in range(150)])
+        self.trace['stack_frames'] = FRAMES
 
     def test_every_node_reads_back_whole(self):
         """ Also out of order and across checkpoints. """
@@ -69,7 +78,8 @@ class ConstraintTraceTest(unittest.TestCase):
 
     def test_lifetimes_cover_every_node(self):
         trace = constraint_trace.ConstraintTrace(self.trace)
-        for field in ('variables', 'path_condition', 'smt_declarations'):
+        for field in ('variables', 'path_condition', 'smt_declarations',
+                      'caller_variables'):
             lifetimes = trace.lifetimes(field)
             for node, snapshot in enumerate(self.snapshots):
                 live = sorted(
@@ -77,6 +87,35 @@ class ConstraintTraceTest(unittest.TestCase):
                      if life.start <= node < life.end), key=str)
                 self.assertEqual(live, sorted(snapshot[field], key=str),
                                  (field, node))
+
+    def test_caller_variables_are_told_apart_by_frame(self):
+        """ Two frames' `n` are two entries, so one changing is one
+        replacement, and each reads back with its frame. """
+        nodes = self.trace['exploded_nodes']
+        self.assertEqual([operation[:2] for operation
+                          in nodes[0]['caller_variables']['insert']],
+                         [[0, 1], [1, 0]])
+        self.assertEqual(list(nodes[10]['caller_variables']), ['replace'])
+        self.assertEqual(len(nodes[10]['caller_variables']['replace']), 1)
+        self.assertNotIn('caller_variables', nodes[11])
+        trace = constraint_trace.ConstraintTrace(self.trace)
+        self.assertEqual(trace.snapshot(25)['caller_variables'], [
+            {'frame': 1, 'name': 'n', 'value': '2', 'kind': 'integer'},
+            {'frame': 0, 'name': 'n', 'value': 'reg_$0<int a0>',
+             'kind': 'symbol', 'smt': 'reg_$0', 'smt_signed': True}])
+        self.assertEqual(trace.frame(1)['function'], 'middle')
+
+    def test_trace_without_caller_variables_has_none(self):
+        """ A trace from a Clang before the list reads as having no
+        callers. """
+        trace = deepcopy(self.trace)
+        for node in trace['exploded_nodes']:
+            node.pop('caller_variables', None)
+        trace = constraint_trace.ConstraintTrace(trace)
+        trace.check()
+        self.assertEqual(trace.snapshot(40)['caller_variables'], [])
+        self.assertEqual(trace.snapshot(40)['variables'],
+                         self.snapshots[40]['variables'])
 
     def test_unordered_lists_are_written_whole(self):
         """ Entries that change order between nodes still read back. """
@@ -100,7 +139,12 @@ class ConstraintTraceTest(unittest.TestCase):
         bad_position = deepcopy(self.trace)
         bad_position['exploded_nodes'][5]['path_condition']['insert'][0][0] \
             = 99
-        for trace in (bad_string, bad_node, bad_position):
+        bad_frame = deepcopy(self.trace)
+        bad_frame['exploded_nodes'][0]['caller_variables']['insert'][0][1] = 3
+        no_frames = deepcopy(self.trace)
+        del no_frames['stack_frames']
+        for trace in (bad_string, bad_node, bad_position, bad_frame,
+                      no_frames):
             with self.assertRaises(constraint_trace.MalformedTrace):
                 constraint_trace.ConstraintTrace(trace).check()
 
