@@ -453,8 +453,8 @@ def parse_analyzer_result_files(
             batch = analyzer_result_files[start:start + batch_size]
             for idx, (file_path, reports) in enumerate(
                     zip(batch, map_fn(parse, batch)), start):
-                LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
-                          f"Parsed '{file_path}' ...")
+                LOG.debug("[%d/%d] Parsed '%s' ...",
+                          idx, len(analyzer_result_files), file_path)
                 yield file_path, reports
 
 
