@@ -690,10 +690,15 @@ Configured report limit for this product: {p.reportLimit}
 
     LOG.info("Compressing report zip file...")
 
-    with open(zip_file, 'rb') as source:
-        compressed = zlib.compress(source.read(), zlib.Z_BEST_COMPRESSION)
-    with open(zip_file, 'wb') as target:
-        target.write(compressed)
+    # In chunks, since the zip can be larger than the memory one would
+    # expect a store to take.
+    compressor = zlib.compressobj(zlib.Z_BEST_COMPRESSION)
+    with open(zip_file, 'rb') as source, \
+            open(zip_file + '.z', 'wb') as target:
+        for chunk in iter(lambda: source.read(1 << 24), b''):
+            target.write(compressor.compress(chunk))
+        target.write(compressor.flush())
+    os.replace(zip_file + '.z', zip_file)
 
     compressed_zip_size = os.stat(zip_file).st_size
 
