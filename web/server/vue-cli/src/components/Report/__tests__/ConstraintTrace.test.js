@@ -148,6 +148,11 @@ describe("readableRange", () => {
       .toBe("not 65535");
   });
 
+  it("reads the analyzer's comma between intervals", () => {
+    expect(readableRange("{ [-2147483648, -1], [1, 2147483647] }", INT))
+      .toBe("not 0");
+  });
+
   it("reads a single value as the value, whatever the type", () => {
     expect(readableRange("{ [1, 1] }", INT)).toBe("1");
     expect(readableRange("{ [-5, -5] }", "reg_$4<size_t n>")).toBe("-5");

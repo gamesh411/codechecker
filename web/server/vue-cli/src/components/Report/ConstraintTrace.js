@@ -316,7 +316,7 @@ function integerType(symbol) {
     : { min: -_half, max: _half - 1n };
 }
 
-const RANGE_SET = /^\{\s*(?:\[-?\d+, -?\d+\]\s*)+\}$/;
+const RANGE_SET = /^\{\s*(?:\[-?\d+, -?\d+\],?\s*)+\}$/;
 
 // A range of integers as a person would say it, or null to show the
 // analyzer's own range. `symbol` is the dump the range is for, which gives the
