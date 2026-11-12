@@ -1322,12 +1322,29 @@ function isNonNull(range) {
   return /^\{ \[1, (?:4294967295|18446744073709551615)\] \}$/.test(range);
 }
 
+const COMPARISONS = new Set([ "<", ">", "<=", ">=", "==", "!=" ]);
+
+// Whether a symbol dump is a comparison at its top, such as `(a) >= (b)`,
+// whose value is 1 when it holds and 0 when it does not.
+function isComparison(symbol) {
+  return COMPARISONS.has(parseSymbolExpression(symbol)?.operator);
+}
+
 // A range of integers as a person would say it, or null to show the
 // analyzer's own range. `symbol` is the dump the range is for, which gives the
 // type. A single value needs no type, and the other forms are about the
-// type's extremes, so they need it.
+// type's extremes, so they need it. A comparison reads true or false, not
+// as the number the analyzer keeps for it.
 export function readableRange(range, symbol, info) {
   if (!RANGE_SET.test(range)) return null;
+
+  if (isComparison(symbol)) {
+    if (range === "{ [0, 0] }") return "false";
+    const _bounds = [ ...range.matchAll(/\[(-?\d+), (-?\d+)\]/g) ]
+      .map(match => [ BigInt(match[1]), BigInt(match[2]) ]);
+    return _bounds.every(([ low, high ]) => low > 0n || high < 0n)
+      ? "true" : null;
+  }
 
   // An address is null or not, whatever else is known of its range.
   const _pointer = info ? info.pointer : POINTER_SYMBOL.test(symbol ?? "");

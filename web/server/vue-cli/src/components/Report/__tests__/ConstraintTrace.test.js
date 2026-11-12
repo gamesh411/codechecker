@@ -216,6 +216,31 @@ describe("readableRange", () => {
     // A range outside the type means the type was not read right.
     expect(readableRange("{ [1, 4294967295] }", INT)).toBe(null);
   });
+
+  it("reads a comparison as true or false", () => {
+    const _ge = "(reg_$2<u_int px>) >= (reg_$52<u_int cellused>)";
+    expect(readableRange("{ [0, 0] }", _ge)).toBe("false");
+    expect(readableRange("{ [-2147483648, -1], [1, 2147483647] }", _ge))
+      .toBe("true");
+    expect(readableRange("{ [1, 1] }", _ge)).toBe("true");
+    [ "<", ">", "<=", "==", "!=" ].forEach(operator =>
+      expect(readableRange("{ [0, 0] }",
+        `(reg_$1<int a>) ${operator} 5`)).toBe("false"));
+    // Whatever the type information says.
+    expect(readableRange("{ [0, 0] }", _ge, { type: "int", pointer: false }))
+      .toBe("false");
+  });
+
+  it("leaves a comparison alone when it may hold or not", () => {
+    expect(readableRange("{ [0, 1] }", "(reg_$1<int a>) < 5")).toBe(null);
+  });
+
+  it("does not read a comparison inside an expression as one", () => {
+    // The top operator is +, so the value is a number.
+    expect(readableRange("{ [0, 0] }",
+      "((reg_$1<int a>) < 5) + (reg_$2<int b>)")).toBe("0");
+    expect(readableRange("{ [0, 0] }", "(reg_$1<int a>) & 4")).toBe("0");
+  });
 });
 
 // x is narrowed and y assumed at node 1, node 2 rewrites the whole range list
