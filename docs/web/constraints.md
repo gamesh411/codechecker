@@ -170,6 +170,8 @@ An integer range reads the way a person would say it, in the snapshot, the path 
 * A range that excludes exactly one value reads "not N", so `[-2147483648, -1] [1, 2147483647]` of an `int` reads "not 0".
 * A range of one value reads as the value, so `[1, 1]` reads "1".
 * A range that runs from a value to the largest value of the type reads "at least N", and one that runs from the smallest value of the type to a value reads "at most N".
+* A comparison, such as `xx >= end`, reads "false" when its range is `[0, 0]` and "true" when its range leaves 0 out, rather than as the number the analyzer keeps for it.
+  Only a comparison at the top of the expression counts, so `(a < 5) + b` reads as a number.
 
 The bounds of the type come from the type Clang records for the symbol, which is the canonical type, so a `size_t` is an `unsigned long` and a field of a replaced value has its own type.
 For a trace without it, the type at the start of the symbol is read instead, such as `int` in `reg_$1<int a>`.
@@ -197,7 +199,28 @@ Some assumptions have a node of their own, between two steps; the line then says
 When the step is an assumption the bug path has no event for, the line says "assumed with no event at" and the link is to that control step.
 A path with no constraints shows "This path has no constraints on it."
 
-![This path requires, on a report of tmux](images/constraints_requires.png)
+#### An example
+
+**Show an example** above the rows asks the server for one example of the path: one value for each row, which together follow the bug path.
+The value appears beside the row's range, after "e.g.", or under it when the panel is narrow.
+It is the value Z3 gives the row's expression in one model of the path's solver input, so `m + n` shows the solver's value of the sum, which may have wrapped around.
+A row such as `m + n` has a value, but `m` and `n` get none of their own unless the path constrains them on a row of their own, since any value of a symbol the path does not constrain would do.
+
+* A number is in the signedness of the analyzer's range for the row, so an `int` shows `-1` where an `unsigned int` would show `4294967295`.
+* A pointer reads **null** or **non-null**, since its number means nothing.
+* A comparison reads **true** or **false**.
+* An enum or a `bool` reads as its number.
+
+The example is one of many, and the panel says so.
+It is a model of what the analyzer recorded, not proof that a real execution can follow the path, for the same reasons that a Feasible verdict is not.
+It respects the constraints in the **Checked together** list of [What if](#what-if), whether they hold at one step or throughout, and it disappears when that list changes, since it no longer matches it.
+**Hide** removes it.
+It is made from the same solver call as the verdict, so it never changes the verdict, and it is never stored, not in the database and not in the browser.
+
+There is no example when the path is not feasible with those constraints, when the solver gives up at its time limit, or when a constraint cannot be read; the panel then says why in place of the values.
+A report without solver input offers no example and says "No example: this report has no solver input for this path. Recording it needs a Clang built with Z3."
+
+![This path requires, with an example, on a report of tmux](images/constraints_requires.png)
 
 ## Selecting a step
 
@@ -331,6 +354,7 @@ A baseline box appears only when the baseline is not Feasible, since then your a
   They cannot be shared or reviewed later.
 * The solver gets 2000 ms for each call.
   A check makes up to two calls and then, if the path is infeasible, searches for the first step where it dies for up to 4000 ms more, so a check can hold a server worker for up to 8 seconds.
+  Asking for an example adds no call.
 * A name is what the panel shows, so a value the panel cannot name, such as a field of a temporary or the size of memory, cannot be constrained either.
 * A function whose name has template arguments, or a lambda, cannot be written before `::`, so its variables can only be named alone.
   The list leaves such names out.
