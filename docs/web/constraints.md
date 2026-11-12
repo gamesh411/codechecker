@@ -87,6 +87,7 @@ The panel can be closed with the cross in its header.
   A symbol without a known range reads "no known range".
   A variable that holds a concrete value shows the value, such as `&x`.
 * A pointer symbol whose range is exactly zero reads **null**, and one whose range is everything except zero reads **non-null**.
+  Whether a symbol is a pointer comes from the type Clang records for it, so a pointer that is a field of a replaced value reads this way too.
   Hovering over the word shows the analyzer's own range.
 * **Other symbols** lists symbols the analyzer has a range for that no listed variable holds, for example the value of an expression.
 
@@ -107,7 +108,27 @@ A symbol the analyzer made up reads as where it came from, wherever the panel wo
 - Any other symbol reads as the statement it was made for, such as "value from `malloc(16)`, line 11", because the analyzer did not record what kind of value it is, for example when a checker models the call.
   A symbol without such a statement reads "origin not recorded".
 
-A long call is shortened to its function's name, such as "`Lex(…)`".
+A symbolic expression reads from the labels of the symbols in it, such as "result of `size()` + 1" or "`hits` after the loop may have changed it > `n`".
+A variable that held a symbol names it in the expression, and so does the name in a symbol's region, such as `n` in `reg_$1<unsigned int n>`.
+An expression with a part that cannot be named, or one this page cannot read to the end, is shown as the analyzer prints it, never half-way.
+Hovering over it shows the analyzer's own expression.
+
+Two results of the same call text are marked.
+The analyzer makes a new value for each call and does not assume that two calls return the same one, which matters when the second call looked certain to agree with the first, as in `if (x.size() > 0) ... x.size()`.
+Each of two symbols on the bug path whose origin is a call with the same text carries a small tag beside its label, such as "another `size()` result, Step 4", and the step is a link that selects it.
+The tooltip says that the analyzer does not assume the two calls return the same value.
+With more than two, the tag names the nearest other one, adds how many more there are, and the tooltip lists every step.
+A statement that Clang had to cut is not compared.
+
+The same labels show wherever a view names a symbol.
+The line picker shows each variable that differs between visits of a line as a range in words, and its tooltip adds the label of the value.
+The control flow graph and the analyzer states views show statements and states, not symbols, so they have none to label; the panel they open shows the labels.
+Rows of the panel are told apart by their symbol, never by their label, so two symbols with the same label are two rows.
+
+Statement text longer than 40 characters is shortened the same way everywhere.
+A call keeps what it calls and drops its arguments, such as "`this->parse(…)`", and falls back to the function's name when that is still long, such as "`lookup(…)`".
+Anything else is cut at 40 characters.
+The whole text is in the tooltip.
 When the value was made in another function than the one of the selected step, the function follows, such as "in `next_len`".
 Hovering over the label explains it and shows the call in full and the analyzer's own symbol, and clicking the line selects the step nearest to that statement or loop.
 Reports analyzed before Clang recorded this show the symbols as before.
@@ -129,8 +150,9 @@ An integer range reads the way a person would say it, in the snapshot, the path 
 * A range of one value reads as the value, so `[1, 1]` reads "1".
 * A range that runs from a value to the largest value of the type reads "at least N", and one that runs from the smallest value of the type to a value reads "at most N".
 
-The bounds of the type come from the type at the start of the symbol, such as `int` in `reg_$1<int a>`.
-When the width or signedness of the type cannot be told for certain, as with a typedef, an enum, a plain `char` or a `long` whose range stops short of the 64-bit extreme, the range is printed as the analyzer prints it, as a list of closed intervals.
+The bounds of the type come from the type Clang records for the symbol, which is the canonical type, so a `size_t` is an `unsigned long` and a field of a replaced value has its own type.
+For a trace without it, the type at the start of the symbol is read instead, such as `int` in `reg_$1<int a>`.
+When the width or signedness of the type cannot be told for certain, as with an enum, a plain `char` or a `long` whose range stops short of the 64-bit extreme, the range is printed as the analyzer prints it, as a list of closed intervals.
 Any other range is printed that way too.
 Hovering over a range that is shown in words shows the analyzer's own range.
 
