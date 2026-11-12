@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>clang_version</key>
-	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 38e11c720645df64133b6a4fb23a6f75441b56dc)</string>
+	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
 	<key>constraint_trace_cfgs</key>
 	<array>
 		<dict>

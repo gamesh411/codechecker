@@ -66,6 +66,7 @@ class TestConstraintTrace(unittest.TestCase):
                              'v1_trace', 'z3_refuted',
                              'concrete_value', 'opaque_call',
                              'call_result', 'no_symbols',
+                             'replaced_field', 'widened_loop',
                              'several_contexts']:
                 report_dir = os.path.join(
                     TEST_WORKSPACE, 'test_proj', run_name)
@@ -480,6 +481,57 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertTrue(last['path_condition'])
         self.assertTrue(all(entry['symbol'] in symbols
                             for entry in last['path_condition']))
+
+    def _symbols(self, run_name):
+        trace = ConstraintTrace(
+            json.loads(self._details(run_name).constraintTrace))
+        source = os.path.join(self._test_workspace, 'test_proj', run_name,
+                              f'{run_name}.c')
+        return trace.symbols(), source
+
+    def test_stored_trace_keeps_values_a_call_replaced(self):
+        """
+        Hand-derived from demo/replaced-field.c: `lex(&Tok)` is evaluated
+        without its body, so it replaces `Tok`, and `Tok.Kind` is derived
+        from that value, which has an entry although no list names it.
+        """
+        symbols, source = self._symbols('replaced_field')
+        field = next(symbol for symbol in symbols.values()
+                     if symbol['kind'] == 'derived')
+        self.assertEqual(field['region'], 'Tok.Kind')
+        self.assertEqual(symbols[field['parent']]['origin'], {
+            'reason': 'invalidation', 'statement': 'lex(&Tok)',
+            'callee': 'lex', 'region': 'Tok', 'function': 'parse',
+            'frame': 0, 'location': {'line': 11, 'col': 3, 'file': source}})
+
+    def test_stored_trace_keeps_globals_a_call_replaced(self):
+        """
+        Hand-derived from demo/opaque-call.c: `refresh()` may change every
+        global, so `g` after it is part of the value that replaced them.
+        """
+        symbols, _ = self._symbols('opaque_call')
+        new_g = next(symbol for symbol in symbols.values()
+                     if symbol.get('region') == 'g')
+        origin = symbols[new_g['parent']]['origin']
+        self.assertEqual((origin['reason'], origin['statement'],
+                          origin.get('globals'), 'region' in origin),
+                         ('invalidation', 'refresh()', True, False))
+
+    def test_stored_trace_keeps_values_a_widened_loop_replaced(self):
+        """
+        Hand-derived from demo/widened-loop.c, analyzed with loop widening:
+        the analyzer replaces `hits` and `i` at the loop's condition, and the
+        entries give the loop's place as a stored path.
+        """
+        symbols, source = self._symbols('widened_loop')
+        widened = {symbol['origin']['region']: symbol['origin']
+                   for symbol in symbols.values()
+                   if symbol.get('origin', {}).get('reason') ==
+                   'loop_widening'}
+        self.assertEqual(set(widened), {'hits', 'i'})
+        self.assertEqual(widened['hits']['loop'],
+                         {'line': 6, 'col': 3, 'file': source})
+        self.assertEqual(widened['hits']['location']['line'], 6)
 
     def test_trace_without_a_symbol_table_is_served_as_before(self):
         """
