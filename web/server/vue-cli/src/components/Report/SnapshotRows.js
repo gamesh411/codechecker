@@ -16,19 +16,26 @@ function changeIn(step, field, symbol) {
 }
 
 // The rows of one frame's variables, by name. `prefix` keeps the keys of two
-// frames' `n` apart.
-function variableRows(step, variables, known, prefix) {
+// frames' `n` apart. A symbol the analyzer dropped at this step shows the
+// last range the path condition has for it, marked `dropped`, as its own row
+// in the path condition is.
+function variableRows(step, variables, known, accumulated, prefix) {
   return [ ...variables ]
     .sort((a, b) => compareNames(a.name, b.name))
     .map(variable => {
       const _isSymbol = variable.kind === "symbol";
+      const _known = _isSymbol && known.has(variable.value);
+      const _dropped = _isSymbol && !_known && accumulated.has(variable.value);
       return {
         key: `${prefix}${variable.name}`,
         name: variable.name,
-        range: _isSymbol ? known.get(variable.value) : undefined,
+        range: _isSymbol
+          ? known.get(variable.value) ?? accumulated.get(variable.value)
+          : undefined,
         display: _isSymbol ? "no known range" : variable.value,
         symbol: _isSymbol ? variable.value : null,
-        muted: _isSymbol && !known.has(variable.value),
+        dropped: _dropped,
+        muted: _isSymbol && !_known && !_dropped,
         change: _isSymbol
           ? changeIn(step, "symbol_ranges", variable.value) : undefined
       };
@@ -58,8 +65,11 @@ function frameGroup(step, frame) {
 export function snapshotRows(step) {
   const _known = new Map(
     step.symbolRanges.map(range => [ range.symbol, range.range ]));
+  const _accumulated = new Map(
+    step.pathCondition.map(range => [ range.symbol, range.range ]));
 
-  const variables = variableRows(step, step.variables, _known, "variable ");
+  const variables = variableRows(step, step.variables, _known, _accumulated,
+    "variable ");
 
   const _byFrame = new Map();
   (step.callerVariables ?? []).forEach(variable => {
@@ -69,7 +79,7 @@ export function snapshotRows(step) {
   // The trace lists frames innermost first, and a Map keeps that order.
   const callers = [ ..._byFrame ].map(([ frame, frameVariables ]) => ({
     ...frameGroup(step, frame),
-    rows: variableRows(step, frameVariables, _known,
+    rows: variableRows(step, frameVariables, _known, _accumulated,
       `frame ${frame} variable `)
   }));
   const current = step.frame === undefined

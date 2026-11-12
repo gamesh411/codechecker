@@ -143,4 +143,35 @@ describe("rows of the snapshot panel", () => {
     expect(rows.current).toBeNull();
     expect(rows.variables.map(row => row.key)).toEqual([ "variable x" ]);
   });
+
+  test("a variable whose range was dropped shows the last one, marked", () => {
+    const TOP_N = "reg_$1<int n>";
+    const { variables, callers, accumulated } = snapshotRows(stepWith({
+      variables: [ { name: "m", value: FIRST, kind: "symbol" } ],
+      callerVariables: [
+        { frame: 0, name: "n", value: TOP_N, kind: "symbol" }
+      ],
+      frame: 1,
+      frames: [ { function: "top" }, { function: "inner", parent: 0 } ],
+      pathCondition: [ { symbol: TOP_N, range: "{ [2, 2] }" } ]
+    }));
+    const [ n ] = callers[0].rows;
+    expect([ n.range, n.dropped, n.muted ]).toEqual([ "{ [2, 2] }", true,
+      false ]);
+    expect(accumulated[0].dropped).toBe(true);
+    // Neither known nor ever constrained: still no known range.
+    expect([ variables[0].range, variables[0].dropped, variables[0].muted,
+      variables[0].display ])
+      .toEqual([ undefined, false, true, "no known range" ]);
+  });
+
+  test("a known range is not marked dropped", () => {
+    const { variables } = snapshotRows(stepWith({
+      variables: [ { name: "a", value: FIRST, kind: "symbol" } ],
+      symbolRanges: [ { symbol: FIRST, range: "{ [0, 0] }" } ],
+      pathCondition: [ { symbol: FIRST, range: "{ [0, 5] }" } ]
+    }));
+    expect([ variables[0].range, variables[0].dropped ])
+      .toEqual([ "{ [0, 0] }", false ]);
+  });
 });

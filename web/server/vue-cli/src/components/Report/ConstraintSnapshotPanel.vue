@@ -192,6 +192,13 @@
                         <dump-text v-else :text="row.display" />
                       </span>
                       <change-tag :change="row.change" />
+                      <span
+                        v-if="row.dropped"
+                        class="panel-dropped text-caption"
+                        :title="DROPPED_HINT"
+                      >
+                        dropped
+                      </span>
                       <div
                         v-if="row.symbol"
                         class="panel-symbol"
@@ -310,7 +317,9 @@ import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
-import { labelPlace, readableRange, shortenPaths } from "./ConstraintTrace";
+import {
+  functionName, labelPlace, readableRange, shortenPaths
+} from "./ConstraintTrace";
 import { EXPANDED_CALLERS, snapshotRows } from "./SnapshotRows";
 import WhatIfSection from "./WhatIfSection";
 
@@ -463,7 +472,7 @@ function SymbolText({ symbol, unless }) {
   if (_label.function) {
     // "in" stays with the name, which may still break inside.
     _parts.push(" in\u00a0", h("code", { class: "panel-label-code" },
-      h(DumpText, { text: _label.function })));
+      h(DumpText, { text: functionName(_label.function) })));
   }
   return h("span", {
     class: "panel-label",
@@ -497,7 +506,7 @@ const variableSections = computed(() => {
     group,
     // Most of a long C++ name is the anonymous namespace it is in; the
     // heading's title keeps it.
-    name: group.function.replaceAll("(anonymous namespace)::", ""),
+    name: functionName(group.function),
     rows: sectionRows,
     caller,
     expanded: !caller ||
@@ -639,7 +648,13 @@ function toggleFrame(section) {
     overflow-wrap: anywhere;
   }
 
-  .panel-frame-where,
+  // A long file name in "called at" wraps instead of running past the panel.
+  .panel-frame-where {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
   .panel-frame-count {
     white-space: nowrap;
   }
@@ -822,6 +837,13 @@ function toggleFrame(section) {
     color: #6b5a12;
     background-color: #f6efc8;
     white-space: nowrap;
+  }
+
+  // Beside a variable's range, as the change tag sits.
+  .panel-value > .panel-dropped {
+    display: inline-block;
+    margin-left: 6px;
+    line-height: 1.5;
   }
 
   .panel-silent {
