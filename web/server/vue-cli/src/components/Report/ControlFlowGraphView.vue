@@ -174,6 +174,7 @@ import {
   ref,
   watch
 } from "vue";
+import { shortenPaths } from "./ConstraintTrace";
 import ReportSideView from "./ReportSideView";
 
 const props = defineProps({
@@ -316,7 +317,7 @@ const blocks = computed(() => {
         key: `${block.id}.${index}`,
         kind: element.parent === undefined ? "statement" : "subexpression",
         index: `${index + 1}`,
-        text: element.text,
+        text: shortenPaths(element.text),
         line: element.line ? `L${element.line}` : "",
         title: element.line
           ? `B${block.id}.${index + 1}, line ${element.line}: ${element.text}`
@@ -330,7 +331,7 @@ const blocks = computed(() => {
         key: `${block.id}.T`,
         kind: "terminator",
         index: "T",
-        text: block.terminator,
+        text: shortenPaths(block.terminator),
         title: `B${block.id} terminator: ${block.terminator}`,
         steps: stepsByPlace.value.get(`${block.id}.T`) ?? []
       });

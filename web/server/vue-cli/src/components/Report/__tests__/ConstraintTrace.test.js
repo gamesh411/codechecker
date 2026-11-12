@@ -1,5 +1,5 @@
 import {
-  ConstraintTrace, compareNames, readConstraintTrace
+  ConstraintTrace, compareNames, readConstraintTrace, shortenPaths
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -119,5 +119,17 @@ describe("compareNames", () => {
   it("orders the numbers in names by value", () => {
     expect([ "a100", "a10", "b", "a2", "a1", "a0" ].sort(compareNames))
       .toEqual([ "a0", "a1", "a2", "a10", "a100", "b" ]);
+  });
+});
+
+describe("shortenPaths", () => {
+  it("cuts an absolute path to its file name", () => {
+    expect(shortenPaths("const class (lambda at /a/b/c.cpp:3:12)"))
+      .toBe("const class (lambda at c.cpp:3:12)");
+  });
+
+  it("leaves a division and an empty text alone", () => {
+    expect(shortenPaths("a / b")).toBe("a / b");
+    expect(shortenPaths(undefined)).toBe("");
   });
 });

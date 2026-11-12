@@ -258,6 +258,17 @@ export function compareNames(a, b) {
   return NAME_COLLATOR.compare(a, b);
 }
 
+// An absolute path, such as the file of a lambda's type, at the start of a
+// word.
+const ABSOLUTE_PATH = /(?<![^\s(<{[,])(?:\/[^\s/:()<>{}[\],]+){2,}/g;
+
+// Text with each absolute path cut to its file name, as the States view shows
+// locations. Callers keep the whole text for a title.
+export function shortenPaths(text) {
+  return (text ?? "").replace(ABSOLUTE_PATH,
+    path => path.slice(path.lastIndexOf("/") + 1));
+}
+
 // A CFG with blocks and elements as objects, as the graph view reads them.
 function expandCfg(cfg) {
   const _edges = cfg.path_edges ?? [];

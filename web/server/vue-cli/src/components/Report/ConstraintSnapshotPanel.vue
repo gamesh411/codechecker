@@ -229,7 +229,7 @@ import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
-import { compareNames } from "./ConstraintTrace";
+import { compareNames, shortenPaths } from "./ConstraintTrace";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
@@ -288,18 +288,13 @@ function RangeText({ range, symbol }) {
 }
 RangeText.props = [ "range", "symbol" ];
 
-// An absolute path, such as the file of a lambda's type, at the start of a
-// word. Shown by its file name, as the States view shows locations; the
-// row's title keeps it whole.
-const ABSOLUTE_PATH = /(?<![^\s(<{[,])(?:\/[^\s/:()<>{}[\],]+){2,}/g;
-
 // A symbol dump or a C++ name may wrap after a separator or an opening
 // bracket, never inside an identifier.
 const BREAK = /(?<=[,({[<.]|::|->)(?=[^\s,.)}\]>])/;
 
 function DumpText({ text, fullPaths }) {
-  const _text = fullPaths ? text ?? "" : (text ?? "").replace(ABSOLUTE_PATH,
-    path => path.slice(path.lastIndexOf("/") + 1));
+  // The row's title keeps an absolute path whole.
+  const _text = fullPaths ? text ?? "" : shortenPaths(text);
   return _text.split(BREAK).flatMap((part, index) =>
     index ? [ h("wbr"), part ] : [ part ]);
 }
