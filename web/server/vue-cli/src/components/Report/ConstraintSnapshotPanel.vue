@@ -133,7 +133,7 @@
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    <symbol-text :symbol="row.symbol" />
+                    <symbol-text :symbol="row.symbol" :unless="row.name" />
                   </div>
                 </div>
               </div>
@@ -201,7 +201,7 @@
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    <symbol-text :symbol="row.symbol" />
+                    <symbol-text :symbol="row.symbol" :unless="row.name" />
                   </span>
                   <span
                     v-if="row.dropped"
@@ -367,10 +367,13 @@ function sameCallTag(others) {
 // A symbol as its label when the trace has one, and as its dump otherwise.
 // The row keeps the dump in its title, and the label's own title adds what
 // the label means. The label's line selects the Path Step nearest to the
-// statement or loop the value came from.
-function SymbolText({ symbol }) {
+// statement or loop the value came from. A label that only repeats
+// `unless`, such as a parameter's name beside the parameter, shows the dump.
+function SymbolText({ symbol, unless }) {
   const _label = props.step.labelOf?.(symbol);
-  if (!_label) return h(DumpText, { text: symbol });
+  if (!_label || unless !== undefined && _label.text === unless) {
+    return h(DumpText, { text: symbol });
+  }
 
   const _parts = _label.parts.map(part => typeof part === "string"
     ? part
@@ -399,7 +402,7 @@ function SymbolText({ symbol }) {
     title: _label.hint ? `${_label.hint}\n${symbol}` : symbol
   }, _parts);
 }
-SymbolText.props = [ "symbol" ];
+SymbolText.props = [ "symbol", "unless" ];
 
 const rows = computed(() => snapshotRows(props.step));
 </script>

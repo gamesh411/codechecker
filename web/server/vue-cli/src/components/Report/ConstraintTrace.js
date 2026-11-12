@@ -25,7 +25,7 @@ const SHOWN_LISTS = [ "symbol_ranges", "variables", "path_condition" ];
 // The keys of a symbol's origin, and of the symbol itself, that name a
 // string.
 const ORIGIN_STRINGS = [ "statement", "callee", "function", "region" ];
-const SYMBOL_STRINGS = [ "parent", "region", "type" ];
+const SYMBOL_STRINGS = [ "parent", "region", "type", "name" ];
 
 // Whole raw lists kept on the way, so that reading any node replays at most
 // this many deltas.
@@ -97,6 +97,7 @@ export class ConstraintTrace {
     this._changes = new Map();
     this._silentChanges = null;
     this._symbols = null;
+    this._expressions = null;
     this._calls = null;
   }
 
@@ -105,10 +106,11 @@ export class ConstraintTrace {
   // symbol `origin`, with `reason` and `function` and, when Clang knows them,
   // `statement`, `location`, `callee` and `frame` (into `stack_frames`), and
   // for memory a call or a loop replaced, `region` or `globals`, and `loop`.
-  // A derived symbol has its `parent`'s dump and its `region`'s access path.
-  // A symbol has its `type`, the canonical type's name, and `pointer` when the
-  // analyzer treats it as an address; a trace from a Clang before those has
-  // neither.
+  // A derived symbol has its `parent`'s dump and its `region`'s access path,
+  // an extent the `region` whose size it is, and a region value the `name` of
+  // its region's access path, each when Clang can describe it. A symbol has
+  // its `type`, the canonical type's name, and `pointer` when the analyzer
+  // treats it as an address; a trace from a Clang before those has neither.
   get symbols() {
     if (this._symbols) return this._symbols;
 
@@ -139,6 +141,28 @@ export class ConstraintTrace {
   // a trace without the table.
   symbol(dump) {
     return this.symbols.get(dump);
+  }
+
+  // The types of the symbolic expressions the snapshots constrain or the
+  // variables hold, as a Map from dump to `{ type, pointer }` in the shape a
+  // symbol's entry has them. An expression has no entry among the symbols.
+  get expressions() {
+    if (this._expressions) return this._expressions;
+
+    const _s = this.strings;
+    this._expressions = new Map((this.trace.expressions ?? []).map(entry => {
+      const _expression = {};
+      if (entry.type !== undefined) _expression.type = _s[entry.type];
+      if (entry.pointer) _expression.pointer = true;
+      return [ _s[entry.symbol], _expression ];
+    }));
+    return this._expressions;
+  }
+
+  // What the trace says of the type of a symbol or an expression, as
+  // symbolType gives it, or undefined when it says nothing.
+  typeOf(dump) {
+    return symbolType(this.symbols.get(dump) ?? this.expressions.get(dump));
   }
 
   // The other symbols whose origin is a call with the same statement text as
@@ -555,6 +579,32 @@ function originWords(origin, memory) {
 export function symbolLabel(entry, stepFrame, symbolOf = () => undefined) {
   if (!entry) return null;
 
+  // The memory's own name is what a reader would write for the value.
+  if (entry.kind === "region_value") {
+    if (!entry.name) return null;
+    return {
+      text: entry.name,
+      parts: [ { code: entry.name } ],
+      hint: "What this memory held before the path changed it, which the " +
+        "analyzer knows only from the constraints on it.",
+      location: null,
+      frame: undefined,
+      function: null
+    };
+  }
+  if (entry.kind === "extent") {
+    if (!entry.region) return null;
+    return {
+      text: `size of ${entry.region}`,
+      parts: [ "size of ", { code: entry.region } ],
+      hint: "The size in bytes of this memory, which the analyzer knows " +
+        "only from the constraints on it.",
+      location: null,
+      frame: undefined,
+      function: null
+    };
+  }
+
   let _origin = entry.origin;
   let _memory = null;
   if (entry.kind === "derived") {
@@ -670,18 +720,11 @@ export function parseSymbolExpression(dump) {
   return typeof dump === "string" ? readExpression(dump) : null;
 }
 
-// The name a region value atom goes by when no variable names it: the last
-// word of its region, as in reg_$1<unsigned int n>.
-function regionValueName(atom) {
-  const _match = /^reg_\$\d+<(.*)>$/.exec(atom);
-  const _word = _match?.[1].split(/\s+/).pop();
-  return _word && /^[A-Za-z_~][\w.:]*$/.test(_word) ? _word : null;
-}
-
 // The label of a symbolic expression, in the shape symbolLabel returns, built
 // from the labels of its atoms; null when the dump is not an expression this
 // can read or an atom has neither a label nor a name. `symbolOf` gives an
-// atom's entry by dump, and `nameOf` the variable that held it, if any.
+// atom's entry by dump, and `nameOf` the variable that held it, if any. A
+// name is never read out of the dump.
 export function expressionLabel(dump, stepFrame, symbolOf, nameOf = () => {}) {
   const _tree = parseSymbolExpression(dump);
   if (!_tree || _tree.atom === dump) return null;
@@ -690,11 +733,16 @@ export function expressionLabel(dump, stepFrame, symbolOf, nameOf = () => {}) {
   const _parts = (node, outer) => {
     if (node.integer !== undefined) return [ node.integer ];
     if (node.atom !== undefined) {
-      const _label = symbolLabel(symbolOf(node.atom), stepFrame, symbolOf);
+      const _entry = symbolOf(node.atom);
+      const _variable = nameOf(node.atom);
+      // A region value goes by the variable that held it, as its own row in
+      // the path condition does, and by its memory otherwise.
+      if (_variable && (!_entry || _entry.kind === "region_value")) {
+        return [ { code: _variable } ];
+      }
+      const _label = symbolLabel(_entry, stepFrame, symbolOf);
       if (_label) return _label.parts;
-      const _name = node.atom.startsWith("reg_$")
-        ? nameOf(node.atom) ?? regionValueName(node.atom) : null;
-      return _name ? [ { code: _name } ] : null;
+      return _variable ? [ { code: _variable } ] : null;
     }
     if (node.cast !== undefined) {
       const _operand = _parts(node.operand, "cast");
@@ -736,7 +784,8 @@ export function expressionLabel(dump, stepFrame, symbolOf, nameOf = () => {}) {
 }
 
 // What a variable is shown as where a line has several visits, and what the
-// analyzer has for it. `entry` is its symbol's entry, which gives the type.
+// analyzer has for it. `entry` is its symbol's entry, or its expression's
+// when it holds an expression, which gives the type.
 export function describeVariable(variable, snapshot, entry) {
   if (variable.kind !== "symbol") {
     return { text: variable.value, raw: variable.value };

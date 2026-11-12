@@ -506,7 +506,8 @@ const LONG_CALL = "Lex(Tok, /*Recover=*/true, getLangOpts().CPlusPlus)";
 const REPLACING_STRINGS = [
   REPLACED, "Lex(Tok)", "Lex", "f", "Tok", FIELD, "Tok.Kind", WIDENED, "i",
   "x", GLOBALS, "refresh()", "refresh", GLOBAL, "counter", RESULT_FIELD,
-  "r.len", CALL, "get()", "get", LONG_CALL
+  "r.len", CALL, "get()", "get", LONG_CALL, "reg_$1<unsigned int n>", "n",
+  "reg_$1<int n>", "reg_$2<int SymRegion{reg_$1<int * p>}.len>", "p->len"
 ];
 const REPLACING = {
   version: 2,
@@ -533,9 +534,42 @@ const REPLACING = {
     { symbol: 17, kind: "conjured", origin: {
       reason: "call_result", statement: 18, callee: 19, function: 3,
       frame: 0, location: LOCATION(30)
-    } }
+    } },
+    { symbol: 21, kind: "region_value", name: 22 },
+    { symbol: 23, kind: "region_value", name: 22 },
+    { symbol: 24, kind: "region_value", name: 25 }
   ]
 };
+
+describe("names of region values", () => {
+  test("a region value reads as its memory's name", () => {
+    const entry = { kind: "region_value", name: "this->Current",
+      type: "int *", pointer: true };
+    expect(symbolLabel(entry, 0)).toEqual({
+      text: "this->Current", parts: [ { code: "this->Current" } ],
+      hint: "What this memory held before the path changed it, which the " +
+        "analyzer knows only from the constraints on it.",
+      location: null, frame: undefined, function: null
+    });
+  });
+
+  test("an extent reads as the size of its memory", () => {
+    expect(symbolLabel({ kind: "extent", region: "*l->cells" }, 0))
+      .toMatchObject({ text: "size of *l->cells",
+        parts: [ "size of ", { code: "*l->cells" } ], location: null });
+  });
+
+  test("a region value without a name has no label", () => {
+    expect(symbolLabel({ kind: "region_value" }, 0)).toBeNull();
+    expect(symbolLabel({ kind: "extent" }, 0)).toBeNull();
+  });
+
+  test("the table reads the name", () => {
+    const trace = new ConstraintTrace(REPLACING);
+    expect(trace.symbol("reg_$2<int SymRegion{reg_$1<int * p>}.len>"))
+      .toEqual({ kind: "region_value", name: "p->len" });
+  });
+});
 
 describe("labels of replaced values", () => {
   const trace = new ConstraintTrace(REPLACING);
@@ -639,7 +673,7 @@ describe("symbolic expressions", () => {
     });
   });
 
-  test("a region value is named by its variable or by its region", () => {
+  test("a region value is named by its variable or by its memory", () => {
     const dump = `(${WIDENED_ATOM}) > (reg_$1<unsigned int n>)`;
     expect(label(dump).text)
       .toBe("x after the loop may have changed it > n");
@@ -648,6 +682,15 @@ describe("symbolic expressions", () => {
     expect(label(dump).parts).toEqual([
       { code: "x" }, " after the loop may have changed it > ", { code: "n" }
     ]);
+    expect(label("(reg_$2<int SymRegion{reg_$1<int * p>}.len>) + 1").text)
+      .toBe("p->len + 1");
+  });
+
+  test("a region value's name is never read from its dump", () => {
+    // Without an entry or a variable, the dump's last word is no name.
+    expect(label("(reg_$9<int count>) + 1")).toBeNull();
+    expect(label("(reg_$9<int count>) + 1", { "reg_$9<int count>": "count" })
+      .text).toBe("count + 1");
   });
 
   test("integers lose their suffix, casts and negation are told", () => {
@@ -761,6 +804,33 @@ describe("types of symbols", () => {
     expect(trace.symbol(CALL)).toMatchObject({ pointer: true });
     expect(symbolType(trace.symbol(PRUNED))).toBeUndefined();
     expect(symbolType(undefined)).toBeUndefined();
+  });
+
+  test("an expression's type comes from the trace's expressions", () => {
+    const masked = "(reg_$1<unsigned long mask>) & 7U";
+    const trace = new ConstraintTrace({
+      ...SYMBOLS,
+      strings: [ ...SYMBOL_STRINGS, "unsigned long", masked, "int *" ],
+      symbols: [ { symbol: 0, kind: "conjured", type: 14, pointer: true } ],
+      expressions: [ { symbol: 13, type: 12 } ]
+    });
+    expect(trace.expressions.get(masked)).toEqual({ type: "unsigned long" });
+    expect(trace.symbol(masked)).toBeUndefined();
+    expect(trace.typeOf(masked))
+      .toEqual({ type: "unsigned long", pointer: false });
+    expect(trace.typeOf(CALL)).toEqual({ type: "int *", pointer: true });
+    expect(trace.typeOf("(reg_$2<int a>) + 1")).toBeUndefined();
+    // An expression's dump does not start with its type, so only the entry
+    // makes its range readable.
+    const range = "{ [1, 18446744073709551615] }";
+    expect(readableRange(range, masked)).toBeNull();
+    expect(readableRange(range, masked, trace.typeOf(masked))).toBe("not 0");
+  });
+
+  test("a trace without expressions has no types for them", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    expect(trace.expressions.size).toBe(0);
+    expect(trace.typeOf("(reg_$0<int a>) + 1")).toBeUndefined();
   });
 
   test("a pointer reads as null or non-null from its entry", () => {

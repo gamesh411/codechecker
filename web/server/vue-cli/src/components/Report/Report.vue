@@ -433,8 +433,7 @@ import {
   describeVariable,
   expressionLabel,
   shortenStatement,
-  symbolLabel,
-  symbolType as symbolTypeOf
+  symbolLabel
 } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
@@ -677,9 +676,10 @@ const selectedConstraintStep = computed(() => {
     silent: false
   };
 });
-// What the symbol table says of a symbol's type, for the range words.
+// What the trace says of the type of a symbol or an expression, for the
+// range words.
 function symbolType(symbol) {
-  return symbolTypeOf(constraintTrace.value.symbol(symbol));
+  return constraintTrace.value.typeOf(symbol);
 }
 
 // Labels of symbols as a Path Step on `node` shows them, each with the Path
@@ -1224,8 +1224,9 @@ function describePickerSteps(steps) {
   const _values = steps.map(step => {
     const _label = symbolLabels(step.node, _trace.symbolNames(step.order));
     return new Map((step.snapshot.variables ?? []).map(variable => {
-      const _described = describeVariable(
-        variable, step.snapshot, _trace.symbol(variable.value));
+      const _value = variable.value;
+      const _described = describeVariable(variable, step.snapshot,
+        _trace.symbol(_value) ?? _trace.expressions.get(_value));
       // The hover tells what the value is, beside the analyzer's range.
       const _what = variable.kind === "symbol"
         ? _label(variable.value)?.text : undefined;
