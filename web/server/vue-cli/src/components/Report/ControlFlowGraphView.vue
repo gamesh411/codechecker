@@ -11,6 +11,7 @@
         v-if="cfgs.length > 1"
         class="cfg-function-select ml-2"
         aria-label="Function"
+        :title="cfg.function"
         :value="cfgIndex"
         @change="emit('update:cfgIndex', Number($event.target.value))"
       >
@@ -18,8 +19,9 @@
           v-for="(graphOption, index) in cfgs"
           :key="index"
           :value="index"
+          :title="graphOption.function"
         >
-          {{ graphOption.function }}
+          {{ functionLabels[index] }}
         </option>
       </select>
       <span
@@ -215,6 +217,33 @@ const ENTRY_OFFSET = 5;
 const STUB_GAP = 8;
 
 const cfg = computed(() => props.cfgs[props.cfgIndex] ?? props.cfgs[0]);
+
+// A C++ name without its template arguments and outer scopes, which is what
+// fits the picker: llvm::yaml::ScalarEnumerationTraits<llvm::codeview::
+// TypeLeafKind>::enumeration reads ScalarEnumerationTraits<…>::enumeration.
+// A name whose angle brackets do not pair up, such as an operator<, is kept.
+function shortFunctionName(name) {
+  let _depth = 0;
+  let _short = "";
+  for (const _char of name) {
+    if (_char === "<") {
+      if (_depth++ === 0) _short += "<…>";
+    } else if (_char === ">") {
+      if (--_depth < 0) return name;
+    } else if (_depth === 0) {
+      _short += _char;
+    }
+  }
+  return _depth ? name : _short.split("::").slice(-2).join("::");
+}
+
+// The full name where two functions would read the same.
+const functionLabels = computed(() => {
+  const _short = props.cfgs.map(graph => shortFunctionName(graph.function));
+  return _short.map((label, index) =>
+    _short.indexOf(label) === _short.lastIndexOf(label)
+      ? label : props.cfgs[index].function);
+});
 
 // The steps at each place of this CFG, keyed like the rows.
 const stepsByPlace = computed(() => {
@@ -589,6 +618,10 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
 
 <style lang="scss">
 .cfg-view {
+  .cfg-function {
+    margin-right: auto;
+  }
+
   .cfg-function,
   .cfg-function-select {
     min-width: 0;
@@ -598,8 +631,11 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     white-space: nowrap;
   }
 
+  // Takes the header's free room, which a long C++ name needs; the whole
+  // name is in its tooltip and in the list.
   .cfg-function-select {
-    max-width: 60%;
+    flex: 1 1 0;
+    margin-right: 8px;
     padding: 1px 4px;
     border: 1px solid #c4c8ce;
     border-radius: 3px;

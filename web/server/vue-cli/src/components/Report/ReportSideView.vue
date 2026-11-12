@@ -14,7 +14,8 @@
         {{ compactHeader ? shortTitle : title }}
       </span>
       <slot name="header" />
-      <v-spacer />
+      <!-- A header of the view's own decides how to use the free room. -->
+      <v-spacer v-if="!$slots.header" />
       <v-btn
         icon="mdi-close"
         variant="text"
