@@ -249,14 +249,24 @@ def unzip(run_name: str, b64zip: str, output_dir: Path) -> int:
         LOG.debug("Decompressing input massStoreRun() ZIP to '%s' ...",
                   zip_file.name)
         start_time = time.time()
+        # In pieces, since the ZIP can be larger than the memory one would
+        # expect a store to take.
+        compressed = base64.b64decode(b64zip)
         zlib_decomp = zlib.decompressobj()
-        zip_file.write(zlib_decomp.decompress(
-            base64.b64decode(b64zip), max_length=decompressed_zip_max_size))
+        size = 0
+        for start in range(0, len(compressed), 1 << 20):
+            pending = compressed[start:start + (1 << 20)]
+            while pending:
+                decompressed = zlib_decomp.decompress(pending, 1 << 24)
+                size += len(decompressed)
+                if size > decompressed_zip_max_size:
+                    reject_unzip()
+                zip_file.write(decompressed)
+                pending = zlib_decomp.unconsumed_tail
+        zip_file.write(zlib_decomp.flush())
         zip_file.flush()
+        del compressed
         end_time = time.time()
-
-        if zlib_decomp.unconsumed_tail:
-            reject_unzip()
 
         size = os.stat(zip_file.name).st_size
         LOG.debug("Decompressed input massStoreRun() ZIP '%s' -> '%s' "
