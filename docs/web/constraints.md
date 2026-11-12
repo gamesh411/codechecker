@@ -95,11 +95,21 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that held the symbol when there was one.
 
-A symbol the analyzer made for the result of a call reads as that result, such as "result of `read_len()` line 8", wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
-The analyzer evaluated that call without seeing inside it.
-Any other symbol the analyzer made up reads "origin not recorded" with the line of the statement it was made for, because the analyzer did not record why it made it, for example when a checker models the call, as for `malloc`.
+A symbol the analyzer made up reads as where it came from, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
+
+- The result of a call reads as that result, such as "result of `read_len()`, line 8".
+  The analyzer evaluated that call without seeing inside it.
+- Memory such a call may have changed reads as the memory and the call, such as "`Tok.Kind` after `lex(&Tok)` may have changed it, line 11".
+  A call can change every global, so a global after it reads, for example, "`g` after `refresh()` may have changed it", and the value of all globals "a global after `refresh()` may have changed it".
+- Memory a loop may have changed reads, for example, "`hits` after the loop may have changed it, line 6", with the loop's line.
+  The analyzer made it when it stopped following the loop after a few passes, which it does only when analyzing with `-analyzer-config widen-loops=true`.
+- A field of a call's result reads, for example, "`r.len` of the result of `get()`".
+- Any other symbol reads as the statement it was made for, such as "value from `malloc(16)`, line 11", because the analyzer did not record what kind of value it is, for example when a checker models the call.
+  A symbol without such a statement reads "origin not recorded".
+
+A long call is shortened to its function's name, such as "`Lex(…)`".
 When the value was made in another function than the one of the selected step, the function follows, such as "in `next_len`".
-Hovering over the label shows the analyzer's own symbol, and clicking the line selects the step nearest to that statement.
+Hovering over the label explains it and shows the call in full and the analyzer's own symbol, and clicking the line selects the step nearest to that statement or loop.
 Reports analyzed before Clang recorded this show the symbols as before.
 
 The rows that changed at the selected step are highlighted, in **Known here** and in the accumulated path condition.
