@@ -213,10 +213,11 @@ class ConstraintTrace:
         and, when Clang knows them, `statement`, `location`, `callee` and
         `frame` (an index into `stack_frames`), and for memory a call or a
         loop replaced, `region` or `globals`, and `loop`. A derived symbol
-        has its `parent`'s dump and its `region`'s access path, and a region
-        value the `name` of its region's access path when Clang can describe
-        it. A symbol has its `type`, the canonical type's name, and `pointer`
-        when the analyzer treats it as an address. """
+        has its `parent`'s dump and its `region`'s access path, an extent
+        the `region` whose size it is, and a region value the `name` of its
+        region's access path, each when Clang can describe it. A symbol
+        has its `type`, the canonical type's name, and `pointer` when the
+        analyzer treats it as an address. """
         if self._symbols is not None:
             return self._symbols
         strings = self.strings
