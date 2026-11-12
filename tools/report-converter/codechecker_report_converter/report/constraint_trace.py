@@ -16,6 +16,12 @@ trace's `strings`, so the trace grows with the length of the Bug Path rather
 than with its square. This module is the one place that turns that back into
 snapshots, whether whole or as the span of nodes each entry lives through.
 
+A trace may also have a table of the atomic symbols its snapshots mention,
+`symbols`, keyed by the symbol's dump in `strings`, with the symbol's kind,
+its SMT-LIB term and, for a conjured symbol, the origin Clang recorded.
+`ConstraintTrace.symbols` reads it, and a trace from a Clang before the table
+reads as having no symbols.
+
 A trace's control flow graphs are self-contained once read, but a plist keeps
 each graph's body once per file, in `PLIST_GRAPHS`, and a trace names it by
 `graph`: the reports of one translation unit run through the same functions
@@ -37,6 +43,9 @@ PLIST_GRAPHS = 'constraint_trace_cfgs'
 # The keys of a control flow graph that make up its body, which does not
 # depend on the path.
 _GRAPH_BODY = ('function', 'entry', 'exit', 'blocks')
+
+# The keys of a symbol's origin that name a string.
+_ORIGIN_STRINGS = ('statement', 'callee', 'function')
 
 # Whole snapshots kept on the way, so that reading any node replays at most
 # this many deltas.
@@ -92,6 +101,7 @@ class ConstraintTrace:
             raise MalformedTrace(f"constraint trace without {ex}") from ex
         self.smtlib = bool(trace.get('smtlib'))
         self._checkpoints: dict[int, dict[str, list]] = {}
+        self._symbols: dict[str, dict] | None = None
 
     def _apply_node(self, lists: dict[str, list], index: int) -> None:
         node = self.nodes[index]
@@ -129,9 +139,68 @@ class ConstraintTrace:
                 if not 0 <= step['exploded_node'] < len(self.nodes):
                     raise MalformedTrace(
                         f"step names node {step['exploded_node']}")
-        except (KeyError, IndexError, TypeError) as ex:
+            self._check_symbols()
+        except (KeyError, IndexError, TypeError, AttributeError) as ex:
             raise MalformedTrace(f"constraint trace does not decode: {ex}") \
                 from ex
+
+    def _check_symbols(self) -> None:
+        table = self.trace.get('symbols', [])
+        if not isinstance(table, list):
+            raise MalformedTrace("symbol table is not a list")
+        frames = len(self.trace.get('stack_frames', []))
+        for entry in table:
+            if not self._symbol_reads(entry, frames):
+                raise MalformedTrace(
+                    f"symbol table entry {entry} does not read")
+
+    def _symbol_reads(self, entry: dict, frames: int) -> bool:
+        """ Whether the entry names its strings and frame. A location's file
+        is a plist index in a plist and a path once stored, so only its
+        presence counts. """
+        def string(value) -> bool:
+            return isinstance(value, int) and 0 <= value < len(self.strings)
+
+        if not isinstance(entry['kind'], str) or \
+                not string(entry['symbol']) or \
+                'smt' in entry and not string(entry['smt']):
+            return False
+        origin = entry.get('origin')
+        if origin is None:
+            return True
+        location = origin.get('location', {'line': 0, 'col': 0, 'file': 0})
+        return isinstance(origin['reason'], str) and \
+            string(origin['function']) and \
+            all(string(origin[key]) for key in ('statement', 'callee')
+                if key in origin) and \
+            ('frame' not in origin or
+             isinstance(origin['frame'], int) and
+             0 <= origin['frame'] < frames) and \
+            isinstance(location.get('line'), int) and \
+            isinstance(location.get('col'), int) and 'file' in location
+
+    def symbols(self) -> dict[str, dict]:
+        """ The symbol table by symbol dump, with its strings read: `kind`,
+        with SMT-LIB `smt` and `smt_signed` when the symbol has a term, and
+        for a conjured symbol `origin`, which has `reason` and `function`
+        and, when Clang knows them, `statement`, `location`, `callee` and
+        `frame` (an index into `stack_frames`). """
+        if self._symbols is not None:
+            return self._symbols
+        strings = self.strings
+        table = {}
+        for entry in self.trace.get('symbols', []):
+            symbol = {'kind': entry['kind']}
+            if 'smt' in entry:
+                symbol['smt'] = strings[entry['smt']]
+                symbol['smt_signed'] = bool(entry['smt_signed'])
+            if 'origin' in entry:
+                symbol['origin'] = {
+                    key: strings[value] if key in _ORIGIN_STRINGS else value
+                    for key, value in entry['origin'].items()}
+            table[strings[entry['symbol']]] = symbol
+        self._symbols = table
+        return table
 
     def _raw(self, node: int) -> dict[str, list]:
         """ The raw lists of `node`, replayed from the nearest checkpoint. """
@@ -353,14 +422,16 @@ def _diff(previous: list, following: list) -> dict:
     return {key: value for key, value in delta.items() if value}
 
 
-def encode(nodes: list[dict], steps: list[dict]) -> dict:
+def encode(nodes: list[dict], steps: list[dict],
+           symbols: dict[str, dict] | None = None) -> dict:
     """
     A version 2 trace from whole snapshots, for tools and tests that make
     traces. Each node is a dict of the snapshot keys a version 1 step had
     (`symbol_ranges`, `variables`, `path_condition`, and with SMT-LIB
     `smt_declarations` and `smt_assertions`) plus any node keys to keep, such
     as `kind` or `cfg_position`. Steps are kept as they are and name their
-    node by `exploded_node`.
+    node by `exploded_node`. `symbols` is a symbol table as
+    `ConstraintTrace.symbols` reads one, written in the order of its dumps.
     """
     strings: list[str] = []
     index: dict[str, int] = {}
@@ -402,6 +473,20 @@ def encode(nodes: list[dict], steps: list[dict]) -> dict:
 
     trace = {'version': VERSION, 'steps': steps,
              'exploded_nodes': encoded_nodes, 'strings': strings}
+    if symbols:
+        table = []
+        for dump in sorted(symbols):
+            symbol = symbols[dump]
+            entry = {'symbol': intern(dump), 'kind': symbol['kind']}
+            if 'smt' in symbol:
+                entry['smt'] = intern(symbol['smt'])
+                entry['smt_signed'] = bool(symbol['smt_signed'])
+            if 'origin' in symbol:
+                entry['origin'] = {
+                    key: intern(value) if key in _ORIGIN_STRINGS else value
+                    for key, value in symbol['origin'].items()}
+            table.append(entry)
+        trace['symbols'] = table
     if smtlib:
         trace['smtlib'] = True
     return trace

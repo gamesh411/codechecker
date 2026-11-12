@@ -345,6 +345,61 @@ class PlistParserTestCase(unittest.TestCase):
         self.assertEqual(parsed.constraint_trace['stack_frames'],
                          report.constraint_trace['stack_frames'])
 
+    def test_symbol_origin_locations_survive_conversion(self):
+        """ The origin of a symbol in the trace's symbol table names its file
+        like the exploded graph does, even a file only the origin names. """
+        only_in_origin = os.path.join(gen_plist_dir_path, 'only_in_origin.h')
+        report = deepcopy(div_zero_skel)
+        report.constraint_trace = {
+            **constraint_trace.encode(
+                [{'path_condition': [{'symbol': 'conj_$2{int, LC1, S9, #1}',
+                                      'range': '{ [0, 0] }'}]}],
+                [{'kind': 'event', 'index': 0, 'order': 0,
+                  'exploded_node': 0}],
+                {'conj_$2{int, LC1, S9, #1}': {
+                    'kind': 'conjured',
+                    'origin': {'reason': 'call_result', 'statement': 'get()',
+                               'callee': 'get', 'function': 'main',
+                               'frame': 0,
+                               'location': {'line': 4, 'col': 7,
+                                            'file': only_in_origin}}},
+                 'reg_$0<int a>': {'kind': 'region_value'}}),
+            'stack_frames': [{'function': 'main'}]}
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_path = os.path.join(tmp_dir, 'trace.plist')
+            parser = plist.Parser()
+            data = parser.convert([report])
+            parser.write(data, plist_path)
+
+            symbols = data['diagnostics'][0]['constraint_trace']['symbols']
+            self.assertEqual(
+                data['files'][symbols[0]['origin']['location']['file']],
+                only_in_origin)
+            self.assertNotIn('origin', symbols[1])
+
+            reports = report_file.get_reports(plist_path)
+
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(reports[0].constraint_trace,
+                         report.constraint_trace)
+
+    def test_trim_path_prefix_applies_to_symbol_origins(self):
+        report = deepcopy(div_zero_skel)
+        source = os.path.join(gen_plist_dir_path, 'a.c')
+        report.constraint_trace = {
+            'version': 2, 'strings': [], 'steps': [], 'exploded_nodes': [],
+            'symbols': [
+                {'symbol': 0, 'kind': 'conjured',
+                 'origin': {'reason': 'other', 'function': 1,
+                            'location': {'line': 1, 'col': 1,
+                                         'file': source}}},
+                {'symbol': 2, 'kind': 'region_value'}]}
+        report.trim_path_prefixes([gen_plist_dir_path])
+        symbols = report.constraint_trace['symbols']
+        self.assertEqual(symbols[0]['origin']['location']['file'], 'a.c')
+        self.assertEqual(symbols[1], {'symbol': 2, 'kind': 'region_value'})
+
     def _round_trip_trace(self, trace):
         report = deepcopy(div_zero_skel)
         report.constraint_trace = trace

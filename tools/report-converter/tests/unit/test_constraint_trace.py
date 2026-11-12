@@ -167,3 +167,68 @@ class ConstraintTraceTest(unittest.TestCase):
                 constraint_trace.resolve_cfgs(
                     {'version': 2, 'cfgs': [{'graph': 0}]},
                     constraint_trace.read_graphs(graphs))
+
+
+CALL_RESULT = 'conj_$2{int, LC1, S1234, #1}'
+SYMBOLS = {
+    'reg_$0<int a0>': {'kind': 'region_value', 'smt': 'reg_$0',
+                       'smt_signed': True},
+    CALL_RESULT: {
+        'kind': 'conjured', 'smt': 'conj_$2', 'smt_signed': True,
+        'origin': {'reason': 'call_result', 'statement': 'get()',
+                   'location': {'line': 4, 'col': 7, 'file': 0},
+                   'callee': 'get', 'function': 'f', 'frame': 0}},
+    'conj_$3{int, LC2, S99, #1}': {
+        'kind': 'conjured',
+        'origin': {'reason': 'other', 'function': 'wrap'}}}
+
+
+class SymbolTableTest(unittest.TestCase):
+
+    def setUp(self):
+        self.snapshot = {
+            'symbol_ranges': [],
+            'variables': [_variable('a0', 'reg_$0<int a0>')],
+            'path_condition': [
+                _range(f'({CALL_RESULT}) + 1', '{ [5, 5] }'),
+                _range('conj_$3{int, LC2, S99, #1}', '{ [7, 7] }')]}
+        self.trace = {
+            **constraint_trace.encode([self.snapshot], [], deepcopy(SYMBOLS)),
+            'stack_frames': [{'function': 'f'}]}
+
+    def test_table_reads_back_by_dump(self):
+        trace = constraint_trace.ConstraintTrace(self.trace)
+        trace.check()
+        self.assertEqual(trace.symbols(), SYMBOLS)
+        self.assertIs(trace.symbols(), trace.symbols())
+        # Symbol dumps in the table are the strings the lists use.
+        strings = self.trace['strings']
+        self.assertEqual(len(strings), len(set(strings)))
+
+    def test_trace_without_a_table_has_no_symbols(self):
+        trace = constraint_trace.ConstraintTrace(
+            constraint_trace.encode([self.snapshot], []))
+        trace.check()
+        self.assertNotIn('symbols', trace.trace)
+        self.assertEqual(trace.symbols(), {})
+
+    def test_bad_tables_are_rejected(self):
+        def broken(change):
+            trace = deepcopy(self.trace)
+            change(trace['symbols'])
+            return trace
+
+        def origin(symbols):
+            return next(s['origin'] for s in symbols if 'origin' in s)
+
+        for trace in (
+                broken(lambda s: s[0].update(symbol=10 ** 6)),
+                broken(lambda s: s[0].pop('kind')),
+                broken(lambda s: s[0].update(smt=-1)),
+                broken(lambda s: origin(s).update(function='f')),
+                broken(lambda s: origin(s).update(frame=3)),
+                broken(lambda s: origin(s).update(location={'line': 1})),
+                broken(lambda s: s.append(7)),
+                {**self.trace, 'symbols': {}}):
+            with self.assertRaises(constraint_trace.MalformedTrace):
+                constraint_trace.ConstraintTrace(trace).check()

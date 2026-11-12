@@ -27,9 +27,9 @@ from codechecker_report_converter.report import \
     File, \
     MacroExpansion, \
     Range, Report, \
-    TRACE_LOCATIONS, UnknownChecker, \
+    UnknownChecker, \
     get_or_create_file, \
-    map_trace_locations
+    map_trace_locations, trace_locations
 from codechecker_report_converter.report import constraint_trace
 from codechecker_report_converter.report.hash import get_report_hash, HashType
 from codechecker_report_converter.report.parser.base import AnalyzerInfo, \
@@ -188,10 +188,7 @@ def get_file_index_map(
 
 def _trace_location_files(trace: dict) -> set[str]:
     """ The file paths that a stored constraint trace's locations name. """
-    return {item[key]['file']
-            for table, key in TRACE_LOCATIONS
-            for item in trace.get(table, [])
-            if key in item}
+    return {location['file'] for location in trace_locations(trace)}
 
 
 class Parser(BaseParser):

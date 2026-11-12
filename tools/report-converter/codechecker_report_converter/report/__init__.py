@@ -14,7 +14,7 @@ import json
 import logging
 import os
 
-from typing import Callable, Protocol, Any
+from typing import Callable, Iterator, Protocol, Any
 
 from .. import util
 
@@ -38,21 +38,44 @@ InvalidFileContentMsg: str = \
     "your project to update the reports."
 
 
-# The tables of a constraint trace that hold locations, and their key there.
-TRACE_LOCATIONS = (('exploded_nodes', 'location'),
-                   ('stack_frames', 'call_site'))
+# The tables of a constraint trace that hold locations, and the keys that lead
+# to a location in one of their items.
+TRACE_LOCATIONS = (('exploded_nodes', ('location',)),
+                   ('stack_frames', ('call_site',)),
+                   ('symbols', ('origin', 'location')))
+
+
+def _map_location(item: dict, keys: tuple, map_file: Callable) -> dict:
+    """ A copy of the item whose location under `keys`, if any, has its
+    `file` mapped. """
+    if keys[0] not in item:
+        return item
+    if len(keys) > 1:
+        return {**item, keys[0]: _map_location(item[keys[0]], keys[1:],
+                                               map_file)}
+    return {**item, keys[0]: {**item[keys[0]],
+                              'file': map_file(item[keys[0]]['file'])}}
+
+
+def trace_locations(trace: dict) -> Iterator[dict]:
+    """ Every location of a constraint trace. """
+    for table, keys in TRACE_LOCATIONS:
+        for item in trace.get(table, []):
+            for key in keys:
+                item = item.get(key)
+                if item is None:
+                    break
+            else:
+                yield item
 
 
 def map_trace_locations(trace: dict, map_file: Callable) -> dict:
     """ A copy of the trace whose locations have their `file` mapped. """
     result = dict(trace)
-    for table, key in TRACE_LOCATIONS:
+    for table, keys in TRACE_LOCATIONS:
         if table in trace:
-            result[table] = [
-                {**item, key: {**item[key],
-                               'file': map_file(item[key]['file'])}}
-                if key in item else item
-                for item in trace[table]]
+            result[table] = [_map_location(item, keys, map_file)
+                             for item in trace[table]]
     return result
 
 
