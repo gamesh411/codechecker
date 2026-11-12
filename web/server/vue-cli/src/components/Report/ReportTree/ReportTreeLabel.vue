@@ -9,6 +9,15 @@
       v-else-if="item.kind === ReportTreeKind.REPORT_STEPS"
       :title="reportStepContent"
     >
+      <v-icon
+        v-if="item.silentChange"
+        class="silent-change-mark"
+        size="14"
+        :title="SILENT_CHANGE_HINT"
+        :aria-label="SILENT_CHANGE_HINT"
+      >
+        mdi-help-rhombus-outline
+      </v-icon>
       {{ reportStepContent }}
     </span>
 
@@ -44,6 +53,9 @@ const props = defineProps({
   item: { type: Object, required: true }
 });
 
+const SILENT_CHANGE_HINT = "Next to this step the analyzer assumed " +
+  "something that the Bug Path does not describe";
+
 const reportStepContent = computed(function() {
   return `${fileName.value}${props.item.step.startLine} ` +
     `- ${props.item.step.msg}`;
@@ -76,3 +88,12 @@ const newReportCountLabel = computed(function() {
   return ` [${newReportCount.value} new]`;
 });
 </script>
+
+<style lang="scss" scoped>
+.silent-change-mark {
+  margin-right: 3px;
+  color: #a67c00;
+  vertical-align: text-bottom;
+  cursor: help;
+}
+</style>

@@ -84,6 +84,9 @@ export class ConstraintTrace {
     this._cfgs = null;
     this._hashes = null;
     this._symbolNameLog = null;
+    this._ordered = null;
+    this._changes = new Map();
+    this._silentChanges = null;
   }
 
   get cfgs() {
@@ -206,6 +209,95 @@ export class ConstraintTrace {
     });
     this._hashes = _hashes;
     return _hashes;
+  }
+
+  // The steps in Bug Path order, which is not the order of the nodes.
+  orderedSteps() {
+    this._ordered ??= [ ...this.steps ].sort((a, b) => a.order - b.order);
+    return this._ordered;
+  }
+
+  // What the step at `order` added or narrowed, as a Map from symbol to
+  // "added" or "narrowed" for each of the symbol ranges and the path
+  // condition. It is the change from the last step before it that shows a
+  // different snapshot, since steps on one snapshot (an edge and the event
+  // there) are one choice to a reader. The first snapshot has nothing before
+  // it to be compared to.
+  changedAt(order) {
+    let _changes = this._changes.get(order);
+    if (_changes) return _changes;
+
+    _changes = { symbol_ranges: new Map(), path_condition: new Map() };
+    const _steps = this.orderedSteps();
+    const _at = _steps.findIndex(step => step.order === order);
+    let _before = _at - 1;
+    while (_before >= 0 && this.sameSnapshot(
+      _steps[_before].exploded_node, _steps[_at].exploded_node)) {
+      --_before;
+    }
+    if (_at >= 0 && _before >= 0) {
+      const _now = this.rawLists(_steps[_at].exploded_node);
+      const _then = this.rawLists(_steps[_before].exploded_node);
+      Object.keys(_changes).forEach(field =>
+        this.diffRanges(_changes[field], _then[field], _now[field]));
+    }
+    this._changes.set(order, _changes);
+    return _changes;
+  }
+
+  // Entries of a list of [symbol, range, ...] that `then` does not have, or
+  // has with another range. Strings are kept once, so equal indices are equal
+  // texts.
+  diffRanges(into, then, now) {
+    const _ranges = new Map(then.map(raw => [ raw[0], raw[1] ]));
+    now.forEach(raw => {
+      if (!_ranges.has(raw[0])) {
+        into.set(this.strings[raw[0]], "added");
+      } else if (_ranges.get(raw[0]) !== raw[1]) {
+        into.set(this.strings[raw[0]], "narrowed");
+      }
+    });
+  }
+
+  // The control steps where the analyzer assumed something that the Bug Path
+  // has no event for: the node adds to the path condition, and no event is on
+  // that node. Each is { order, node, afterEvent }, where afterEvent is the
+  // index of the event step before it in the Bug Path, or -1. The path
+  // condition only grows along the nodes and a printed path can visit them out
+  // of order, so a step adds to it only when its node is later than every node
+  // before it and has path condition changes in between.
+  silentChanges() {
+    if (this._silentChanges) return this._silentChanges;
+
+    const _changed = [ 0 ];
+    this.nodes.forEach((node, index) => {
+      const _delta = node.path_condition;
+      const _any = _delta &&
+        ((_delta.replace?.length ?? 0) + (_delta.insert?.length ?? 0)) > 0;
+      _changed.push(_changed[index] + (_any ? 1 : 0));
+    });
+    // _changed[n + 1] counts the nodes up to n that change it.
+    const _eventNodes = new Set(this.steps
+      .filter(step => step.kind === "event")
+      .map(step => step.exploded_node));
+
+    const _silent = [];
+    let _furthest = null;
+    let _afterEvent = -1;
+    this.orderedSteps().forEach(step => {
+      const _node = step.exploded_node;
+      if (step.kind === "event") {
+        _afterEvent = step.index;
+      } else if (_furthest !== null && _node > _furthest &&
+                 _changed[_node + 1] > _changed[_furthest + 1] &&
+                 !_eventNodes.has(_node)) {
+        _silent.push(
+          { order: step.order, node: _node, afterEvent: _afterEvent });
+      }
+      if (_furthest === null || _node > _furthest) _furthest = _node;
+    });
+    this._silentChanges = _silent;
+    return _silent;
   }
 
   // For each symbol, the name of the variable that last held it among the

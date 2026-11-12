@@ -215,3 +215,121 @@ describe("readableRange", () => {
     expect(readableRange("{ [1, 4294967295] }", INT)).toBe(null);
   });
 });
+
+// x is narrowed and y assumed at node 1, node 2 rewrites the whole range list
+// and adds z, and node 3 adds z to the path condition. Steps 4 and 5 share
+// node 3, step 2 has an event on its node, and step 7 goes back to node 2, as
+// a printed path may.
+const CHANGE_STRINGS = [
+  "x", "{ [0, 10] }", "{ [0, 5] }", "y", "{ [1, 1] }", "z", "{ [2, 2] }"
+];
+const CHANGES = {
+  version: 2,
+  strings: CHANGE_STRINGS,
+  steps: [
+    { kind: "event", index: 0, order: 1, exploded_node: 0 },
+    { kind: "control", index: 1, order: 2, exploded_node: 1 },
+    { kind: "event", index: 1, order: 3, exploded_node: 1 },
+    { kind: "control", index: 2, order: 4, exploded_node: 2 },
+    { kind: "control", index: 3, order: 5, exploded_node: 3 },
+    { kind: "control", index: 4, order: 6, exploded_node: 3 },
+    { kind: "control", index: 5, order: 7, exploded_node: 2 }
+  ],
+  exploded_nodes: [
+    {
+      symbol_ranges: { insert: [ [ 0, 0, 1 ] ] },
+      path_condition: { insert: [ [ 0, 0, 1 ] ] }
+    },
+    {
+      symbol_ranges: { replace: [ [ 0, 0, 2 ] ], insert: [ [ 1, 3, 4 ] ] },
+      path_condition: { replace: [ [ 0, 0, 2 ] ], insert: [ [ 1, 3, 4 ] ] }
+    },
+    {
+      symbol_ranges: {
+        remove: [ 0, 1 ],
+        insert: [ [ 0, 0, 2 ], [ 1, 3, 4 ], [ 2, 5, 6 ] ]
+      }
+    },
+    { path_condition: { insert: [ [ 2, 5, 6 ] ] } }
+  ]
+};
+
+describe("changes at a step", () => {
+  const changes = (trace, order) => {
+    const { symbol_ranges, path_condition } = trace.changedAt(order);
+    return {
+      ranges: Object.fromEntries(symbol_ranges),
+      condition: Object.fromEntries(path_condition)
+    };
+  };
+
+  test("an entry is added or narrowed against the step before", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(changes(trace, 2)).toEqual({
+      ranges: { x: "narrowed", y: "added" },
+      condition: { x: "narrowed", y: "added" }
+    });
+  });
+
+  test("steps showing one snapshot show one change", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(changes(trace, 3)).toEqual(changes(trace, 2));
+  });
+
+  test("a list rewritten whole reports only what really changed", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(changes(trace, 4)).toEqual({
+      ranges: { z: "added" }, condition: {}
+    });
+  });
+
+  test("the first step and an unknown step change nothing", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(changes(trace, 1)).toEqual({ ranges: {}, condition: {} });
+    expect(changes(trace, 99)).toEqual({ ranges: {}, condition: {} });
+    expect(changes(trace, -1)).toEqual({ ranges: {}, condition: {} });
+  });
+
+  test("a step after a jump back compares by symbol", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(changes(trace, 7)).toEqual({ ranges: {}, condition: {} });
+  });
+
+  test("the answer is built once", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    expect(trace.changedAt(2)).toBe(trace.changedAt(2));
+  });
+});
+
+describe("silent changes", () => {
+  test("a control step changing the path condition without an event", () => {
+    const trace = new ConstraintTrace(CHANGES);
+    // Step 2 has an event on its node, step 4 only changes ranges, step 5
+    // assumes z, step 6 repeats step 5's node, and step 7 goes back to a node
+    // that assumes less than step 6.
+    expect(trace.silentChanges()).toEqual([
+      { order: 5, node: 3, afterEvent: 1 }
+    ]);
+    expect(trace.silentChanges()).toBe(trace.silentChanges());
+  });
+
+  test("a control step before any event follows none", () => {
+    const trace = new ConstraintTrace({
+      version: 2,
+      strings: CHANGE_STRINGS,
+      steps: [
+        { kind: "control", index: 0, order: 1, exploded_node: 0 },
+        { kind: "control", index: 1, order: 2, exploded_node: 1 },
+        { kind: "event", index: 0, order: 3, exploded_node: 2 }
+      ],
+      exploded_nodes: [
+        { path_condition: { insert: [ [ 0, 0, 1 ] ] } },
+        { path_condition: { replace: [ [ 0, 0, 2 ] ] } },
+        {}
+      ]
+    });
+    expect(trace.silentChanges()).toEqual([
+      { order: 2, node: 1, afterEvent: -1 }
+    ]);
+  });
+});

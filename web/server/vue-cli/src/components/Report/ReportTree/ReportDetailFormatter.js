@@ -176,7 +176,17 @@ function getReportStepIcon(step, index, isResult, report) {
   };
 }
 
-function formatReportEvents(report, events) {
+// The events that an assumption without an event follows: the analyzer
+// assumed something there that the Bug Path does not describe. -1 stands for
+// before the first event.
+function silentAfterEvents(trace) {
+  if (typeof trace?.silentChanges !== "function") return new Set();
+  return new Set(trace.silentChanges().map(change =>
+    Math.max(change.afterEvent, 0)));
+}
+
+function formatReportEvents(report, events, trace) {
+  const silentAfter = silentAfterEvents(trace);
   const items = [];
 
   const highlightStack = {
@@ -220,14 +230,15 @@ function formatReportEvents(report, events) {
       reportStepIcon: reportStepIcon,
       bgColor: highlightData.bgColor,
       level: indentation,
-      fileName: fileName
+      fileName: fileName,
+      silentChange: silentAfter.has(index)
     });
   });
 
   return items;
 }
 
-export default function formatReportDetails(report, reportDetails) {
+export default function formatReportDetails(report, reportDetails, trace) {
   const items = [];
 
   // Add extended items such as notes and macros.
@@ -242,7 +253,8 @@ export default function formatReportDetails(report, reportDetails) {
     report: report
   });
 
-  const reportSteps = formatReportEvents(report, reportDetails.pathEvents);
+  const reportSteps = formatReportEvents(report, reportDetails.pathEvents,
+    trace);
   items.push(...reportSteps);
 
   return items;

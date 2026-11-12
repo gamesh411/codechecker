@@ -430,13 +430,12 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import {
   ConstraintTrace,
   compareNames,
-  readConstraintTrace,
   readableRange
 } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
 import PathStepPicker from "./PathStepPicker";
-import { getReportDetails } from "./ReportDetailsCache";
+import { constraintTraceOf, getReportDetails } from "./ReportDetailsCache";
 import ReportStepMessage from "./ReportStepMessage";
 
 import { useReviewStatus } from "@/composables/useReviewStatus";
@@ -623,6 +622,10 @@ const selectedControlStep = computed(() =>
     : constraintPathSteps.value.find(step => step.kind === "control" &&
       step.positionIndex === selectedControlIndex.value)
 );
+// The control steps that assume something the Bug Path has no event for.
+const silentOrders = computed(() => new Set(hasConstraintTrace.value
+  ? constraintTrace.value.silentChanges().map(change => change.order)
+  : []));
 const selectedConstraintStep = computed(() => {
   if (!showConstraints.value || !hasConstraintTrace.value) return null;
 
@@ -636,7 +639,9 @@ const selectedConstraintStep = computed(() => {
       pathCondition: _control.snapshot.path_condition ?? [],
       symbolNames: constraintTrace.value.symbolNames(_control.order),
       order: _control.order,
-      smtlib: constraintTrace.value.smtlib
+      smtlib: constraintTrace.value.smtlib,
+      changes: constraintTrace.value.changedAt(_control.order),
+      silent: silentOrders.value.has(_control.order)
     };
   }
 
@@ -656,7 +661,9 @@ const selectedConstraintStep = computed(() => {
     pathCondition: _snapshot?.path_condition ?? [],
     symbolNames: constraintTrace.value.symbolNames(_traceStep?.order ?? -1),
     order: _traceStep?.order ?? -1,
-    smtlib: constraintTrace.value.smtlib
+    smtlib: constraintTrace.value.smtlib,
+    changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
+    silent: false
   };
 });
 const editorCols = computed(() => {
@@ -743,6 +750,30 @@ watch(editorCols, async () => {
   await nextTick();
   addArrowLines();
 });
+
+const SILENT_CHANGE_HINT = "The analyzer assumed something here that the " +
+  "Bug Path does not describe";
+
+// Marks the end of a line where the analyzer made an assumption that the
+// Bug Path has no event for.
+class SilentChangeWidget extends WidgetType {
+  eq(other) {
+    return other instanceof SilentChangeWidget;
+  }
+
+  toDOM() {
+    const _mark = document.createElement("span");
+    _mark.className = "silent-change-mark";
+    _mark.textContent = "assumes";
+    _mark.title = SILENT_CHANGE_HINT;
+    _mark.setAttribute("aria-label", SILENT_CHANGE_HINT);
+    return _mark;
+  }
+
+  ignoreEvent() {
+    return false;
+  }
+}
 
 class AdvancedLineWidget extends WidgetType {
   constructor(data, appContext) {
@@ -1201,16 +1232,33 @@ function refreshPathStepLines() {
   const _selectedLine = showConstraints.value && _control &&
     _control.fileId.equals(sourceFile.value.fileId) ? _control.line : null;
 
+  const _silent = showConstraints.value
+    ? new Set(constraintPathSteps.value
+      .filter(step => step.kind === "control" &&
+        silentOrders.value.has(step.order) &&
+        step.fileId.equals(sourceFile.value.fileId))
+      .map(step => step.line))
+    : new Set();
   const _ranges = [ ..._lines ]
     .filter(line => line <= _doc.lines)
     .sort((a, b) => a - b)
     .map(line => Decoration.line({
-      class: line === _selectedLine
-        ? "path-step-line path-step-line-selected" : "path-step-line"
+      class: [
+        "path-step-line",
+        line === _selectedLine && "path-step-line-selected",
+        _silent.has(line) && "path-step-line-silent"
+      ].filter(Boolean).join(" ")
     }).range(_doc.line(line).from));
 
+  const _marks = [ ..._silent ]
+    .filter(line => line <= _doc.lines)
+    .map(line => Decoration.widget({
+      widget: new SilentChangeWidget(), side: 1
+    }).range(_doc.line(line).to));
+
   editor.value.dispatch({
-    effects: setPathStepLines.of(Decoration.set(_ranges))
+    effects: setPathStepLines.of(
+      Decoration.set([ ..._ranges, ..._marks ], true))
   });
 }
 
@@ -1305,7 +1353,7 @@ async function drawBugPath() {
     );
   });
 
-  constraintTrace.value = readConstraintTrace(_reportDetail.constraintTrace);
+  constraintTrace.value = constraintTraceOf(_reportDetail);
   if (!hasConstraintTrace.value) {
     showConstraints.value = false;
   }
@@ -1744,6 +1792,26 @@ function truncate(text, length) {
 .constraints-enabled .jtk-connector,
 .constraints-enabled .jtk-connector * {
   pointer-events: none !important;
+}
+
+// A small tag at the end of the line, like the "dropped" tag in the panel.
+.silent-change-mark {
+  margin-left: 12px;
+  padding: 0 5px;
+  border: 1px solid #c9a227;
+  border-radius: 3px;
+  color: #6b5a12;
+  background-color: #f6efc8;
+  font: 0.6875rem/1.4 sans-serif;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: help;
+}
+
+// Visible even when the line runs past the edge of the editor, where its tag
+// is out of sight.
+.constraints-enabled .path-step-line-silent {
+  box-shadow: inset 3px 0 0 #c9a227;
 }
 
 .path-step-line-selected {

@@ -60,7 +60,7 @@ import { nextTick, onMounted, ref, watch } from "vue";
 
 import { ReviewStatusIcon } from "@/components/Icons";
 
-import { getReportDetails } from "../ReportDetailsCache";
+import { constraintTraceOf, getReportDetails } from "../ReportDetailsCache";
 import formatReportDetails from "./ReportDetailFormatter";
 import ReportTreeIcon from "./ReportTreeIcon";
 import ReportTreeKind from "./ReportTreeKind";
@@ -220,7 +220,8 @@ function fetchReports() {
             getChildren: item => {
               return new Promise(resolve => {
                 getReportDetails(report.reportId).then(details => {
-                  item.children = formatReportDetails(report, details);
+                  item.children = formatReportDetails(report, details,
+                    constraintTraceOf(details));
                   resolve();
 
                   if (props.report.reportId.equals(item.report.reportId)) {

@@ -73,6 +73,13 @@
       </span>
       <dump-text :text="step.message" :full-paths="true" />
       <span
+        v-if="step.silent"
+        class="panel-silent text-caption ml-1"
+        :title="SILENT_HINT"
+      >
+        Assumed, no event
+      </span>
+      <span
         v-if="diesHere"
         class="panel-dies-here text-caption ml-1"
         :title="diesHere.earliest
@@ -106,6 +113,7 @@
                 v-for="row in variableRows"
                 :key="row.name"
                 class="panel-row"
+                :class="changeClass(row.change)"
               >
                 <div class="panel-name" :title="row.name">
                   <dump-text :text="row.name" />
@@ -119,6 +127,7 @@
                     />
                     <dump-text v-else :text="row.display" />
                   </span>
+                  <change-tag :change="row.change" />
                   <div
                     v-if="row.symbol"
                     class="panel-symbol"
@@ -138,12 +147,16 @@
                 v-for="range in otherSymbols"
                 :key="range.symbol"
                 class="panel-row panel-row-raw"
+                :class="changeClass(changeOf('symbol_ranges', range.symbol))"
               >
                 <div class="panel-name panel-raw-symbol" :title="range.symbol">
                   <dump-text :text="range.symbol" />
                 </div>
                 <div class="panel-value">
                   <range-text :range="range.range" :symbol="range.symbol" />
+                  <change-tag
+                    :change="changeOf('symbol_ranges', range.symbol)"
+                  />
                 </div>
               </div>
             </div>
@@ -169,7 +182,9 @@
               v-for="row in accumulatedRows"
               :key="row.symbol"
               class="panel-row"
-              :class="{ 'panel-row-raw': !row.name }"
+              :class="[
+                { 'panel-row-raw': !row.name }, changeClass(row.change)
+              ]"
             >
               <div
                 class="panel-name"
@@ -181,6 +196,7 @@
               <div class="panel-value">
                 <range-text :range="row.range" :symbol="row.symbol" />
                 <div class="panel-meta">
+                  <change-tag :change="row.change" />
                   <span
                     v-if="row.name"
                     class="panel-symbol"
@@ -233,6 +249,8 @@ import { compareNames, readableRange, shortenPaths } from "./ConstraintTrace";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
+  // Besides the lists: `changes` (what the step added or narrowed) and
+  // `silent` (an assumption the Bug Path has no event for).
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
   // From useWhatIf, owned by the report view.
@@ -257,6 +275,31 @@ const diesHere = computed(() => {
       props.resolveStep(_dead)?.order !== props.step.order) return null;
   return { earliest: _response.firstDeadStepIsEarliest !== false };
 });
+
+const SILENT_HINT = "The analyzer assumed something here that the Bug Path " +
+  "does not describe";
+const CHANGE_HINTS = {
+  added: "First known at this step",
+  narrowed: "Narrower at this step than at the step before"
+};
+const CHANGE_LABELS = { added: "new", narrowed: "narrowed" };
+
+// What this step did to a symbol's entry in one list, or undefined.
+function changeOf(field, symbol) {
+  return props.step.changes?.[field].get(symbol);
+}
+
+function changeClass(change) {
+  return change ? [ "panel-row-changed", `panel-row-${change}` ] : [];
+}
+
+function ChangeTag({ change }) {
+  return change ? h("span", {
+    class: [ "panel-change", `panel-change-${change}`, "text-caption" ],
+    title: CHANGE_HINTS[change]
+  }, CHANGE_LABELS[change]) : null;
+}
+ChangeTag.props = [ "change" ];
 
 const DROPPED_HINT = "The analyzer no longer tracks this value at this step";
 
@@ -319,7 +362,9 @@ const variableRows = computed(() =>
         range: _isSymbol ? knownRanges.value.get(variable.value) : undefined,
         display: _isSymbol ? "no known range" : variable.value,
         symbol: _isSymbol ? variable.value : null,
-        muted: _isSymbol && !knownRanges.value.has(variable.value)
+        muted: _isSymbol && !knownRanges.value.has(variable.value),
+        change: _isSymbol
+          ? changeOf("symbol_ranges", variable.value) : undefined
       };
     })
 );
@@ -338,7 +383,8 @@ const accumulatedRows = computed(() =>
     symbol: range.symbol,
     range: range.range,
     name: props.step.symbolNames.get(range.symbol),
-    dropped: !knownRanges.value.has(range.symbol)
+    dropped: !knownRanges.value.has(range.symbol),
+    change: changeOf("path_condition", range.symbol)
   })).sort((a, b) =>
     (a.name === undefined) - (b.name === undefined) ||
     compareNames(a.name ?? a.symbol, b.name ?? b.symbol))
@@ -532,6 +578,57 @@ const accumulatedRows = computed(() =>
     color: #6b5a12;
     background-color: #f6efc8;
     white-space: nowrap;
+  }
+
+  .panel-silent {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 3px;
+    color: #6b5a12;
+    background-color: #f6efc8;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: help;
+  }
+
+  // A changed row has a bar on its left and a tag beside its range, so that
+  // the change shows in black and white too.
+  .panel-row-changed {
+    padding-left: 8px;
+    margin-left: -8px;
+    box-shadow: inset 3px 0 0 var(--change-bar);
+    background-color: var(--change-fill);
+  }
+
+  .panel-row-added {
+    --change-bar: #3d9a52;
+    --change-fill: rgba(61, 154, 82, 0.1);
+  }
+
+  .panel-row-narrowed {
+    --change-bar: #3a74c4;
+    --change-fill: rgba(58, 116, 196, 0.1);
+  }
+
+  .panel-change {
+    display: inline-block;
+    padding: 0 5px;
+    margin-left: 6px;
+    border-radius: 3px;
+    font-family: sans-serif;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .panel-change-added {
+    color: #1d5c2a;
+    background-color: #dff1e3;
+  }
+
+  .panel-change-narrowed {
+    color: #1f4e8c;
+    background-color: #e0ebfa;
   }
 
   .panel-empty {
