@@ -67,7 +67,7 @@ class TestConstraintTrace(unittest.TestCase):
                              'concrete_value', 'opaque_call',
                              'call_result', 'no_symbols',
                              'replaced_field', 'widened_loop',
-                             'several_contexts']:
+                             'access_path', 'several_contexts']:
                 report_dir = os.path.join(
                     TEST_WORKSPACE, 'test_proj', run_name)
                 shutil.copytree(
@@ -527,6 +527,28 @@ class TestConstraintTrace(unittest.TestCase):
             'reason': 'invalidation', 'statement': 'lex(&Tok)',
             'callee': 'lex', 'region': 'Tok', 'function': 'parse',
             'frame': 0, 'location': {'line': 11, 'col': 3, 'file': source}})
+
+    def test_stored_trace_keeps_access_path_names(self):
+        """
+        Hand-derived from demo/access-path.c: the values `cut` starts from
+        are named by the expressions that read them, behind pointers and
+        through an array, and the masked flags have the type of `flags`,
+        which their dump does not say.
+        """
+        symbols, _ = self._symbols('access_path')
+        names = {symbol['name'] for symbol in symbols.values()
+                 if symbol['kind'] == 'region_value'}
+        self.assertEqual(names, {
+            'grid', 'line', 'out', 'grid->rows', 'line->cells[0].width',
+            'line->next', 'line->next->cells[1].flags'})
+
+        trace = ConstraintTrace(
+            json.loads(self._details('access_path').constraintTrace))
+        masked = next(dump for dump in trace.expressions()
+                      if dump.endswith(' & 4U'))
+        self.assertEqual(trace.expressions()[masked],
+                         {'type': 'unsigned int'})
+        self.assertNotIn(masked, trace.symbols())
 
     def test_stored_trace_keeps_globals_a_call_replaced(self):
         """
