@@ -71,7 +71,7 @@
       <span class="panel-step-index text-medium-emphasis mr-1">
         {{ step.heading }}
       </span>
-      {{ step.message }}
+      <dump-text :text="step.message" :full-paths="true" />
       <span
         v-if="diesHere"
         class="panel-dies-here text-caption ml-1"
@@ -108,7 +108,7 @@
                 class="panel-row"
               >
                 <div class="panel-name" :title="row.name">
-                  {{ row.name }}
+                  <dump-text :text="row.name" />
                 </div>
                 <div class="panel-value">
                   <span :class="{ 'text-medium-emphasis': row.muted }">
@@ -117,14 +117,14 @@
                       :range="row.range"
                       :symbol="row.symbol"
                     />
-                    <template v-else>{{ row.display }}</template>
+                    <dump-text v-else :text="row.display" />
                   </span>
                   <div
                     v-if="row.symbol"
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    {{ row.symbol }}
+                    <dump-text :text="row.symbol" />
                   </div>
                 </div>
               </div>
@@ -140,7 +140,7 @@
                 class="panel-row panel-row-raw"
               >
                 <div class="panel-name panel-raw-symbol" :title="range.symbol">
-                  {{ range.symbol }}
+                  <dump-text :text="range.symbol" />
                 </div>
                 <div class="panel-value">
                   <range-text :range="range.range" :symbol="range.symbol" />
@@ -176,7 +176,7 @@
                 :class="{ 'panel-raw-symbol': !row.name }"
                 :title="row.symbol"
               >
-                {{ row.name ?? row.symbol }}
+                <dump-text :text="row.name ?? row.symbol" />
               </div>
               <div class="panel-value">
                 <range-text :range="row.range" :symbol="row.symbol" />
@@ -186,7 +186,7 @@
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    {{ row.symbol }}
+                    <dump-text :text="row.symbol" />
                   </span>
                   <span
                     v-if="row.dropped"
@@ -288,6 +288,23 @@ function RangeText({ range, symbol }) {
 }
 RangeText.props = [ "range", "symbol" ];
 
+// An absolute path, such as the file of a lambda's type, at the start of a
+// word. Shown by its file name, as the States view shows locations; the
+// row's title keeps it whole.
+const ABSOLUTE_PATH = /(?<![^\s(<{[,])(?:\/[^\s/:()<>{}[\],]+){2,}/g;
+
+// A symbol dump or a C++ name may wrap after a separator or an opening
+// bracket, never inside an identifier.
+const BREAK = /(?<=[,({[<.]|::|->)(?=[^\s,.)}\]>])/;
+
+function DumpText({ text, fullPaths }) {
+  const _text = fullPaths ? text ?? "" : (text ?? "").replace(ABSOLUTE_PATH,
+    path => path.slice(path.lastIndexOf("/") + 1));
+  return _text.split(BREAK).flatMap((part, index) =>
+    index ? [ h("wbr"), part ] : [ part ]);
+}
+DumpText.props = [ "text", "fullPaths" ];
+
 const knownRanges = computed(() =>
   new Map(props.step.symbolRanges.map(range => [ range.symbol, range.range ]))
 );
@@ -336,6 +353,10 @@ const accumulatedRows = computed(() =>
 
   .panel-header {
     background-color: #f7f7f7;
+  }
+
+  .panel-step {
+    overflow-wrap: break-word;
   }
 
   .panel-step-index {
@@ -397,20 +418,52 @@ const accumulatedRows = computed(() =>
   // of a step change at 1205 steps. Rows out of view are skipped until
   // scrolled to; the sizes are a row's usual content height, kept exact once
   // seen.
+  //
+  // The value keeps the right 74% of the row, so values line up. A name wider
+  // than the rest takes a line of its own above its value, rather than
+  // breaking inside it, as NumIntermediates did in a 26% column.
   .panel-row {
-    display: grid;
-    grid-template-columns: minmax(3.5rem, 26%) minmax(0, 1fr);
+    display: flex;
+    flex-wrap: wrap;
     column-gap: 8px;
     padding: 3px 0;
     font-size: 0.8125rem;
     border-bottom: 1px solid #edf0f3;
     content-visibility: auto;
     contain-intrinsic-size: auto 38px;
+
+    > .panel-name {
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    > .panel-value {
+      flex: 0 0 calc(74% - 8px);
+      min-width: 0;
+      margin-left: auto;
+    }
   }
 
+  // A symbol dump takes the row beside its range, and a range too wide for
+  // what is left, such as two 64-bit intervals, goes below it on the right.
   .panel-row-raw {
-    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
     contain-intrinsic-size: auto 17px;
+
+    > .panel-name {
+      flex: 1 1 55%;
+    }
+
+    > .panel-value {
+      flex: 0 1 auto;
+      max-width: 100%;
+      text-align: right;
+
+      .panel-intervals,
+      .panel-meta {
+        justify-content: flex-end;
+      }
+    }
   }
 
   .panel-accumulated .panel-row {
@@ -421,19 +474,24 @@ const accumulatedRows = computed(() =>
     border-bottom: 0;
   }
 
+  // Lines break where DumpText allows, and inside a word only when the word
+  // alone is wider than the line.
   .panel-name,
   .panel-value,
   .panel-symbol {
     font-family: monospace;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .panel-name {
     font-weight: 600;
   }
 
+  // Lighter than its range, so that a range beside a wrapped dump does not
+  // read as part of it.
   .panel-name.panel-raw-symbol {
     font-weight: 400;
+    color: rgba(0, 0, 0, 0.68);
   }
 
   .panel-intervals {
@@ -446,7 +504,7 @@ const accumulatedRows = computed(() =>
   // interval breaks inside only when it alone is wider than the column.
   .panel-interval {
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   // Beside a name the symbol is secondary, and a field's symbol on a real
