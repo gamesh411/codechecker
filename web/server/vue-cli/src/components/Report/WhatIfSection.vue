@@ -14,7 +14,7 @@
           this path.
         </p>
 
-        <form class="d-flex align-start" @submit.prevent="submit">
+        <form class="what-if-form d-flex align-start" @submit.prevent="submit">
           <div ref="field" class="what-if-field">
             <v-text-field
               v-model="expression"
@@ -42,7 +42,7 @@
             />
           </div>
           <v-btn
-            class="what-if-check ml-2"
+            class="what-if-check"
             type="submit"
             color="primary"
             variant="flat"
@@ -599,8 +599,15 @@ onBeforeUnmount(() => {
     overflow-y: auto;
   }
 
+  // In a narrow panel the Check button drops below the input instead of
+  // squeezing it until a placeholder such as "flags == 0" is cut off.
+  .what-if-form {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   .what-if-field {
-    flex: 1 1 auto;
+    flex: 1 1 10rem;
     min-width: 0;
   }
 
