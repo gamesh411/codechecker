@@ -95,7 +95,16 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that held the symbol when there was one.
 
-Ranges are printed as the analyzer prints them, as a list of closed intervals, so a range that excludes one value reads `[-2147483648, -1] [1, 2147483647]`.
+An integer range reads the way a person would say it, in the snapshot, the path condition and the line picker:
+
+* A range that excludes exactly one value reads "not N", so `[-2147483648, -1] [1, 2147483647]` of an `int` reads "not 0".
+* A range of one value reads as the value, so `[1, 1]` reads "1".
+* A range that runs from a value to the largest value of the type reads "at least N", and one that runs from the smallest value of the type to a value reads "at most N".
+
+The bounds of the type come from the type at the start of the symbol, such as `int` in `reg_$1<int a>`.
+When the width or signedness of the type cannot be told for certain, as with a typedef, an enum, a plain `char` or a `long` whose range stops short of the 64-bit extreme, the range is printed as the analyzer prints it, as a list of closed intervals.
+Any other range is printed that way too.
+Hovering over a range that is shown in words shows the analyzer's own range.
 
 ## Selecting a step
 
