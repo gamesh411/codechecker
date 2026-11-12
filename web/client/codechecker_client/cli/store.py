@@ -29,7 +29,7 @@ from collections import defaultdict, namedtuple
 from contextlib import contextmanager, nullcontext
 from datetime import timedelta
 from threading import Timer
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from codechecker_api.python.DBAccess_v6.ttypes import \
     StoreLimitKind, SubmittedRunOptions
@@ -68,9 +68,6 @@ from codechecker_web.shared.env import get_default_workspace
 LOG = logger.get_logger('system')
 
 MAX_UPLOAD_SIZE = 1024 ** 3  # 1024^3 = 1 GiB.
-
-
-AnalyzerResultFileReports = dict[str, list[Report]]
 
 
 FileReportPositions = dict[str, set[int]]
@@ -436,13 +433,12 @@ def get_reports(
 
 
 def parse_analyzer_result_files(
-    analyzer_result_files: Iterable[str],
+    analyzer_result_files: list[str],
     checker_labels: CheckerLabels,
     jobs: int = cpu_count()
-) -> AnalyzerResultFileReports:
-    """ Get reports from the given analyzer result files. """
-    analyzer_result_file_reports: AnalyzerResultFileReports = defaultdict(list)
-
+) -> Iterator[tuple[str, list[Report]]]:
+    """ Get reports from the given analyzer result files, one file at a time
+    and in their order, so that a caller need not hold them all. """
     ctx = nullcontext() if jobs == 1 else Pool(max_workers=jobs)
 
     with ctx as executor:
@@ -454,9 +450,7 @@ def parse_analyzer_result_files(
                 analyzer_result_files))):
             LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
                       f"Parsed '{file_path}' ...")
-            analyzer_result_file_reports[file_path] = reports
-
-    return analyzer_result_file_reports
+            yield file_path, reports
 
 
 class ReportLimitExceedError(Exception):
@@ -516,20 +510,21 @@ def assemble_zip(inputs,
 
     LOG.debug(f"Processing {len(analyzer_result_file_paths)} report files ...")
 
-    analyzer_result_file_reports = parse_analyzer_result_files(
-        analyzer_result_file_paths, checker_labels, jobs)
-
-    LOG.info("Processing report files done.")
-
     changed_files = set()
     file_paths = set()
     file_report_positions: FileReportPositions = defaultdict(set)
-    unique_reports: dict[str, dict[str, list[Report]]] = defaultdict(dict)
 
+    # The unique reports of each analyzer result file are written as soon as
+    # the file is parsed, so that neither this process nor the server ever
+    # holds the reports of the whole run, which constraint traces make
+    # gigabytes for a project the size of LLVM.
+    temp_dir = tempfile.mkdtemp('-unique-plists', dir=tmp_dir)
     unique_report_hashes = set()
-    for file_path, reports in analyzer_result_file_reports.items():
+    for file_path, reports in parse_analyzer_result_files(
+            analyzer_result_file_paths, checker_labels, jobs):
         stats.num_of_analyzer_result_files += 1
 
+        unique_reports: dict[str, list[Report]] = defaultdict(list)
         for report in reports:
             if report.changed_files:
                 changed_files.update(report.changed_files)
@@ -540,26 +535,24 @@ def assemble_zip(inputs,
             report_path_hash = get_report_path_hash(report)
             if report_path_hash not in unique_report_hashes:
                 unique_report_hashes.add(report_path_hash)
-                unique_reports[os.path.dirname(file_path)]\
-                    .setdefault(report.analyzer_name, []) \
-                    .append(report)
+                unique_reports[report.analyzer_name].append(report)
                 stats.add_report(report)
 
             file_paths.update(report.original_files)
             file_report_positions[report.file.original_path].add(report.line)
 
-    temp_dir = tempfile.mkdtemp('-unique-plists', dir=tmp_dir)
-    for dirname, analyzer_reports in unique_reports.items():
-        for analyzer_name, reports in analyzer_reports.items():
+        for analyzer_name, analyzer_reports in unique_reports.items():
             if not analyzer_name:
                 analyzer_name = 'unknown'
             tmpfile = os.path.join(
                 temp_dir, f'{uuid.uuid4()}-{analyzer_name}.plist')
 
-            report_file.create(tmpfile, reports, checker_labels,
+            report_file.create(tmpfile, analyzer_reports, checker_labels,
                                AnalyzerInfo(analyzer_name))
             LOG.debug(f"Stored '{analyzer_name}' unique reports in {tmpfile}.")
-            files_to_compress[dirname].add(tmpfile)
+            files_to_compress[os.path.dirname(file_path)].add(tmpfile)
+
+    LOG.info("Processing report files done.")
 
     if changed_files:
         reports_helper.dump_changed_files(changed_files)
