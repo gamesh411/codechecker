@@ -289,8 +289,10 @@ function RangeText({ range, symbol }) {
 RangeText.props = [ "range", "symbol" ];
 
 // A symbol dump or a C++ name may wrap after a separator or an opening
-// bracket, never inside an identifier.
-const BREAK = /(?<=[,({[<.]|::|->)(?=[^\s,.)}\]>])/;
+// bracket, never inside an identifier. A parenthesis that opens a group after
+// an operator or another parenthesis stays with its contents, so that no line
+// ends in "- (".
+const BREAK = /(?<=[,{[<.]|[^\s(]\(|::|->)(?=[^\s,.)}\]>])/;
 
 function DumpText({ text, fullPaths }) {
   // The row's title keeps an absolute path whole.
