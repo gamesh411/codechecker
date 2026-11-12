@@ -1686,11 +1686,11 @@ function truncate(text, length) {
       outline: none;
     }
 
-    :deep(.cm-line:hover) {
+    .cm-line:hover {
       background-color: #f5f5f5;
     }
 
-    &.blame :deep(.cm-editor) {
+    &.blame .cm-editor {
       line-height: 21px;
 
       .CodeMirror-gutter-wrapper {
@@ -1700,11 +1700,11 @@ function truncate(text, length) {
       }
     }
 
-    :deep(.cm-searchMatch) {
+    .cm-searchMatch {
       background-color: lightgreen;
     }
 
-    :deep(.cm-searchMatch-selected) {
+    .cm-searchMatch-selected {
       background-color: green;
     }
   }
