@@ -336,8 +336,10 @@ class PlistParserTestCase(unittest.TestCase):
                 only_in_trace)
             self.assertNotIn('location', trace['exploded_nodes'][1])
 
-            parsed, = report_file.get_reports(plist_path)
+            reports = report_file.get_reports(plist_path)
 
+        self.assertEqual(len(reports), 1)
+        parsed = reports[0]
         self.assertEqual(parsed.constraint_trace['exploded_nodes'],
                          report.constraint_trace['exploded_nodes'])
         self.assertEqual(parsed.constraint_trace['stack_frames'],
@@ -350,8 +352,9 @@ class PlistParserTestCase(unittest.TestCase):
             plist_path = os.path.join(tmp_dir, 'trace.plist')
             parser = plist.Parser()
             parser.write(parser.convert([report]), plist_path)
-            parsed, = report_file.get_reports(plist_path)
-        return parsed.constraint_trace
+            reports = report_file.get_reports(plist_path)
+        self.assertEqual(len(reports), 1)
+        return reports[0].constraint_trace
 
     def test_trace_is_stored_as_written(self):
         """ The deltas of a version 2 trace are kept, not expanded. """
