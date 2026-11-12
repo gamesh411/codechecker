@@ -83,7 +83,7 @@ The panel can be closed with the cross in its header.
 **Known here** is what the analyzer held at that step:
 
 * **Variables** lists the variables the analyzer tracks at that point, sorted by name.
-  A variable that holds a symbol shows the range of values the analyzer knows for it, and under it the symbol, such as `reg_$1<int a>`.
+  A variable that holds a symbol shows the range of values the analyzer knows for it, and under it the symbol's label, or the symbol itself, such as `reg_$1<int a>`, when the label would only repeat the variable's name.
   A symbol without a known range reads "no known range".
   A variable that holds a concrete value shows the value, such as `&x`.
 * A pointer symbol whose range is exactly zero reads **null**, and one whose range is everything except zero reads **non-null**.
@@ -96,11 +96,18 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that held the symbol when there was one.
 
-A symbol the analyzer made up reads as where it came from, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
+A symbol reads as what it stands for, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
+
+- The value memory held before the path changed it reads as the expression for that memory, such as `grid->rows`, `*q`, `line->cells[0].width` or `this->Current`.
+  Memory the analyzer reads as another type than its pointer's reads through a cast, such as `((struct imsg *)data)->hdr`.
+  The name comes from what Clang knows about the memory, so memory it cannot describe, such as a field of a call's result, keeps the analyzer's symbol.
+- The size of memory the analyzer does not know reads as, for example, "size of `*gd->linedata`".
+
+A symbol the analyzer made up reads as where it came from:
 
 - The result of a call reads as that result, such as "result of `read_len()`, line 8".
   The analyzer evaluated that call without seeing inside it.
-- Memory such a call may have changed reads as the memory and the call, such as "`Tok.Kind` after `lex(&Tok)` may have changed it, line 11".
+- Memory such a call may have changed reads as the memory and the call, such as "`Tok.Kind` after `lex(&Tok)` may have changed it, line 11" or "`this->Current` after `this->parse(…)` may have changed it".
   A call can change every global, so a global after it reads, for example, "`g` after `refresh()` may have changed it", and the value of all globals "a global after `refresh()` may have changed it".
 - Memory a loop may have changed reads, for example, "`hits` after the loop may have changed it, line 6", with the loop's line.
   The analyzer made it when it stopped following the loop after a few passes, which it does only when analyzing with `-analyzer-config widen-loops=true`.
@@ -109,9 +116,10 @@ A symbol the analyzer made up reads as where it came from, wherever the panel wo
   A symbol without such a statement reads "origin not recorded".
 
 A symbolic expression reads from the labels of the symbols in it, such as "result of `size()` + 1" or "`hits` after the loop may have changed it > `n`".
-A variable that held a symbol names it in the expression, and so does the name in a symbol's region, such as `n` in `reg_$1<unsigned int n>`.
+A variable that held a symbol names it in the expression, and otherwise the symbol's own name or label does, such as `gd->linedata[py].cellsize`.
 An expression with a part that cannot be named, or one this page cannot read to the end, is shown as the analyzer prints it, never half-way.
 Hovering over it shows the analyzer's own expression.
+Clang records the type of each expression a range is about, so its range reads in words too, such as "not 0" for `flags & 4`.
 
 Two results of the same call text are marked.
 The analyzer makes a new value for each call and does not assume that two calls return the same one, which matters when the second call looked certain to agree with the first, as in `if (x.size() > 0) ... x.size()`.
@@ -123,7 +131,7 @@ A statement that Clang had to cut is not compared.
 The same labels show wherever a view names a symbol.
 The line picker shows each variable that differs between visits of a line as a range in words, and its tooltip adds the label of the value.
 The control flow graph and the analyzer states views show statements and states, not symbols, so they have none to label; the panel they open shows the labels.
-Rows of the panel are told apart by their symbol, never by their label, so two symbols with the same label are two rows.
+Rows of the panel are told apart by their symbol, never by their label or name, so two symbols with the same label are two rows.
 
 Statement text longer than 40 characters is shortened the same way everywhere.
 A call keeps what it calls and drops its arguments, such as "`this->parse(…)`", and falls back to the function's name when that is still long, such as "`lookup(…)`".
