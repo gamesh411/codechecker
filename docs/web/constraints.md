@@ -12,6 +12,7 @@ It needs data that Clang records only when asked to, and its format may change b
 * [Storing the reports](#storing-the-reports)
 * [Show constraints](#show-constraints)
 * [Reading the Constraint Snapshot panel](#reading-the-constraint-snapshot-panel)
+  * [This path requires](#this-path-requires)
 * [Selecting a step](#selecting-a-step)
 * [What if](#what-if)
   * [Syntax](#syntax)
@@ -79,6 +80,7 @@ With the checkbox ticked, the source lines that carry a bug path step are marked
 Selecting a step opens the **Constraint Snapshot** panel beside the source code.
 Its title line gives the step, such as `Step 1 Assuming 'a' is not equal to 0`.
 The panel can be closed with the cross in its header.
+Two buttons under the title line choose what the panel shows: **This step**, described next, and **Whole path**, which is [This path requires](#this-path-requires).
 
 **Known here** is what the analyzer held at that step:
 
@@ -175,6 +177,28 @@ When the width or signedness of the type cannot be told for certain, as with an 
 Any other range is printed that way too.
 Hovering over a range that is shown in words shows the analyzer's own range.
 
+### This path requires
+
+**Whole path** lists everything the bug path assumes, from its first step to its last, so that you can ask which of it is unrealistic and go to the code that assumed it.
+It does not change with the selected step, and it has the same rows as the accumulated path condition of the last step, which is why the two are never on screen together.
+The list reads the trace's symbol table to group the rows, entry inputs first:
+
+* **Entry inputs** are what the function was called with: its parameters, globals and the fields of `this`, and what they point to, such as `SuperLoc` or `n`.
+  A compound value made only of entry inputs, such as `m + n`, is listed here too.
+* **Call results** are values that calls the analyzer did not see inside returned.
+* **Replaced values** are memory that a call or a loop may have changed, and the parts of it.
+* **Other** is everything else: a value whose origin the analyzer did not say, memory behind a call's result, and an expression that mixes origins.
+
+A group with no rows is left out, and a report whose trace has no symbol table shows one list with no groups.
+A row is named and labelled as in the accumulated path condition, and has the **dropped** tag when the analyzer no longer knows the symbol's range at the last step.
+Under it, a line says where the analyzer last assumed it: "last set at" and a link to the step that shows the row as it is at the end, then the function of that step.
+Clicking the link selects the step, which shows its code.
+Some assumptions have a node of their own, between two steps; the line then says "last set before" the first step that shows it, so the code to read is just ahead of that step.
+When the step is an assumption the bug path has no event for, the line says "assumed with no event at" and the link is to that control step.
+A path with no constraints shows "This path has no constraints on it."
+
+![This path requires, on a report of tmux](images/constraints_requires.png)
+
 ## Selecting a step
 
 With **Show constraints** ticked:
@@ -187,6 +211,9 @@ With **Show constraints** ticked:
   A line is visited more than once by a loop or by a function that is called from several places.
   Each entry of the list shows the step, and the values of the variables that differ between the entries, so that you can tell the visits apart.
   Steps that would show the same panel count as one entry.
+
+A control flow step, which the bug path draws as an arrow between lines and has no event of its own, is named by the event before it: "Edge after Step 2", or "Edge before Step 1" when no event comes first.
+Verdicts and links use that name.
 
 At the foot of the list, **Choose in the control flow graph** and **Choose by analyzer state** select the step in the views described in [Control flow graph and analyzer states](#control-flow-graph-and-analyzer-states).
 
