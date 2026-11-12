@@ -12,9 +12,6 @@ from codechecker_common.logger import get_logger
 LOG = get_logger('system')
 
 
-FileBlameInfo = dict[str, dict | None]
-
-
 def __get_tracking_branch(repo: Repo) -> str | None:
     """
     Get the tracking branch name or the current commit hash from the given
@@ -100,19 +97,6 @@ def __get_blame_info(file_path: str):
     return None
 
 
-def __collect_blame_info_for_files(
-    file_paths: Iterable[str],
-    zip_iter=map
-) -> FileBlameInfo:
-    """ Collect blame information for the given file paths. """
-    file_blame_info = {}
-    for file_path, blame_info in zip(file_paths,
-                                     zip_iter(__get_blame_info, file_paths)):
-        file_blame_info[file_path] = blame_info
-
-    return file_blame_info
-
-
 def assemble_blame_info(
     zip_file: zipfile.ZipFile,
     file_paths: Iterable[str]
@@ -122,16 +106,17 @@ def assemble_blame_info(
 
     Returns the number of collected blame information.
     """
+    file_paths = list(file_paths)
+    collected = 0
+    # Written as each file's comes, rather than collected for every file
+    # first, which takes as much memory as the blame of the whole project.
     with Pool() as executor:
-        file_blame_info = __collect_blame_info_for_files(
-            file_paths, executor.map)
+        for f, blame_info in zip(file_paths,
+                                 executor.map(__get_blame_info, file_paths)):
+            if blame_info:
+                zip_file.writestr(
+                    os.path.join('blame', f.lstrip('/')),
+                    json.dumps(blame_info))
+                collected += 1
 
-    # Add blame information to the zip for the files which will be sent
-    # to the server if exist.
-    for f, blame_info in file_blame_info.items():
-        if blame_info:
-            zip_file.writestr(
-                os.path.join('blame', f.lstrip('/')),
-                json.dumps(blame_info))
-
-    return sum(bool(v) for v in file_blame_info.values())
+    return collected
