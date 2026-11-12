@@ -113,7 +113,8 @@
         :style="{
           top: `${block.top}px`,
           height: `${block.height}px`,
-          left: `${gutterWidth}px`
+          left: `${gutterWidth}px`,
+          '--cfg-index-digits': block.indexDigits
         }"
       >
         <div class="cfg-block-header">
@@ -354,6 +355,8 @@ const blocks = computed(() => {
       id: block.id,
       successors: block.successors,
       onPath: _onPath.has(block.id),
+      // Rows of one block line up whatever their number's length.
+      indexDigits: String(block.elements.length).length,
       lines: _first > _last ? ""
         : _first === _last ? `line ${_first}` : `lines ${_first}–${_last}`,
       rows: _rows
@@ -753,7 +756,8 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
 
   .cfg-row-index {
     flex: none;
-    width: 1.8em;
+    width: max(1.8em, calc(var(--cfg-index-digits) * 1ch));
+    font-variant-numeric: tabular-nums;
     color: rgba(0, 0, 0, 0.45);
     text-align: right;
   }
