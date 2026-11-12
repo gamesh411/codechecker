@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>clang_version</key>
-	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+	<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
 	<key>constraint_trace_cfgs</key>
 	<array>
 		<dict>
@@ -509,7 +509,7 @@
 							</array>
 						</dict>
 						<key>state_id</key>
-						<integer>2120</integer>
+						<integer>2114</integer>
 						<key>variables</key>
 						<dict>
 							<key>insert</key>
@@ -565,7 +565,7 @@
 						<key>path_position</key>
 						<integer>53</integer>
 						<key>state_id</key>
-						<integer>2470</integer>
+						<integer>2464</integer>
 						<key>symbol_ranges</key>
 						<dict>
 							<key>insert</key>
@@ -613,7 +613,7 @@
 							</array>
 						</dict>
 						<key>state_id</key>
-						<integer>4039</integer>
+						<integer>3996</integer>
 						<key>symbol_ranges</key>
 						<dict>
 							<key>remove</key>
@@ -666,7 +666,7 @@
 						<key>path_position</key>
 						<integer>64</integer>
 						<key>state_id</key>
-						<integer>4039</integer>
+						<integer>3996</integer>
 					</dict>
 					<dict>
 						<key>cfg_position</key>
@@ -696,7 +696,7 @@
 						<key>path_position</key>
 						<integer>77</integer>
 						<key>state_id</key>
-						<integer>4541</integer>
+						<integer>4508</integer>
 						<key>variables</key>
 						<dict>
 							<key>remove</key>
@@ -733,7 +733,7 @@
 						<key>path_position</key>
 						<integer>83</integer>
 						<key>state_id</key>
-						<integer>4752</integer>
+						<integer>4720</integer>
 					</dict>
 				</array>
 				<key>smtlib</key>
@@ -847,12 +847,15 @@
 					<string>(assert (and (bvsge conj_$7 #x00000011) (bvsle conj_$7 #x7fffffff)))</string>
 					<string>0</string>
 					<string>integer</string>
+					<string>void *</string>
 					<string>malloc(16)</string>
 					<string>malloc</string>
 					<string>copy</string>
+					<string>int</string>
 					<string>read_len()</string>
 					<string>read_len</string>
 					<string>next_len</string>
+					<string>int *</string>
 				</array>
 				<key>version</key>
 				<integer>2</integer>

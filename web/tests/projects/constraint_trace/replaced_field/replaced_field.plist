@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -452,21 +452,22 @@
      <dict>
       <key>symbol</key><integer>11</integer>
       <key>kind</key><string>conjured</string>
-      <key>smt</key><integer>12</integer>
+      <key>type</key><integer>12</integer>
+      <key>smt</key><integer>13</integer>
       <key>smt_signed</key><true/>
       <key>origin</key>
       <dict>
        <key>reason</key><string>invalidation</string>
-       <key>statement</key><integer>13</integer>
+       <key>statement</key><integer>14</integer>
        <key>location</key>
        <dict>
         <key>line</key><integer>11</integer>
         <key>col</key><integer>3</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>callee</key><integer>14</integer>
-       <key>region</key><integer>15</integer>
-       <key>function</key><integer>16</integer>
+       <key>callee</key><integer>15</integer>
+       <key>region</key><integer>16</integer>
+       <key>function</key><integer>17</integer>
        <key>frame</key><integer>0</integer>
       </dict>
      </dict>
@@ -474,13 +475,16 @@
       <key>symbol</key><integer>0</integer>
       <key>kind</key><string>derived</string>
       <key>parent</key><integer>11</integer>
-      <key>region</key><integer>17</integer>
-      <key>smt</key><integer>18</integer>
+      <key>region</key><integer>18</integer>
+      <key>type</key><integer>12</integer>
+      <key>smt</key><integer>19</integer>
       <key>smt_signed</key><true/>
      </dict>
      <dict>
       <key>symbol</key><integer>3</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>20</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>5</integer>
       <key>smt_signed</key><false/>
      </dict>
@@ -499,6 +503,7 @@
      <string>0</string>
      <string>integer</string>
      <string>conj_$2{int, LC1, S2233, #1}</string>
+     <string>int</string>
      <string>conj_$2</string>
      <string>lex(&amp;Tok)</string>
      <string>lex</string>
@@ -506,6 +511,7 @@
      <string>parse</string>
      <string>Tok.Kind</string>
      <string>derived_$6</string>
+     <string>int *</string>
     </array>
    </dict>
    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;out&apos;)</string>

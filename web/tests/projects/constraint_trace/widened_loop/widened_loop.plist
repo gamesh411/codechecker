@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -1806,6 +1806,7 @@
      <dict>
       <key>symbol</key><integer>37</integer>
       <key>kind</key><string>conjured</string>
+      <key>type</key><integer>46</integer>
       <key>smt</key><integer>38</integer>
       <key>smt_signed</key><false/>
       <key>origin</key>
@@ -1825,13 +1826,14 @@
         <key>col</key><integer>3</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>function</key><integer>46</integer>
+       <key>function</key><integer>47</integer>
        <key>frame</key><integer>0</integer>
       </dict>
      </dict>
      <dict>
       <key>symbol</key><integer>35</integer>
       <key>kind</key><string>conjured</string>
+      <key>type</key><integer>46</integer>
       <key>smt</key><integer>36</integer>
       <key>smt_signed</key><false/>
       <key>origin</key>
@@ -1851,38 +1853,44 @@
         <key>col</key><integer>3</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>function</key><integer>46</integer>
+       <key>function</key><integer>47</integer>
        <key>frame</key><integer>0</integer>
       </dict>
      </dict>
      <dict>
       <key>symbol</key><integer>30</integer>
       <key>kind</key><string>region_value</string>
-      <key>smt</key><integer>47</integer>
+      <key>type</key><integer>48</integer>
+      <key>smt</key><integer>49</integer>
       <key>smt_signed</key><true/>
      </dict>
      <dict>
       <key>symbol</key><integer>7</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>50</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>9</integer>
       <key>smt_signed</key><false/>
      </dict>
      <dict>
       <key>symbol</key><integer>0</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>46</integer>
       <key>smt</key><integer>11</integer>
       <key>smt_signed</key><false/>
      </dict>
      <dict>
       <key>symbol</key><integer>16</integer>
       <key>kind</key><string>region_value</string>
-      <key>smt</key><integer>48</integer>
+      <key>type</key><integer>48</integer>
+      <key>smt</key><integer>51</integer>
       <key>smt_signed</key><true/>
      </dict>
      <dict>
       <key>symbol</key><integer>24</integer>
       <key>kind</key><string>region_value</string>
-      <key>smt</key><integer>49</integer>
+      <key>type</key><integer>48</integer>
+      <key>smt</key><integer>52</integer>
       <key>smt_signed</key><true/>
      </dict>
     </array>
@@ -1937,8 +1945,11 @@
          (bvsle (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #xffffffff))
     (and (bvsge (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #x00000001)
          (bvsle (ite (bvugt conj_$15 reg_$2) #x00000001 #x00000000) #x7fffffff))))</string>
+     <string>unsigned int</string>
      <string>count</string>
+     <string>int</string>
      <string>reg_$12</string>
+     <string>const int *</string>
      <string>reg_$6</string>
      <string>reg_$9</string>
     </array>

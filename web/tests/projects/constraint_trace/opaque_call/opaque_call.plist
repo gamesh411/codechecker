@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -604,21 +604,22 @@
      <dict>
       <key>symbol</key><integer>16</integer>
       <key>kind</key><string>conjured</string>
-      <key>smt</key><integer>17</integer>
+      <key>type</key><integer>17</integer>
+      <key>smt</key><integer>18</integer>
       <key>smt_signed</key><true/>
       <key>origin</key>
       <dict>
        <key>reason</key><string>invalidation</string>
-       <key>statement</key><integer>18</integer>
+       <key>statement</key><integer>19</integer>
        <key>location</key>
        <dict>
         <key>line</key><integer>10</integer>
         <key>col</key><integer>3</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>callee</key><integer>19</integer>
+       <key>callee</key><integer>20</integer>
        <key>globals</key><true/>
-       <key>function</key><integer>20</integer>
+       <key>function</key><integer>21</integer>
        <key>frame</key><integer>0</integer>
       </dict>
      </dict>
@@ -627,18 +628,23 @@
       <key>kind</key><string>derived</string>
       <key>parent</key><integer>16</integer>
       <key>region</key><integer>2</integer>
+      <key>type</key><integer>22</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>12</integer>
       <key>smt_signed</key><false/>
      </dict>
      <dict>
       <key>symbol</key><integer>0</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>22</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>4</integer>
       <key>smt_signed</key><false/>
      </dict>
      <dict>
       <key>symbol</key><integer>8</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>17</integer>
       <key>smt</key><integer>9</integer>
       <key>smt_signed</key><true/>
      </dict>
@@ -662,10 +668,12 @@
      <string>{ [0, 0] }</string>
      <string>(assert (= derived_$9 #x0000000000000000))</string>
      <string>conj_$7{int, LC1, S2159, #1}</string>
+     <string>int</string>
      <string>conj_$7</string>
      <string>refresh()</string>
      <string>refresh</string>
      <string>f</string>
+     <string>int *</string>
     </array>
    </dict>
    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;g&apos;)</string>

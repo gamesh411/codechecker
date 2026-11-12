@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -561,7 +561,7 @@
      </dict>
      <dict>
       <key>id</key><integer>48</integer>
-      <key>state_id</key><integer>2120</integer>
+      <key>state_id</key><integer>2114</integer>
       <key>path_position</key><integer>46</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -594,7 +594,7 @@
      </dict>
      <dict>
       <key>id</key><integer>55</integer>
-      <key>state_id</key><integer>2470</integer>
+      <key>state_id</key><integer>2464</integer>
       <key>path_position</key><integer>53</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -627,7 +627,7 @@
      </dict>
      <dict>
       <key>id</key><integer>93</integer>
-      <key>state_id</key><integer>4039</integer>
+      <key>state_id</key><integer>3996</integer>
       <key>path_position</key><integer>63</integer>
       <key>kind</key><string>PostStore</string>
       <key>location</key>
@@ -665,7 +665,7 @@
      </dict>
      <dict>
       <key>id</key><integer>94</integer>
-      <key>state_id</key><integer>4039</integer>
+      <key>state_id</key><integer>3996</integer>
       <key>path_position</key><integer>64</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -684,7 +684,7 @@
      </dict>
      <dict>
       <key>id</key><integer>116</integer>
-      <key>state_id</key><integer>4541</integer>
+      <key>state_id</key><integer>4508</integer>
       <key>path_position</key><integer>77</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -708,7 +708,7 @@
      </dict>
      <dict>
       <key>id</key><integer>122</integer>
-      <key>state_id</key><integer>4752</integer>
+      <key>state_id</key><integer>4720</integer>
       <key>path_position</key><integer>83</integer>
       <key>kind</key><string>PreLoad</string>
       <key>location</key>
@@ -737,45 +737,50 @@
      <dict>
       <key>symbol</key><integer>0</integer>
       <key>kind</key><string>conjured</string>
+      <key>type</key><integer>19</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>4</integer>
       <key>smt_signed</key><false/>
       <key>origin</key>
       <dict>
        <key>reason</key><string>other</string>
-       <key>statement</key><integer>19</integer>
+       <key>statement</key><integer>20</integer>
        <key>location</key>
        <dict>
         <key>line</key><integer>11</integer>
         <key>col</key><integer>15</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>callee</key><integer>20</integer>
-       <key>function</key><integer>21</integer>
+       <key>callee</key><integer>21</integer>
+       <key>function</key><integer>22</integer>
        <key>frame</key><integer>0</integer>
       </dict>
      </dict>
      <dict>
       <key>symbol</key><integer>12</integer>
       <key>kind</key><string>conjured</string>
+      <key>type</key><integer>23</integer>
       <key>smt</key><integer>13</integer>
       <key>smt_signed</key><true/>
       <key>origin</key>
       <dict>
        <key>reason</key><string>call_result</string>
-       <key>statement</key><integer>22</integer>
+       <key>statement</key><integer>24</integer>
        <key>location</key>
        <dict>
         <key>line</key><integer>8</integer>
         <key>col</key><integer>36</integer>
         <key>file</key><integer>0</integer>
        </dict>
-       <key>callee</key><integer>23</integer>
-       <key>function</key><integer>24</integer>
+       <key>callee</key><integer>25</integer>
+       <key>function</key><integer>26</integer>
       </dict>
      </dict>
      <dict>
       <key>symbol</key><integer>6</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>27</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>7</integer>
       <key>smt_signed</key><false/>
      </dict>
@@ -801,12 +806,15 @@
      <string>(assert (and (bvsge conj_$7 #x00000011) (bvsle conj_$7 #x7fffffff)))</string>
      <string>0</string>
      <string>integer</string>
+     <string>void *</string>
      <string>malloc(16)</string>
      <string>malloc</string>
      <string>copy</string>
+     <string>int</string>
      <string>read_len()</string>
      <string>read_len</string>
      <string>next_len</string>
+     <string>int *</string>
     </array>
    </dict>
    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;out&apos;)</string>

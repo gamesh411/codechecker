@@ -482,6 +482,30 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertTrue(all(entry['symbol'] in symbols
                             for entry in last['path_condition']))
 
+    def test_stored_trace_keeps_the_type_of_symbols(self):
+        """
+        Hand-derived from demo/call-result.c and demo/replaced-field.c: the
+        length `read_len()` returns is an `int`, the `malloc` a checker
+        models is a `void *` the analyzer treats as an address, and `Tok.Kind`
+        derives from a value that replaced `Tok`, so its dump says nothing of
+        its type but its entry does.
+        """
+        symbols = self._symbols('call_result')[0]
+        by_callee = {symbol['origin'].get('callee'): symbol
+                     for symbol in symbols.values() if 'origin' in symbol}
+        self.assertEqual(by_callee['read_len']['type'], 'int')
+        self.assertNotIn('pointer', by_callee['read_len'])
+        self.assertEqual(by_callee['malloc']['type'], 'void *')
+        self.assertTrue(by_callee['malloc']['pointer'])
+
+        symbols = self._symbols('replaced_field')[0]
+        field = next(symbol for symbol in symbols.values()
+                     if symbol['kind'] == 'derived')
+        self.assertEqual(field['type'], 'int')
+        self.assertNotIn('pointer', field)
+        self.assertTrue(any(symbol.get('pointer')
+                            for symbol in symbols.values()))
+
     def _symbols(self, run_name):
         trace = ConstraintTrace(
             json.loads(self._details(run_name).constraintTrace))

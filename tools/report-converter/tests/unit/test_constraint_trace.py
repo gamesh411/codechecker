@@ -176,14 +176,14 @@ WIDENED = 'conj_$6{int, LC1, S60, #3}'
 GLOBALS = 'conj_$7{int, LC1, S70, #1}'
 SYMBOLS = {
     'reg_$0<int a0>': {'kind': 'region_value', 'smt': 'reg_$0',
-                       'smt_signed': True},
+                       'smt_signed': True, 'type': 'int'},
     CALL_RESULT: {
         'kind': 'conjured', 'smt': 'conj_$2', 'smt_signed': True,
         'origin': {'reason': 'call_result', 'statement': 'get()',
                    'location': {'line': 4, 'col': 7, 'file': 0},
                    'callee': 'get', 'function': 'f', 'frame': 0}},
     'conj_$3{int, LC2, S99, #1}': {
-        'kind': 'conjured',
+        'kind': 'conjured', 'type': 'int *', 'pointer': True,
         'origin': {'reason': 'other', 'function': 'wrap'}},
     REPLACED: {
         'kind': 'conjured',
@@ -191,7 +191,8 @@ SYMBOLS = {
                    'location': {'line': 57, 'col': 3, 'file': 0},
                    'callee': 'Lex', 'region': 'Tok', 'function': 'f',
                    'frame': 0}},
-    FIELD: {'kind': 'derived', 'parent': REPLACED, 'region': 'Tok.Kind'},
+    FIELD: {'kind': 'derived', 'parent': REPLACED, 'region': 'Tok.Kind',
+            'type': 'unsigned long'},
     WIDENED: {
         'kind': 'conjured',
         'origin': {'reason': 'loop_widening', 'statement': 'i',
@@ -263,6 +264,8 @@ class SymbolTableTest(unittest.TestCase):
                 broken(lambda s: origin(s).update(region=-1)),
                 broken(lambda s: origin(s).update(loop={'col': 1})),
                 broken(lambda s: origin(s).update(globals=1)),
+                broken(lambda s: s[0].update(type=10 ** 6)),
+                broken(lambda s: s[0].update(pointer=1)),
                 broken(lambda s: derived(s).update(parent=10 ** 6)),
                 broken(lambda s: derived(s).update(region='Tok.Kind')),
                 broken(lambda s: s.append(7)),

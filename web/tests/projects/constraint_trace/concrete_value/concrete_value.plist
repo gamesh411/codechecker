@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git eb24822df6a09108915068e5bf3c9244b16d4d8e)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 1acd0c5cf62f7b09ca4b84ffa84cf61dca8d656e)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -449,12 +449,15 @@
      <dict>
       <key>symbol</key><integer>0</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>16</integer>
+      <key>pointer</key><true/>
       <key>smt</key><integer>7</integer>
       <key>smt_signed</key><false/>
      </dict>
      <dict>
       <key>symbol</key><integer>9</integer>
       <key>kind</key><string>region_value</string>
+      <key>type</key><integer>17</integer>
       <key>smt</key><integer>10</integer>
       <key>smt_signed</key><true/>
      </dict>
@@ -477,6 +480,8 @@
      <string>(declare-fun reg_$3 () (_ BitVec 32))</string>
      <string>0</string>
      <string>integer</string>
+     <string>int *</string>
+     <string>int</string>
     </array>
    </dict>
    <key>description</key><string>Dereference of null pointer (loaded from variable &apos;p&apos;)</string>

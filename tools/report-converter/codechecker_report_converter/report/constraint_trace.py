@@ -47,7 +47,7 @@ _GRAPH_BODY = ('function', 'entry', 'exit', 'blocks')
 # The keys of a symbol's origin, and of the symbol itself, that name a
 # string.
 _ORIGIN_STRINGS = ('statement', 'callee', 'function', 'region')
-_SYMBOL_STRINGS = ('parent', 'region')
+_SYMBOL_STRINGS = ('parent', 'region', 'type')
 
 # Whole snapshots kept on the way, so that reading any node replays at most
 # this many deltas.
@@ -171,7 +171,8 @@ class ConstraintTrace:
         if not isinstance(entry['kind'], str) or \
                 not string(entry['symbol']) or \
                 not all(string(entry[key]) for key in ('smt',) +
-                        _SYMBOL_STRINGS if key in entry):
+                        _SYMBOL_STRINGS if key in entry) or \
+                not isinstance(entry.get('pointer', True), bool):
             return False
         origin = entry.get('origin')
         if origin is None:
@@ -194,7 +195,9 @@ class ConstraintTrace:
         and, when Clang knows them, `statement`, `location`, `callee` and
         `frame` (an index into `stack_frames`), and for memory a call or a
         loop replaced, `region` or `globals`, and `loop`. A derived symbol
-        has its `parent`'s dump and its `region`'s access path. """
+        has its `parent`'s dump and its `region`'s access path. A symbol
+        has its `type`, the canonical type's name, and `pointer` when the
+        analyzer treats it as an address. """
         if self._symbols is not None:
             return self._symbols
         strings = self.strings
@@ -203,6 +206,8 @@ class ConstraintTrace:
             symbol = {'kind': entry['kind']}
             symbol.update({key: strings[entry[key]]
                            for key in _SYMBOL_STRINGS if key in entry})
+            if entry.get('pointer'):
+                symbol['pointer'] = True
             if 'smt' in entry:
                 symbol['smt'] = strings[entry['smt']]
                 symbol['smt_signed'] = bool(entry['smt_signed'])
@@ -492,6 +497,8 @@ def encode(nodes: list[dict], steps: list[dict],
             entry = {'symbol': intern(dump), 'kind': symbol['kind']}
             entry.update({key: intern(symbol[key])
                           for key in _SYMBOL_STRINGS if key in symbol})
+            if symbol.get('pointer'):
+                entry['pointer'] = True
             if 'smt' in symbol:
                 entry['smt'] = intern(symbol['smt'])
                 entry['smt_signed'] = bool(symbol['smt_signed'])
