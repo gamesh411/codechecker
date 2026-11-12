@@ -626,7 +626,8 @@ const selectedConstraintStep = computed(() => {
       variables: _control.snapshot.variables ?? [],
       pathCondition: _control.snapshot.path_condition ?? [],
       symbolNames: constraintTrace.value.symbolNames(_control.order),
-      order: _control.order
+      order: _control.order,
+      smtlib: constraintTrace.value.smtlib
     };
   }
 
@@ -645,7 +646,8 @@ const selectedConstraintStep = computed(() => {
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
     symbolNames: constraintTrace.value.symbolNames(_traceStep?.order ?? -1),
-    order: _traceStep?.order ?? -1
+    order: _traceStep?.order ?? -1,
+    smtlib: constraintTrace.value.smtlib
   };
 });
 const editorCols = computed(() => {

@@ -282,10 +282,15 @@ const { canScrollUp, canScrollDown } = useScrollShadows(scroller);
 const listboxId = `what-if-suggestions-${useId()}`;
 const errorId = `what-if-error-${useId()}`;
 
+// Suggests only a variable the check can decide: a symbol with a solver term,
+// or an integer. A reference or an address gets Unknown, and so does every
+// variable of a trace without solver input, so then nothing is suggested.
 const placeholder = computed(() => {
-  const _variable = props.step.variables.find(v => v.kind === "symbol") ??
-    props.step.variables[0];
-  return `${_variable?.name ?? "x"} == 0`;
+  if (!props.step.smtlib) return "";
+  const _variable =
+    props.step.variables.find(v => v.kind === "symbol" && v.smt) ??
+    props.step.variables.find(v => v.kind === "integer");
+  return _variable ? `${_variable.name} == 0` : "";
 });
 
 // The text the error was about is gone once the reader edits it.
