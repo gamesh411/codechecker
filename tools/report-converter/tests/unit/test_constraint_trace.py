@@ -123,3 +123,39 @@ class ConstraintTraceTest(unittest.TestCase):
                 {'id': 0, 'elements': [], 'successors': []}],
             'path_blocks': [1, 2],
             'path_edges': [{'from': 2, 'to': 1}, {'from': 1, 'to': 0}]}])
+
+    def test_graph_bodies_are_kept_once(self):
+        """ Graphs with one body, whether one object or equal ones, name one
+        entry of the file's table, and read back whole. """
+        def graph(function):
+            return {'function': function, 'entry': 1, 'exit': 0,
+                    'blocks': [[1, '', [0], [['a', 3, -1]]], [0, '', [], []]]}
+
+        table = constraint_trace.GraphTable()
+        shared = graph('f')
+        cfgs = [
+            {**shared, 'path_blocks': [1], 'path_edges': []},
+            {**shared, 'path_blocks': [0, 1], 'path_edges': [1, 0]},
+            {**graph('f'), 'path_blocks': [], 'path_edges': []},
+            {**graph('g'), 'path_blocks': [1], 'path_edges': []}]
+        refs = [table.share(cfg) for cfg in cfgs]
+        self.assertEqual([ref['graph'] for ref in refs], [0, 0, 0, 1])
+        self.assertEqual(refs[1], {'graph': 0, 'path_blocks': [0, 1],
+                                   'path_edges': [1, 0]})
+        self.assertEqual(table.graphs, [graph('f'), graph('g')])
+
+        resolved = constraint_trace.resolve_cfgs(
+            {'version': 2, 'cfgs': refs}, table.graphs)
+        self.assertEqual(resolved['cfgs'], cfgs)
+        self.assertIs(resolved['cfgs'][0]['blocks'],
+                      resolved['cfgs'][1]['blocks'])
+
+    def test_whole_graphs_are_kept_and_bad_names_rejected(self):
+        whole = {'function': 'f', 'entry': 0, 'exit': 0, 'blocks': [],
+                 'path_blocks': [], 'path_edges': []}
+        trace = {'version': 2, 'cfgs': [whole]}
+        self.assertEqual(constraint_trace.resolve_cfgs(trace, []), trace)
+        for graphs in ([], [{'function': 'f'}]):
+            with self.assertRaises(constraint_trace.MalformedTrace):
+                constraint_trace.resolve_cfgs(
+                    {'version': 2, 'cfgs': [{'graph': 0}]}, graphs)

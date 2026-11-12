@@ -373,6 +373,36 @@ class PlistParserTestCase(unittest.TestCase):
         self.assertEqual(self._round_trip_trace({'version': 1}),
                          {'version': 1})
 
+    def test_graph_bodies_are_written_once_per_file(self):
+        """ Reports through one function keep its body once in the plist,
+        and each reads back with its own path through it. """
+        body = {'function': 'f', 'entry': 1, 'exit': 0,
+                'blocks': [[1, 'if a', [0, -1], [['a', 3, -1]]],
+                           [0, '', [], []]]}
+        reports = []
+        for path_blocks in ([1], [0, 1]):
+            report = deepcopy(div_zero_skel)
+            report.constraint_trace = {
+                **constraint_trace.encode([{'symbol_ranges': []}], []),
+                'cfgs': [{**deepcopy(body), 'path_blocks': path_blocks,
+                          'path_edges': []}]}
+            reports.append(report)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            plist_path = os.path.join(tmp_dir, 'trace.plist')
+            parser = plist.Parser()
+            data = parser.convert(reports)
+            parser.write(data, plist_path)
+            parsed = report_file.get_reports(plist_path)
+
+        self.assertEqual(data[constraint_trace.PLIST_GRAPHS], [body])
+        self.assertEqual(
+            [diag['constraint_trace']['cfgs'] for diag in data['diagnostics']],
+            [[{'graph': 0, 'path_blocks': [1], 'path_edges': []}],
+             [{'graph': 0, 'path_blocks': [0, 1], 'path_edges': []}]])
+        self.assertEqual([r.constraint_trace for r in parsed],
+                         [r.constraint_trace for r in reports])
+
     def test_malformed_trace_is_dropped(self):
         trace = constraint_trace.encode(
             [{'symbol_ranges': []}],

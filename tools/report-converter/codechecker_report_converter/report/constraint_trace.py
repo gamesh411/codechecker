@@ -15,14 +15,28 @@ lists are written as the change from the node before it, as indices into the
 trace's `strings`, so the trace grows with the length of the Bug Path rather
 than with its square. This module is the one place that turns that back into
 snapshots, whether whole or as the span of nodes each entry lives through.
+
+A trace's control flow graphs are self-contained once read, but a plist keeps
+each graph's body once per file, in `PLIST_GRAPHS`, and a trace names it by
+`graph`: the reports of one translation unit run through the same functions
+again and again. `resolve_cfgs` and `GraphTable` turn one into the other.
 """
 
+import hashlib
+import json
 from dataclasses import dataclass
 
 VERSION = 2
 
 # The snapshot lists, in the order a node lists their changes.
 LISTS = ('symbol_ranges', 'variables', 'path_condition', 'smt_declarations')
+
+# The plist key of a file's control flow graph bodies.
+PLIST_GRAPHS = 'constraint_trace_cfgs'
+
+# The keys of a control flow graph that make up its body, which does not
+# depend on the path.
+_GRAPH_BODY = ('function', 'entry', 'exit', 'blocks')
 
 # Whole snapshots kept on the way, so that reading any node replays at most
 # this many deltas.
@@ -204,6 +218,63 @@ class ConstraintTrace:
     def cfgs(self) -> list[dict]:
         """ The control flow graphs, with blocks and elements as dicts. """
         return [_expand_cfg(cfg) for cfg in self.trace.get('cfgs', [])]
+
+
+def resolve_cfgs(trace: dict, graphs: list) -> dict:
+    """ The trace with each control flow graph whole: the body it names in
+    the plist's `graphs`, beside the part of it the path took. Bodies are
+    shared between the traces of a file rather than copied. A graph that is
+    whole already, as Clang wrote them before bodies were kept per file, is
+    kept. """
+    if not trace.get('cfgs'):
+        return trace
+    cfgs = []
+    for cfg in trace['cfgs']:
+        if 'graph' not in cfg:
+            cfgs.append(cfg)
+            continue
+        index = cfg['graph']
+        if not isinstance(index, int) or not 0 <= index < len(graphs):
+            raise MalformedTrace(
+                f"control flow graph {index} outside a table of {len(graphs)}")
+        try:
+            body = {key: graphs[index][key] for key in _GRAPH_BODY}
+        except (KeyError, TypeError) as ex:
+            raise MalformedTrace(
+                f"control flow graph {index} without {ex}") from ex
+        cfgs.append({**body, **{key: value for key, value in cfg.items()
+                                if key != 'graph'}})
+    return {**trace, 'cfgs': cfgs}
+
+
+class GraphTable:
+    """ The control flow graph bodies of one plist file being written, each
+    once, for `PLIST_GRAPHS`. """
+
+    def __init__(self):
+        self.graphs: list[dict] = []
+        self._by_content: dict[bytes, int] = {}
+        # Graphs resolved from one body share its blocks, so most are found
+        # without serializing them. The blocks are kept so that their id
+        # stays theirs.
+        self._by_object: dict[tuple, tuple[object, int]] = {}
+
+    def share(self, cfg: dict) -> dict:
+        """ The graph as a trace in the file names it. """
+        body = {key: cfg[key] for key in _GRAPH_BODY}
+        identity = (id(body['blocks']), body['function'], body['entry'],
+                    body['exit'])
+        known = self._by_object.get(identity)
+        if known is None:
+            content = hashlib.sha256(json.dumps(
+                [body[key] for key in _GRAPH_BODY]).encode()).digest()
+            index = self._by_content.setdefault(content, len(self.graphs))
+            if index == len(self.graphs):
+                self.graphs.append(body)
+            known = (body['blocks'], index)
+            self._by_object[identity] = known
+        return {'graph': known[1], **{key: value for key, value in cfg.items()
+                                      if key not in _GRAPH_BODY}}
 
 
 def _expand_cfg(cfg: dict) -> dict:

@@ -217,10 +217,11 @@ class Parser(BaseParser):
 
             files = get_file_index_map(
                 plist, source_dir_path, self._file_cache)
+            graphs = plist.get(constraint_trace.PLIST_GRAPHS, [])
 
             for diag in plist.get('diagnostics', []):
                 report = self.__create_report(
-                    analyzer_result_file_path, diag, files, metadata)
+                    analyzer_result_file_path, diag, files, metadata, graphs)
 
                 if report.report_hash is None:
                     report.report_hash = get_report_hash(
@@ -251,7 +252,8 @@ class Parser(BaseParser):
         analyzer_result_file_path: str,
         diag: dict,
         files: dict[int, File],
-        metadata: dict[str, Any]
+        metadata: dict[str, Any],
+        graphs: list
     ) -> Report:
         location = diag.get("location", {})
         checker_name = diag.get("check_name", UnknownChecker[1])
@@ -282,7 +284,7 @@ class Parser(BaseParser):
             macro_expansions=self.__get_macro_expansions(diag, files),
             annotations=report_annotation,
             constraint_trace=self.__get_constraint_trace(
-                diag, files, control_positions))
+                diag, files, control_positions, graphs))
 
     def __get_analyzer_name(
         self,
@@ -395,7 +397,8 @@ class Parser(BaseParser):
         self,
         diag: dict,
         files: dict[int, File],
-        control_positions: dict[int, int]
+        control_positions: dict[int, int],
+        graphs: list
     ) -> dict | None:
         """ Get the Constraint Snapshots, keyed to the report's Path Steps.
 
@@ -405,6 +408,8 @@ class Parser(BaseParser):
         an event index, or to the position index of the piece's end point.
         Storage also loses the interleaving of the two lists, so the original
         position is kept as `order`, the step's place on the Bug Path.
+        Control flow graphs are made whole from the file's `graphs`, so that
+        a report's trace stands on its own.
         """
         trace = diag.get('constraint_trace')
         if trace is None:
@@ -420,6 +425,7 @@ class Parser(BaseParser):
                      diag.get('check_name'))
             return {'version': trace.get('version')}
         try:
+            trace = constraint_trace.resolve_cfgs(trace, graphs)
             constraint_trace.ConstraintTrace(trace).check()
         except constraint_trace.MalformedTrace as ex:
             LOG.warning("Ignoring malformed constraint trace in '%s': %s",
@@ -543,6 +549,8 @@ class Parser(BaseParser):
             data['files'].append(file_path)
             file_index_map[file_path] = idx
 
+        graphs = constraint_trace.GraphTable()
+
         for report in reports:
             diagnostic = {
                 'location': self._create_location(
@@ -600,7 +608,7 @@ class Parser(BaseParser):
                 diagnostic['constraint_trace'] = \
                     self._create_constraint_trace(
                         report.constraint_trace, first_event_position,
-                        control_path_indices, file_index_map)
+                        control_path_indices, file_index_map, graphs)
 
             if report.notes:
                 diagnostic['notes'] = []
@@ -621,6 +629,9 @@ class Parser(BaseParser):
                     diagnostic["report-annotation"][key] = value
 
             data['diagnostics'].append(diagnostic)
+
+        if graphs.graphs:
+            data[constraint_trace.PLIST_GRAPHS] = graphs.graphs
 
         return data
 
@@ -646,14 +657,16 @@ class Parser(BaseParser):
         trace: dict,
         first_event_position: int,
         control_path_indices: dict[int, int],
-        file_index_map: dict[str, int]
+        file_index_map: dict[str, int],
+        graphs: constraint_trace.GraphTable
     ) -> dict:
         """ Turn a report's trace back into the per-diagnostic plist key.
 
         Every path event is written after the control points, which is why an
         event step's plist position is the event index shifted by their count.
         A control step addresses the position its edge ends at, which is the
-        end of the control point written for it.
+        end of the control point written for it. Control flow graph bodies go
+        to the file's `graphs`, once each.
         """
         if 'steps' not in trace:
             # Only the version of an unsupported trace is kept.
@@ -675,9 +688,11 @@ class Parser(BaseParser):
                 'path_index': path_index
             })
 
+        written = {**trace, 'steps': steps}
+        if 'cfgs' in trace:
+            written['cfgs'] = [graphs.share(cfg) for cfg in trace['cfgs']]
         return map_trace_locations(
-            {**trace, 'steps': steps},
-            lambda file_path: file_index_map[file_path])
+            written, lambda file_path: file_index_map[file_path])
 
     def _create_location(
         self,
@@ -792,9 +807,11 @@ class Parser(BaseParser):
                 files = get_file_index_map(
                     plist, analyzer_result_dir_path, file_cache)
 
+                graphs = plist.get(constraint_trace.PLIST_GRAPHS, [])
                 for diag in plist['diagnostics']:
                     report = self.__create_report(
-                        analyzer_result_file_path, diag, files, metadata)
+                        analyzer_result_file_path, diag, files, metadata,
+                        graphs)
                     diag['issue_hash_content_of_line_in_context'] = \
                         get_report_hash(report, hash_type)
 
