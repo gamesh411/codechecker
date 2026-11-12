@@ -349,11 +349,14 @@ class PlistParserTestCase(unittest.TestCase):
         """ The origin of a symbol in the trace's symbol table names its file
         like the exploded graph does, even a file only the origin names. """
         only_in_origin = os.path.join(gen_plist_dir_path, 'only_in_origin.h')
+        only_in_loop = os.path.join(gen_plist_dir_path, 'only_in_loop.h')
         report = deepcopy(div_zero_skel)
         report.constraint_trace = {
             **constraint_trace.encode(
                 [{'path_condition': [{'symbol': 'conj_$2{int, LC1, S9, #1}',
-                                      'range': '{ [0, 0] }'}]}],
+                                      'range': '{ [0, 0] }'},
+                                     {'symbol': 'conj_$3{int, LC1, S9, #2}',
+                                      'range': '{ [1, 1] }'}]}],
                 [{'kind': 'event', 'index': 0, 'order': 0,
                   'exploded_node': 0}],
                 {'conj_$2{int, LC1, S9, #1}': {
@@ -363,6 +366,14 @@ class PlistParserTestCase(unittest.TestCase):
                                'frame': 0,
                                'location': {'line': 4, 'col': 7,
                                             'file': only_in_origin}}},
+                 'conj_$3{int, LC1, S9, #2}': {
+                    'kind': 'conjured',
+                    'origin': {'reason': 'loop_widening', 'statement': 'i',
+                               'function': 'main', 'frame': 0,
+                               'location': {'line': 6, 'col': 19,
+                                            'file': only_in_loop},
+                               'loop': {'line': 6, 'col': 3,
+                                        'file': only_in_loop}}},
                  'reg_$0<int a>': {'kind': 'region_value'}}),
             'stack_frames': [{'function': 'main'}]}
 
@@ -376,7 +387,12 @@ class PlistParserTestCase(unittest.TestCase):
             self.assertEqual(
                 data['files'][symbols[0]['origin']['location']['file']],
                 only_in_origin)
-            self.assertNotIn('origin', symbols[1])
+            loop = symbols[1]['origin']
+            self.assertEqual(data['files'][loop['loop']['file']],
+                             only_in_loop)
+            self.assertEqual(data['files'][loop['location']['file']],
+                             only_in_loop)
+            self.assertNotIn('origin', symbols[2])
 
             reports = report_file.get_reports(plist_path)
 
@@ -391,13 +407,15 @@ class PlistParserTestCase(unittest.TestCase):
             'version': 2, 'strings': [], 'steps': [], 'exploded_nodes': [],
             'symbols': [
                 {'symbol': 0, 'kind': 'conjured',
-                 'origin': {'reason': 'other', 'function': 1,
+                 'origin': {'reason': 'loop_widening', 'function': 1,
                             'location': {'line': 1, 'col': 1,
-                                         'file': source}}},
+                                         'file': source},
+                            'loop': {'line': 1, 'col': 1, 'file': source}}},
                 {'symbol': 2, 'kind': 'region_value'}]}
         report.trim_path_prefixes([gen_plist_dir_path])
         symbols = report.constraint_trace['symbols']
         self.assertEqual(symbols[0]['origin']['location']['file'], 'a.c')
+        self.assertEqual(symbols[0]['origin']['loop']['file'], 'a.c')
         self.assertEqual(symbols[1], {'symbol': 2, 'kind': 'region_value'})
 
     def _round_trip_trace(self, trace):

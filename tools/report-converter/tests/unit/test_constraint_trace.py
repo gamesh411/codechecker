@@ -170,6 +170,10 @@ class ConstraintTraceTest(unittest.TestCase):
 
 
 CALL_RESULT = 'conj_$2{int, LC1, S1234, #1}'
+REPLACED = 'conj_$4{int, LC1, S50, #1}'
+FIELD = 'derived_$5{conj_$4{int, LC1, S50, #1},Tok.Kind}'
+WIDENED = 'conj_$6{int, LC1, S60, #3}'
+GLOBALS = 'conj_$7{int, LC1, S70, #1}'
 SYMBOLS = {
     'reg_$0<int a0>': {'kind': 'region_value', 'smt': 'reg_$0',
                        'smt_signed': True},
@@ -180,7 +184,28 @@ SYMBOLS = {
                    'callee': 'get', 'function': 'f', 'frame': 0}},
     'conj_$3{int, LC2, S99, #1}': {
         'kind': 'conjured',
-        'origin': {'reason': 'other', 'function': 'wrap'}}}
+        'origin': {'reason': 'other', 'function': 'wrap'}},
+    REPLACED: {
+        'kind': 'conjured',
+        'origin': {'reason': 'invalidation', 'statement': 'Lex(Tok)',
+                   'location': {'line': 57, 'col': 3, 'file': 0},
+                   'callee': 'Lex', 'region': 'Tok', 'function': 'f',
+                   'frame': 0}},
+    FIELD: {'kind': 'derived', 'parent': REPLACED, 'region': 'Tok.Kind'},
+    WIDENED: {
+        'kind': 'conjured',
+        'origin': {'reason': 'loop_widening', 'statement': 'i',
+                   'location': {'line': 6, 'col': 19, 'file': 0},
+                   'loop': {'line': 6, 'col': 3, 'file': 0},
+                   'region': 'x', 'function': 'f', 'frame': 0}},
+    GLOBALS: {
+        'kind': 'conjured',
+        'origin': {'reason': 'invalidation', 'statement': 'refresh()',
+                   'location': {'line': 9, 'col': 3, 'file': 0},
+                   'callee': 'refresh', 'globals': True, 'function': 'f',
+                   'frame': 0}},
+    'derived_$8{conj_$7{int, LC1, S70, #1},counter}': {
+        'kind': 'derived', 'parent': GLOBALS}}
 
 
 class SymbolTableTest(unittest.TestCase):
@@ -191,7 +216,11 @@ class SymbolTableTest(unittest.TestCase):
             'variables': [_variable('a0', 'reg_$0<int a0>')],
             'path_condition': [
                 _range(f'({CALL_RESULT}) + 1', '{ [5, 5] }'),
-                _range('conj_$3{int, LC2, S99, #1}', '{ [7, 7] }')]}
+                _range('conj_$3{int, LC2, S99, #1}', '{ [7, 7] }'),
+                _range(FIELD, '{ [1, 1] }'),
+                _range(WIDENED, '{ [7, 7] }'),
+                _range('derived_$8{conj_$7{int, LC1, S70, #1},counter}',
+                       '{ [5, 5] }')]}
         self.trace = {
             **constraint_trace.encode([self.snapshot], [], deepcopy(SYMBOLS)),
             'stack_frames': [{'function': 'f'}]}
@@ -221,6 +250,9 @@ class SymbolTableTest(unittest.TestCase):
         def origin(symbols):
             return next(s['origin'] for s in symbols if 'origin' in s)
 
+        def derived(symbols):
+            return next(s for s in symbols if 'parent' in s)
+
         for trace in (
                 broken(lambda s: s[0].update(symbol=10 ** 6)),
                 broken(lambda s: s[0].pop('kind')),
@@ -228,6 +260,11 @@ class SymbolTableTest(unittest.TestCase):
                 broken(lambda s: origin(s).update(function='f')),
                 broken(lambda s: origin(s).update(frame=3)),
                 broken(lambda s: origin(s).update(location={'line': 1})),
+                broken(lambda s: origin(s).update(region=-1)),
+                broken(lambda s: origin(s).update(loop={'col': 1})),
+                broken(lambda s: origin(s).update(globals=1)),
+                broken(lambda s: derived(s).update(parent=10 ** 6)),
+                broken(lambda s: derived(s).update(region='Tok.Kind')),
                 broken(lambda s: s.append(7)),
                 {**self.trace, 'symbols': {}}):
             with self.assertRaises(constraint_trace.MalformedTrace):

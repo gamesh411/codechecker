@@ -42,7 +42,8 @@ InvalidFileContentMsg: str = \
 # to a location in one of their items.
 TRACE_LOCATIONS = (('exploded_nodes', ('location',)),
                    ('stack_frames', ('call_site',)),
-                   ('symbols', ('origin', 'location')))
+                   ('symbols', ('origin', 'location')),
+                   ('symbols', ('origin', 'loop')))
 
 
 def _map_location(item: dict, keys: tuple, map_file: Callable) -> dict:
@@ -74,8 +75,9 @@ def map_trace_locations(trace: dict, map_file: Callable) -> dict:
     result = dict(trace)
     for table, keys in TRACE_LOCATIONS:
         if table in trace:
+            # A table can hold several locations, so map what is mapped.
             result[table] = [_map_location(item, keys, map_file)
-                             for item in trace[table]]
+                             for item in result[table]]
     return result
 
 

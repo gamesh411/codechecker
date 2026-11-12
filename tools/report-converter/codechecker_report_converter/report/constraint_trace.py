@@ -44,8 +44,10 @@ PLIST_GRAPHS = 'constraint_trace_cfgs'
 # depend on the path.
 _GRAPH_BODY = ('function', 'entry', 'exit', 'blocks')
 
-# The keys of a symbol's origin that name a string.
-_ORIGIN_STRINGS = ('statement', 'callee', 'function')
+# The keys of a symbol's origin, and of the symbol itself, that name a
+# string.
+_ORIGIN_STRINGS = ('statement', 'callee', 'function', 'region')
+_SYMBOL_STRINGS = ('parent', 'region')
 
 # Whole snapshots kept on the way, so that reading any node replays at most
 # this many deltas.
@@ -161,36 +163,46 @@ class ConstraintTrace:
         def string(value) -> bool:
             return isinstance(value, int) and 0 <= value < len(self.strings)
 
+        def location(value) -> bool:
+            return isinstance(value, dict) and \
+                isinstance(value.get('line'), int) and \
+                isinstance(value.get('col'), int) and 'file' in value
+
         if not isinstance(entry['kind'], str) or \
                 not string(entry['symbol']) or \
-                'smt' in entry and not string(entry['smt']):
+                not all(string(entry[key]) for key in ('smt',) +
+                        _SYMBOL_STRINGS if key in entry):
             return False
         origin = entry.get('origin')
         if origin is None:
             return True
-        location = origin.get('location', {'line': 0, 'col': 0, 'file': 0})
         return isinstance(origin['reason'], str) and \
             string(origin['function']) and \
-            all(string(origin[key]) for key in ('statement', 'callee')
+            all(string(origin[key]) for key in _ORIGIN_STRINGS
                 if key in origin) and \
             ('frame' not in origin or
              isinstance(origin['frame'], int) and
              0 <= origin['frame'] < frames) and \
-            isinstance(location.get('line'), int) and \
-            isinstance(location.get('col'), int) and 'file' in location
+            isinstance(origin.get('globals', False), bool) and \
+            all(location(origin[key]) for key in ('location', 'loop')
+                if key in origin)
 
     def symbols(self) -> dict[str, dict]:
         """ The symbol table by symbol dump, with its strings read: `kind`,
         with SMT-LIB `smt` and `smt_signed` when the symbol has a term, and
         for a conjured symbol `origin`, which has `reason` and `function`
         and, when Clang knows them, `statement`, `location`, `callee` and
-        `frame` (an index into `stack_frames`). """
+        `frame` (an index into `stack_frames`), and for memory a call or a
+        loop replaced, `region` or `globals`, and `loop`. A derived symbol
+        has its `parent`'s dump and its `region`'s access path. """
         if self._symbols is not None:
             return self._symbols
         strings = self.strings
         table = {}
         for entry in self.trace.get('symbols', []):
             symbol = {'kind': entry['kind']}
+            symbol.update({key: strings[entry[key]]
+                           for key in _SYMBOL_STRINGS if key in entry})
             if 'smt' in entry:
                 symbol['smt'] = strings[entry['smt']]
                 symbol['smt_signed'] = bool(entry['smt_signed'])
@@ -478,6 +490,8 @@ def encode(nodes: list[dict], steps: list[dict],
         for dump in sorted(symbols):
             symbol = symbols[dump]
             entry = {'symbol': intern(dump), 'kind': symbol['kind']}
+            entry.update({key: intern(symbol[key])
+                          for key in _SYMBOL_STRINGS if key in symbol})
             if 'smt' in symbol:
                 entry['smt'] = intern(symbol['smt'])
                 entry['smt_signed'] = bool(symbol['smt_signed'])
