@@ -440,17 +440,22 @@ def parse_analyzer_result_files(
     """ Get reports from the given analyzer result files, one file at a time
     and in their order, so that a caller need not hold them all. """
     ctx = nullcontext() if jobs == 1 else Pool(max_workers=jobs)
+    parse = functools.partial(get_reports, checker_labels=checker_labels)
+    # A few files per worker at a time: the workers parse faster than a
+    # caller that writes each file's reports again, and the results would
+    # otherwise pile up in this process.
+    batch_size = 4 * jobs
 
     with ctx as executor:
         map_fn = map if jobs == 1 else executor.map
 
-        for idx, (file_path, reports) in enumerate(zip(
-            analyzer_result_files, map_fn(
-                functools.partial(get_reports, checker_labels=checker_labels),
-                analyzer_result_files))):
-            LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
-                      f"Parsed '{file_path}' ...")
-            yield file_path, reports
+        for start in range(0, len(analyzer_result_files), batch_size):
+            batch = analyzer_result_files[start:start + batch_size]
+            for idx, (file_path, reports) in enumerate(
+                    zip(batch, map_fn(parse, batch)), start):
+                LOG.debug(f"[{idx}/{len(analyzer_result_files)}] "
+                          f"Parsed '{file_path}' ...")
+                yield file_path, reports
 
 
 class ReportLimitExceedError(Exception):
