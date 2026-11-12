@@ -145,6 +145,7 @@ For more information how to use CodeChecker see our [user guide](usage.md).
 * [Webserver User Guide](web/user_guide.md)
 * [WEB GUI User Guide](https://github.com/Ericsson/codechecker/blob/master/web/server/vue-cli/src/assets/userguide/userguide.md)
 * [Command line and WEB UI Feature overview](feature_comparison.md)
+* [Constraints of a bug path (experimental)](web/constraints.md)
 * Security configuration
   * [Configuring Authentication](web/authentication.md)
   * [Configuring Authorization](web/permissions.md)
