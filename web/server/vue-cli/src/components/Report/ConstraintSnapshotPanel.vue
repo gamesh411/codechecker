@@ -133,7 +133,7 @@
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    <dump-text :text="row.symbol" />
+                    <symbol-text :symbol="row.symbol" />
                   </div>
                 </div>
               </div>
@@ -150,7 +150,7 @@
                 :class="changeClass(changeOf('symbol_ranges', range.symbol))"
               >
                 <div class="panel-name panel-raw-symbol" :title="range.symbol">
-                  <dump-text :text="range.symbol" />
+                  <symbol-text :symbol="range.symbol" />
                 </div>
                 <div class="panel-value">
                   <range-text :range="range.range" :symbol="range.symbol" />
@@ -191,18 +191,19 @@
                 :class="{ 'panel-raw-symbol': !row.name }"
                 :title="row.symbol"
               >
-                <dump-text :text="row.name ?? row.symbol" />
+                <dump-text v-if="row.name" :text="row.name" />
+                <symbol-text v-else :symbol="row.symbol" />
               </div>
               <div class="panel-value">
                 <range-text :range="row.range" :symbol="row.symbol" />
-                <div class="panel-meta">
-                  <change-tag :change="row.change" />
+                <change-tag :change="row.change" />
+                <div v-if="row.name || row.dropped" class="panel-meta">
                   <span
                     v-if="row.name"
                     class="panel-symbol"
                     :title="row.symbol"
                   >
-                    <dump-text :text="row.symbol" />
+                    <symbol-text :symbol="row.symbol" />
                   </span>
                   <span
                     v-if="row.dropped"
@@ -249,8 +250,10 @@ import { compareNames, readableRange, shortenPaths } from "./ConstraintTrace";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
-  // Besides the lists: `changes` (what the step added or narrowed) and
-  // `silent` (an assumption the Bug Path has no event for).
+  // Besides the lists: `changes` (what the step added or narrowed), `silent`
+  // (an assumption the Bug Path has no event for) and `labelOf`, which gives
+  // a symbol's label as symbolLabel does, plus `order`, the Path Step nearest
+  // to its origin, and `otherFile`, whether that is in another file.
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
   // From useWhatIf, owned by the report view.
@@ -347,6 +350,42 @@ function DumpText({ text, fullPaths }) {
     index ? [ h("wbr"), part ] : [ part ]);
 }
 DumpText.props = [ "text", "fullPaths" ];
+
+// A symbol as its label when the trace has one, and as its dump otherwise.
+// The row keeps the dump in its title. The label's line selects the Path Step
+// nearest to the statement the value came from.
+function SymbolText({ symbol }) {
+  const _label = props.step.labelOf?.(symbol);
+  if (!_label) return h(DumpText, { text: symbol });
+
+  const _parts = _label.code
+    ? [ _label.text.slice(0, -_label.code.length),
+      h("code", { class: "panel-label-code" }, h(DumpText, {
+        text: _label.code
+      })) ]
+    : [ _label.text ];
+  const _where = _label.location && (_label.otherFile
+    ? `${shortenPaths(_label.location.file)}:${_label.location.line}`
+    : `line ${_label.location.line}`);
+  if (_where) {
+    _parts.push(" ", _label.order === null
+      ? h("span", { class: "panel-label-line" }, _where)
+      : h("button", {
+        type: "button",
+        class: "panel-label-line panel-label-link",
+        title: "Select the Path Step nearest to the statement that made " +
+          "this value",
+        onClick: () => emit("select-step", _label.order)
+      }, _where));
+  }
+  if (_label.function) {
+    // "in" stays with the name, which may still break inside.
+    _parts.push(" in\u00a0", h("code", { class: "panel-label-code" },
+      h(DumpText, { text: _label.function })));
+  }
+  return h("span", { class: "panel-label" }, _parts);
+}
+SymbolText.props = [ "symbol" ];
 
 const knownRanges = computed(() =>
   new Map(props.step.symbolRanges.map(range => [ range.symbol, range.range ]))
@@ -570,6 +609,36 @@ const accumulatedRows = computed(() =>
     flex-wrap: wrap;
     align-items: center;
     column-gap: 8px;
+  }
+
+  // A label is prose with code in it, so it reads apart from the dumps and
+  // names around it.
+  .panel-label {
+    font-family: sans-serif;
+    font-weight: 400;
+  }
+
+  .panel-label-code {
+    font-family: monospace;
+    font-size: inherit;
+    background: none;
+    padding: 0;
+  }
+
+  .panel-label-line {
+    white-space: nowrap;
+  }
+
+  .panel-label-link {
+    color: #1f5fae;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration-style: solid;
+    }
   }
 
   .panel-dropped {

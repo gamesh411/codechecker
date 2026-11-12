@@ -1,6 +1,6 @@
 import {
   ConstraintTrace, compareNames, readConstraintTrace, readableRange,
-  shortenPaths
+  shortenPaths, symbolLabel
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -331,5 +331,119 @@ describe("silent changes", () => {
     expect(trace.silentChanges()).toEqual([
       { order: 2, node: 1, afterEvent: -1 }
     ]);
+  });
+});
+
+// Two calls of get(): one in main, one in a callee the trace has no frame for,
+// a malloc a checker modelled, and the parameter they are compared with.
+const CALL = "conj_$2{int, LC1, S90, #1}";
+const PRUNED = "conj_$5{int, LC3, S40, #1}";
+const MODELLED = "conj_$7{void *, LC1, S120, #1}";
+const SYMBOL_STRINGS = [
+  CALL, "{ [42, 42] }", "get()", "get", "main", "reg_$0<int a>", "wrap",
+  PRUNED, "malloc(4)", "malloc", MODELLED, "conj_$2"
+];
+const LOCATION = (line, col = 3) => ({ file: "/src/a.c", line, col });
+const SYMBOLS = {
+  version: 2,
+  strings: SYMBOL_STRINGS,
+  steps: [
+    { kind: "event", index: 0, order: 1, exploded_node: 0 },
+    { kind: "control", index: 0, order: 2, exploded_node: 1 },
+    { kind: "event", index: 1, order: 3, exploded_node: 2 },
+    { kind: "event", index: 2, order: 4, exploded_node: 3 }
+  ],
+  exploded_nodes: [
+    { location: LOCATION(9), frame: 0 },
+    { location: LOCATION(12), frame: 0 },
+    { location: LOCATION(12), frame: 1 },
+    { location: { ...LOCATION(13), file: "/src/b.h" }, frame: 1 }
+  ],
+  stack_frames: [ { function: "main" }, { function: "f", parent: 0 } ],
+  symbols: [
+    { symbol: 0, kind: "conjured", smt: 11, smt_signed: true, origin: {
+      reason: "call_result", statement: 2, callee: 3, function: 4, frame: 0,
+      location: LOCATION(11, 7)
+    } },
+    { symbol: 7, kind: "conjured", origin: {
+      reason: "call_result", statement: 2, callee: 3, function: 6,
+      location: LOCATION(30)
+    } },
+    { symbol: 10, kind: "conjured", origin: {
+      reason: "other", statement: 8, callee: 9, function: 4, frame: 0,
+      location: LOCATION(12, 12)
+    } },
+    { symbol: 5, kind: "region_value" }
+  ]
+};
+
+describe("symbol table", () => {
+  test("entries read back by dump with their strings", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    expect(trace.symbol(CALL)).toEqual({
+      kind: "conjured", smt: "conj_$2", smt_signed: true, origin: {
+        reason: "call_result", statement: "get()", callee: "get",
+        function: "main", frame: 0, location: LOCATION(11, 7)
+      }
+    });
+    expect(trace.symbol("reg_$0<int a>")).toEqual({ kind: "region_value" });
+    expect(trace.symbol("(conj_$2{int, LC1, S90, #1}) + 1")).toBeUndefined();
+    expect(trace.symbols).toBe(trace.symbols);
+  });
+
+  test("a trace without the table has no entries", () => {
+    const trace = new ConstraintTrace(TRACE);
+    expect(trace.symbols.size).toBe(0);
+    expect(trace.symbol("reg_$0<int a>")).toBeUndefined();
+  });
+
+  test("a call result reads as the callee's result at its line", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    expect(symbolLabel(trace.symbol(CALL), 0)).toEqual({
+      text: "result of get()", code: "get()", location: LOCATION(11, 7),
+      frame: 0, function: null
+    });
+  });
+
+  test("the creating function shows when it is another frame's", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    expect(symbolLabel(trace.symbol(CALL), 1).function).toBe("main");
+    // A frame the trace does not list is never the step's.
+    expect(symbolLabel(trace.symbol(PRUNED), 0).function).toBe("wrap");
+  });
+
+  test("a call result without a known callee is named by its statement", () => {
+    const entry = new ConstraintTrace(SYMBOLS).symbol(CALL);
+    const indirect = { ...entry, origin: { ...entry.origin, callee: undefined,
+      statement: "(*fp)(1)" } };
+    expect(symbolLabel(indirect, 0).text).toBe("result of (*fp)(1)");
+  });
+
+  test("an unclassified or unknown reason reads as not recorded", () => {
+    const entry = new ConstraintTrace(SYMBOLS).symbol(MODELLED);
+    expect(symbolLabel(entry, 0)).toMatchObject(
+      { text: "origin not recorded", code: null, location: LOCATION(12, 12) });
+    expect(symbolLabel({ ...entry, origin: { ...entry.origin,
+      reason: "something_new" } }, 0).text).toBe("origin not recorded");
+  });
+
+  test("symbols without an origin have no label", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    expect(symbolLabel(trace.symbol("reg_$0<int a>"), 0)).toBeNull();
+    expect(symbolLabel(undefined, 0)).toBeNull();
+  });
+
+  test("the nearest step to an origin is in its file and frame", () => {
+    const trace = new ConstraintTrace(SYMBOLS);
+    // Line 12 in frame 0 is nearer than line 9, and line 12 in frame 1 is
+    // not the frame the value was made in.
+    expect(trace.nearestStep(LOCATION(11, 7), 0)).toBe(2);
+    // Without a frame of its own, any step in the file counts, earliest first.
+    expect(trace.nearestStep(LOCATION(30), undefined)).toBe(2);
+    expect(trace.nearestStep({ ...LOCATION(1), file: "/src/b.h" }, 0))
+      .toBe(4);
+    expect(trace.nearestStep({ ...LOCATION(1), file: "/src/c.c" }, 0))
+      .toBeNull();
+    expect(trace.nearestStep(undefined, 0)).toBeNull();
   });
 });

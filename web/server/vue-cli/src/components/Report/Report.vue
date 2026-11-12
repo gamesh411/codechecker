@@ -430,7 +430,8 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import {
   ConstraintTrace,
   compareNames,
-  readableRange
+  readableRange,
+  symbolLabel
 } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
@@ -638,6 +639,7 @@ const selectedConstraintStep = computed(() => {
       variables: _control.snapshot.variables ?? [],
       pathCondition: _control.snapshot.path_condition ?? [],
       symbolNames: constraintTrace.value.symbolNames(_control.order),
+      labelOf: symbolLabels(_control.node),
       order: _control.order,
       smtlib: constraintTrace.value.smtlib,
       changes: constraintTrace.value.changedAt(_control.order),
@@ -660,12 +662,33 @@ const selectedConstraintStep = computed(() => {
     variables: _snapshot?.variables ?? [],
     pathCondition: _snapshot?.path_condition ?? [],
     symbolNames: constraintTrace.value.symbolNames(_traceStep?.order ?? -1),
+    labelOf: symbolLabels(_traceStep?.exploded_node),
     order: _traceStep?.order ?? -1,
     smtlib: constraintTrace.value.smtlib,
     changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
     silent: false
   };
 });
+// Labels of symbols as a Path Step on `node` shows them, each with the Path
+// Step nearest to its origin, made the first time a symbol is shown.
+function symbolLabels(node) {
+  const _trace = constraintTrace.value;
+  const _node = node === undefined ? undefined : _trace.nodes[node];
+  const _labels = new Map();
+  return symbol => {
+    if (!_labels.has(symbol)) {
+      const _label = symbolLabel(_trace.symbol(symbol), _node?.frame);
+      if (_label) {
+        _label.order = _trace.nearestStep(_label.location, _label.frame);
+        _label.otherFile = !!_label.location &&
+          _label.location.file !== _node?.location?.file;
+      }
+      _labels.set(symbol, _label);
+    }
+    return _labels.get(symbol);
+  };
+}
+
 const editorCols = computed(() => {
   const maxCols = 12;
   const commentsCols = showComments.value ? commentCols.value : 0;

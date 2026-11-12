@@ -7,6 +7,10 @@
 // the trace's `strings`, so the trace grows with the Bug Path, not with its
 // square. This module is the one place in the UI that turns that back into
 // snapshots. They are built only when a step is shown, and kept once built.
+//
+// A trace may also have a table of the atomic symbols its snapshots mention,
+// `symbols`, keyed by each symbol's dump, with the origin Clang recorded for a
+// conjured symbol. A trace from a Clang before the table has no entries.
 
 export const TRACE_VERSION = 2;
 
@@ -17,6 +21,9 @@ const LISTS = [
 
 // What two steps on one line are compared by, to show them as one choice.
 const SHOWN_LISTS = [ "symbol_ranges", "variables", "path_condition" ];
+
+// The keys of a symbol's origin that name a string.
+const ORIGIN_STRINGS = [ "statement", "callee", "function" ];
 
 // Whole raw lists kept on the way, so that reading any node replays at most
 // this many deltas.
@@ -87,6 +94,63 @@ export class ConstraintTrace {
     this._ordered = null;
     this._changes = new Map();
     this._silentChanges = null;
+    this._symbols = null;
+  }
+
+  // The symbol table as a Map from symbol dump to its entry: `kind`, `smt`
+  // and `smt_signed` when the symbol has an SMT-LIB term, and for a conjured
+  // symbol `origin`, with `reason` and `function` and, when Clang knows them,
+  // `statement`, `location`, `callee` and `frame` (into `stack_frames`).
+  get symbols() {
+    if (this._symbols) return this._symbols;
+
+    const _s = this.strings;
+    this._symbols = new Map((this.trace.symbols ?? []).map(entry => {
+      const _symbol = { kind: entry.kind };
+      if (entry.smt !== undefined) {
+        _symbol.smt = _s[entry.smt];
+        _symbol.smt_signed = !!entry.smt_signed;
+      }
+      if (entry.origin) {
+        const _origin = { ...entry.origin };
+        ORIGIN_STRINGS.forEach(key => {
+          if (_origin[key] !== undefined) _origin[key] = _s[_origin[key]];
+        });
+        _symbol.origin = _origin;
+      }
+      return [ _s[entry.symbol], _symbol ];
+    }));
+    return this._symbols;
+  }
+
+  // The entry of an atomic symbol, or undefined for a symbolic expression or
+  // a trace without the table.
+  symbol(dump) {
+    return this.symbols.get(dump);
+  }
+
+  // The `order` of the Path Step nearest to a source location: of the steps
+  // whose node is in its file, those in `frame` if there are any, then the
+  // closest line, then the earliest on the Bug Path. Null when no step is in
+  // that file.
+  nearestStep(location, frame) {
+    if (!location) return null;
+
+    const _inFile = this.orderedSteps().filter(step =>
+      this.nodes[step.exploded_node]?.location?.file === location.file);
+    const _inFrame = _inFile.filter(step =>
+      frame !== undefined && this.nodes[step.exploded_node].frame === frame);
+    let _best = null;
+    let _distance = Infinity;
+    (_inFrame.length ? _inFrame : _inFile).forEach(step => {
+      const _d = Math.abs(
+        this.nodes[step.exploded_node].location.line - location.line);
+      if (_d < _distance) {
+        _best = step.order;
+        _distance = _d;
+      }
+    });
+    return _best;
   }
 
   get cfgs() {
@@ -340,6 +404,33 @@ export class ConstraintTrace {
     this._symbolNameLog = _log;
     return _log;
   }
+}
+
+// What a reader is shown for a symbol in place of its dump, or null to show
+// the dump: `text`, the part of it that is source code as `code` (or null),
+// the origin's `location` and `frame` (null and undefined when it has none),
+// and the `function` the value was made in when that is not `stepFrame`, the
+// frame of the Path Step shown, or else null. Only reasons Clang recorded are
+// told; any other conjured symbol is said to have no recorded origin.
+export function symbolLabel(entry, stepFrame) {
+  const _origin = entry?.origin;
+  if (!_origin) return null;
+
+  let _text = "origin not recorded";
+  let _code = null;
+  if (_origin.reason === "call_result") {
+    _code = _origin.callee ? `${_origin.callee}()` : _origin.statement ?? null;
+    if (_code) _text = `result of ${_code}`;
+  }
+  const _otherFrame =
+    _origin.frame === undefined || _origin.frame !== stepFrame;
+  return {
+    text: _text,
+    code: _code,
+    location: _origin.location ?? null,
+    frame: _origin.frame,
+    function: _otherFrame ? _origin.function ?? null : null
+  };
 }
 
 const NAME_COLLATOR = new Intl.Collator("en", { numeric: true });
