@@ -95,6 +95,17 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that held the symbol when there was one.
 
+The rows that changed at the selected step are highlighted, in **Known here** and in the accumulated path condition.
+A row has a coloured bar on its left and a tag beside its range: **new** for a symbol that had no entry at the step before, and **narrowed** for one whose range is narrower than at the step before.
+The step before is the closest earlier step that shows a different snapshot, so the edge into a statement and the event on it show the same changes.
+Nothing is highlighted at the first step, which has no step before it.
+
+A step where the analyzer assumed something that the bug path has no event for is marked.
+It is a control flow step that adds to the path condition, with no event on its analyzer state, such as a branch the analyzer took without an event saying so.
+In the report tree the event next to it has a small question mark before its text.
+In the source its line has an amber bar on the left and an **assumes** tag at its end.
+The tooltip of both says that the analyzer assumed something here that the bug path does not describe, and the panel of that step says **Assumed, no event**.
+
 An integer range reads the way a person would say it, in the snapshot, the path condition and the line picker:
 
 * A range that excludes exactly one value reads "not N", so `[-2147483648, -1] [1, 2147483647]` of an `int` reads "not 0".
