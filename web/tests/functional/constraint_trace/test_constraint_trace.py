@@ -61,9 +61,11 @@ class TestConstraintTrace(unittest.TestCase):
                                 {'codechecker_cfg': codechecker_cfg})
             codechecker.add_test_package_product(server_access, TEST_WORKSPACE)
 
+            # several_contexts last: trimmed_paths stores it again.
             for run_name in ['with_snapshots', 'no_snapshots', 'no_smtlib',
                              'v1_trace', 'z3_refuted',
                              'concrete_value', 'opaque_call',
+                             'call_result', 'no_symbols',
                              'several_contexts']:
                 report_dir = os.path.join(
                     TEST_WORKSPACE, 'test_proj', run_name)
@@ -434,6 +436,71 @@ class TestConstraintTrace(unittest.TestCase):
         self.assertEqual(added, [1, 1])
         self.assertFalse(any('remove' in node.get('path_condition', {})
                              for node in raw['exploded_nodes']))
+
+    def test_stored_trace_keeps_its_symbol_table(self):
+        """
+        Hand-derived from demo/call-result.c: the length is the result of
+        `read_len()`, called in `next_len`, a callee the Bug Path leaves out,
+        so its frame is not in the trace; `malloc` is modelled by a checker,
+        so the analyzer recorded no reason for its value. Origins name their
+        file by its stored path, as the trace's other locations do.
+        """
+        details = self._details('call_result')
+        trace = ConstraintTrace(json.loads(details.constraintTrace))
+        symbols = trace.symbols()
+        source = os.path.join(self._test_workspace, 'test_proj',
+                              'call_result', 'call_result.c')
+
+        by_callee = {symbol['origin'].get('callee'): (dump, symbol)
+                     for dump, symbol in symbols.items()
+                     if 'origin' in symbol}
+        self.assertEqual(set(by_callee), {'read_len', 'malloc'})
+        dump, read_len = by_callee['read_len']
+        self.assertTrue(dump.startswith('conj_$'))
+        self.assertEqual(read_len['kind'], 'conjured')
+        self.assertEqual(read_len['origin'], {
+            'reason': 'call_result', 'statement': 'read_len()',
+            'callee': 'read_len', 'function': 'next_len',
+            'location': {'line': 8, 'col': 36, 'file': source}})
+        self.assertIn('smt', read_len)
+        malloc = by_callee['malloc'][1]['origin']
+        self.assertEqual((malloc['reason'], malloc['function'],
+                          malloc['statement'], malloc['location']['line']),
+                         ('other', 'copy', 'malloc(16)', 11))
+        self.assertEqual(
+            trace.trace['stack_frames'][malloc['frame']]['function'], 'copy')
+        # The parameter `out` has an entry with no origin.
+        self.assertIn({'kind': 'region_value'},
+                      [{'kind': symbol['kind']}
+                       for symbol in symbols.values()
+                       if 'origin' not in symbol])
+
+        # Every symbol the last path condition names has an entry.
+        last = trace.snapshot(len(trace.nodes) - 1)
+        self.assertTrue(last['path_condition'])
+        self.assertTrue(all(entry['symbol'] in symbols
+                            for entry in last['path_condition']))
+
+    def test_trace_without_a_symbol_table_is_served_as_before(self):
+        """
+        A trace from a Clang before the symbol table reads as having none,
+        and gives the same snapshots and verdicts as the one with it.
+        """
+        raw = json.loads(self._details('no_symbols').constraintTrace)
+        self.assertNotIn('symbols', raw)
+        self.assertEqual(ConstraintTrace(raw).symbols(), {})
+
+        without, with_table = self._trace('no_symbols'), \
+            self._trace('call_result')
+        self.assertEqual(without['steps'], with_table['steps'])
+        for run_name in ('no_symbols', 'call_result'):
+            step = self._event_step(run_name, "Assuming 'len' is > 16")
+            self.assertEqual(
+                self._check(run_name, (step, 'len == 20')).verdict,
+                PathVerdict.FEASIBLE)
+            self.assertEqual(
+                self._check(run_name, (step, 'len == 3')).verdict,
+                PathVerdict.INFEASIBLE)
 
     def test_report_stored_in_an_older_format(self):
         """

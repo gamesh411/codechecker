@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 7e0a2e00548d4625f43672d0197105c25d1649dc)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 38e11c720645df64133b6a4fb23a6f75441b56dc)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -925,6 +925,27 @@
     <array>
      <dict>
       <key>function</key><string>f</string>
+     </dict>
+    </array>
+    <key>symbols</key>
+    <array>
+     <dict>
+      <key>symbol</key><integer>0</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>4</integer>
+      <key>smt_signed</key><true/>
+     </dict>
+     <dict>
+      <key>symbol</key><integer>6</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>7</integer>
+      <key>smt_signed</key><true/>
+     </dict>
+     <dict>
+      <key>symbol</key><integer>12</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>13</integer>
+      <key>smt_signed</key><true/>
      </dict>
     </array>
     <key>strings</key>

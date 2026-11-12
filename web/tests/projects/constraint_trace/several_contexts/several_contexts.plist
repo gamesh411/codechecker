@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
  <key>clang_version</key>
-<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 7e0a2e00548d4625f43672d0197105c25d1649dc)</string>
+<string>clang version 24.0.0git (git@github.com:gamesh411/llvm-project.git 38e11c720645df64133b6a4fb23a6f75441b56dc)</string>
  <key>diagnostics</key>
  <array>
   <dict>
@@ -770,7 +770,7 @@
      </dict>
      <dict>
       <key>id</key><integer>127</integer>
-      <key>state_id</key><integer>4880</integer>
+      <key>state_id</key><integer>4913</integer>
       <key>path_position</key><integer>35</integer>
       <key>kind</key><string>PostStore</string>
       <key>location</key>
@@ -794,7 +794,7 @@
      </dict>
      <dict>
       <key>id</key><integer>128</integer>
-      <key>state_id</key><integer>4880</integer>
+      <key>state_id</key><integer>4913</integer>
       <key>path_position</key><integer>36</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -813,7 +813,7 @@
      </dict>
      <dict>
       <key>id</key><integer>134</integer>
-      <key>state_id</key><integer>5024</integer>
+      <key>state_id</key><integer>5057</integer>
       <key>path_position</key><integer>42</integer>
       <key>kind</key><string>PostStmt</string>
       <key>location</key>
@@ -832,7 +832,7 @@
      </dict>
      <dict>
       <key>id</key><integer>136</integer>
-      <key>state_id</key><integer>5024</integer>
+      <key>state_id</key><integer>5057</integer>
       <key>path_position</key><integer>44</integer>
       <key>kind</key><string>CallExitEnd</string>
       <key>location</key>
@@ -867,7 +867,7 @@
      </dict>
      <dict>
       <key>id</key><integer>148</integer>
-      <key>state_id</key><integer>5541</integer>
+      <key>state_id</key><integer>5574</integer>
       <key>path_position</key><integer>56</integer>
       <key>kind</key><string>CallEnter</string>
       <key>location</key>
@@ -891,7 +891,7 @@
      </dict>
      <dict>
       <key>id</key><integer>157</integer>
-      <key>state_id</key><integer>5789</integer>
+      <key>state_id</key><integer>5826</integer>
       <key>path_position</key><integer>64</integer>
       <key>kind</key><string>BlockEdge</string>
       <key>location</key>
@@ -934,7 +934,7 @@
      </dict>
      <dict>
       <key>id</key><integer>189</integer>
-      <key>state_id</key><integer>6398</integer>
+      <key>state_id</key><integer>6469</integer>
       <key>path_position</key><integer>75</integer>
       <key>kind</key><string>PreLoad</string>
       <key>location</key>
@@ -981,6 +981,27 @@
        <key>col</key><integer>10</integer>
        <key>file</key><integer>0</integer>
       </dict>
+     </dict>
+    </array>
+    <key>symbols</key>
+    <array>
+     <dict>
+      <key>symbol</key><integer>8</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>9</integer>
+      <key>smt_signed</key><false/>
+     </dict>
+     <dict>
+      <key>symbol</key><integer>1</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>3</integer>
+      <key>smt_signed</key><true/>
+     </dict>
+     <dict>
+      <key>symbol</key><integer>5</integer>
+      <key>kind</key><string>region_value</string>
+      <key>smt</key><integer>6</integer>
+      <key>smt_signed</key><true/>
      </dict>
     </array>
     <key>strings</key>
