@@ -85,7 +85,11 @@
                 density="compact"
                 hide-details
               />
-              <v-tooltip location="bottom" max-width="320">
+              <v-tooltip
+                v-model="constraintHintOpen"
+                location="bottom"
+                max-width="320"
+              >
                 <template v-slot:activator="{ props: tooltipProps }">
                   <div v-bind="tooltipProps">
                     <v-checkbox
@@ -101,6 +105,7 @@
                       density="compact"
                       hide-details
                       :disabled="!hasConstraintTrace"
+                      @update:model-value="constraintHintOpen = false"
                     />
                   </div>
                 </template>
@@ -464,6 +469,9 @@ const loadNumOfComments = ref(false);
 const showComments = ref(false);
 const commentCols = ref(3);
 const showConstraints = ref(false);
+// The hint has said its piece once the box is clicked, but a pointer resting
+// on the box would keep it open over the editor's header.
+const constraintHintOpen = ref(false);
 const constraintCols = ref(4);
 // A trace can hold megabytes of snapshots that never change once loaded, so
 // it and the steps built from it stay out of deep reactivity. It is a
