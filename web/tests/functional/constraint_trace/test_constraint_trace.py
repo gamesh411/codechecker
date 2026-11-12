@@ -148,10 +148,17 @@ class TestConstraintTrace(unittest.TestCase):
                     for step in json.loads(details.constraintTrace)['steps']
                     if step['kind'] == 'event' and step['index'] == index)
 
-    def _check(self, run_name, *constraints):
+    def _check(self, run_name, *constraints, with_example=False):
         return self._cc_client.checkWhatIf(
             self._report_id(run_name),
-            [WhatIfConstraint(*constraint) for constraint in constraints])
+            [WhatIfConstraint(*constraint) for constraint in constraints],
+            with_example)
+
+    def _example(self, run_name, *constraints):
+        """ The example of the path as {symbol: value}, or None. """
+        result = self._check(run_name, *constraints, with_example=True)
+        return result, None if result.example is None else \
+            {value.symbol: value.value for value in result.example}
 
     def _first_step_constraining(self, run_name, symbol_prefix):
         """ The `order` of the first step whose path condition has it. """
@@ -935,6 +942,60 @@ class TestConstraintTrace(unittest.TestCase):
             result = self._check('caller_frames', (step, text))
             self.assertEqual(result.verdict, verdict, text)
             self.assertEqual(result.baselineVerdict, PathVerdict.FEASIBLE)
+
+    def test_example_only_when_asked(self):
+        """ An ordinary check costs what it did and carries no example. """
+        result = self._check('caller_frames')
+        self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+        self.assertIsNone(result.example)
+        self.assertIsNone(result.exampleReason)
+
+    def test_example_gives_a_value_for_every_requirement(self):
+        """
+        Hand-derived from demo/caller-frames.c: the path requires top's `n`
+        2, `g` 4, `h` 1 and `m` above 5, and the example has one value for
+        each entry of the last step's path condition, and for nothing else.
+        """
+        trace = self._trace('caller_frames')
+        last = max(trace['steps'], key=lambda step: step['order'])
+
+        result, example = self._example('caller_frames')
+
+        self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+        self.assertIsNone(result.exampleReason)
+        self.assertEqual(sorted(example),
+                         sorted(entry['symbol']
+                                for entry in last['path_condition']))
+        self.assertEqual(example['reg_$1<int n>'], '2')
+        self.assertEqual(example['reg_$5<int g>'], '4')
+        self.assertEqual(example['reg_$12<int h>'], '1')
+        self.assertGreater(int(example['reg_$2<int m>']), 5)
+
+    def test_example_satisfies_a_what_if_constraint(self):
+        step = self._event_step(
+            'caller_frames',
+            "Dereference of null pointer (loaded from variable 'p')")
+
+        _, example = self._example('caller_frames', (step, 'm == 9'))
+        self.assertEqual(example['reg_$2<int m>'], '9')
+
+        _, example = self._example('caller_frames', (1, 'm >= 1000', True))
+        self.assertGreaterEqual(int(example['reg_$2<int m>']), 1000)
+
+    def test_no_example_off_a_feasible_path(self):
+        """ The reason says why; the verdict is the one without asking. """
+        step = self._event_step(
+            'caller_frames',
+            "Dereference of null pointer (loaded from variable 'p')")
+
+        result, example = self._example('caller_frames', (step, 'm <= 5'))
+        self.assertIsNone(example)
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertIn('not feasible', result.exampleReason)
+
+        result, example = self._example('no_smtlib')
+        self.assertIsNone(example)
+        self.assertIn('no solver input', result.exampleReason)
 
     def test_name_in_several_functions_is_unknown_with_candidates(self):
         """

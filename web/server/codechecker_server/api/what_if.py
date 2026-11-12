@@ -23,7 +23,7 @@ from dataclasses import dataclass
 import z3
 
 from codechecker_api.python.DBAccess_v6.ttypes import PathVerdict, \
-    WhatIfResult, WhatIfSyntaxError
+    WhatIfExampleValue, WhatIfResult, WhatIfSyntaxError
 
 from codechecker_report_converter.report.constraint_trace import \
     ConstraintTrace, MalformedTrace, VERSION as TRACE_VERSION
@@ -55,6 +55,9 @@ OLD_TRACE_REASON = \
 UNREADABLE_TRACE_REASON = \
     "This report's Constraint Snapshots are unreadable, so this path cannot " \
     "be checked."
+NOT_FEASIBLE_EXAMPLE_REASON = \
+    "There is no example, because this path is not feasible with these " \
+    "What-If Constraints."
 
 
 class ConstraintSyntaxError(Exception):
@@ -207,8 +210,11 @@ def _bitvector_term(term: Term, symbol, signed: bool, ctx: z3.Context):
 
 
 def _solve(ctx: z3.Context, assertions, extra,
-           timeout_ms: int = WHAT_IF_SOLVER_TIMEOUT_MS
-           ) -> tuple[int, str | None]:
+           timeout_ms: int = WHAT_IF_SOLVER_TIMEOUT_MS,
+           models: list | None = None) -> tuple[int, str | None]:
+    """ The verdict on the assertions and the extra formulas together, and
+    why when there is none. A satisfiable one appends its model to `models`
+    when that is given. """
     solver = z3.Solver(ctx=ctx)
     solver.set('timeout', timeout_ms)
     solver.add(assertions)
@@ -216,6 +222,8 @@ def _solve(ctx: z3.Context, assertions, extra,
 
     result = solver.check()
     if result == z3.sat:
+        if models is not None:
+            models.append(solver.model())
         return PathVerdict.FEASIBLE, None
     if result == z3.unsat:
         return PathVerdict.INFEASIBLE, None
@@ -227,6 +235,53 @@ def _solve(ctx: z3.Context, assertions, extra,
             f"{WHAT_IF_SOLVER_TIMEOUT_MS} ms."
     return PathVerdict.UNKNOWN, f"The solver has no answer for this path " \
         f"({why})."
+
+
+_COMPARISONS = (z3.Z3_OP_EQ, z3.Z3_OP_DISTINCT,
+                z3.Z3_OP_SLEQ, z3.Z3_OP_SGEQ, z3.Z3_OP_SLT, z3.Z3_OP_SGT,
+                z3.Z3_OP_ULEQ, z3.Z3_OP_UGEQ, z3.Z3_OP_ULT, z3.Z3_OP_UGT)
+
+_INTERVAL = re.compile(r'\[(-?\d+), (-?\d+)\]')
+
+
+def _constrained_term(assertion):
+    """
+    The term a path condition entry's assertion constrains. Clang writes an
+    entry as the term compared with each bound of its range, those
+    comparisons joined by `and` and `or`, with the term always on the left.
+    None when the assertion has another shape.
+    """
+    formula = assertion
+    while z3.is_and(formula) or z3.is_or(formula) or z3.is_not(formula):
+        formula = formula.arg(0)
+    if not z3.is_app(formula) or formula.num_args() != 2 or \
+            formula.decl().kind() not in _COMPARISONS:
+        return None
+    term = formula.arg(0)
+    return None if z3.is_bv_value(term) else term
+
+
+def _example_value(value, range_text: str) -> str | None:
+    """
+    A model's value of a term, in decimal. A bit-vector has no sign, so it is
+    read the way the analyzer's range of the term is written, which is in the
+    signedness of the term's type: the model satisfies that range, so exactly
+    one reading lies in it unless both do, when they are the same number.
+    """
+    if z3.is_true(value) or z3.is_false(value):
+        return "1" if z3.is_true(value) else "0"
+    if not z3.is_bv_value(value):
+        return None
+    unsigned = value.as_long()
+    width = value.size()
+    signed = unsigned - (1 << width) if unsigned >> (width - 1) else unsigned
+    intervals = [(int(low), int(high))
+                 for low, high in _INTERVAL.findall(range_text)]
+    for reading in (signed, unsigned):
+        if any(low <= reading <= high for low, high in intervals):
+            return str(reading)
+    # Not reached for a model of the path; the type's own sign then.
+    return str(signed if any(low < 0 for low, _ in intervals) else unsigned)
 
 
 class PreparedPath:
@@ -295,11 +350,13 @@ def prepared_path(key, load_trace) -> PreparedPath:
     return path
 
 
-def check_what_if(path: PreparedPath, constraints) -> WhatIfResult:
+def check_what_if(path: PreparedPath, constraints,
+                  with_example: bool = False) -> WhatIfResult:
     """
     Check a Bug Path against What-If Constraints, a list of objects with
     `pathStep`, `expression` and `holdsThroughout`, which must all hold
-    together.
+    together. `with_example` asks for one example of the path too, which a
+    Feasible verdict has, and otherwise the reason it has none.
 
     A constraint that cannot be read is reported as a syntax error, with the
     Baseline Verdict, and nothing is solved with the constraints.
@@ -315,20 +372,43 @@ def check_what_if(path: PreparedPath, constraints) -> WhatIfResult:
             result.verdict = PathVerdict.UNKNOWN
             result.reason = f"Cannot read the constraint: {ex}"
             result.syntaxError = WhatIfSyntaxError(index, str(ex), ex.offset)
+            if with_example:
+                result.exampleReason = "There is no example, because a " \
+                    "What-If Constraint cannot be read."
             return result
 
-    return _check_path(path, parsed)
+    return _check_path(path, parsed, with_example)
+
+
+def _no_example(result: WhatIfResult) -> str:
+    """ Why a result without an example has none. """
+    if result.verdict == PathVerdict.UNKNOWN:
+        return f"There is no example, because there is no verdict. " \
+            f"{result.reason}"
+    return NOT_FEASIBLE_EXAMPLE_REASON
 
 
 def _check_path(prepared: PreparedPath,
-                constraints: list[tuple[int, list[Term], bool]]
-                ) -> WhatIfResult:
+                constraints: list[tuple[int, list[Term], bool]],
+                with_example: bool = False) -> WhatIfResult:
     """
     The path condition accumulated at the last Path Step holds every
     constraint of the path, so it is what both verdicts are solved over. A
     constraint's anchor only decides which value its variables stand for,
     unless it holds throughout, when every value they take counts.
+
+    The example is the model of that same solver call, so asking for one
+    costs no further call and never changes the verdict.
     """
+    result = _verdicts(prepared, constraints, with_example)
+    if with_example and result.example is None:
+        result.exampleReason = _no_example(result)
+    return result
+
+
+def _verdicts(prepared: PreparedPath,
+              constraints: list[tuple[int, list[Term], bool]],
+              with_example: bool) -> WhatIfResult:
     if prepared.unchecked_reason:
         return WhatIfResult(PathVerdict.UNKNOWN, prepared.unchecked_reason,
                             PathVerdict.UNKNOWN, prepared.unchecked_reason)
@@ -357,10 +437,16 @@ def _check_path(prepared: PreparedPath,
                                     baseline_reason,
                                     reasonConstraintIndex=index)
 
+        models: list = []
+        last = len(path.steps) - 1
         result = WhatIfResult(
-            *_solve(ctx, path.assertions(len(path.steps) - 1),
-                    [a.formula for a in applied]),
+            *_solve(ctx, path.assertions(last),
+                    [a.formula for a in applied],
+                    models=models if with_example else None),
             baseline, baseline_reason)
+        if models:
+            result.example = [WhatIfExampleValue(symbol, value)
+                              for symbol, value in path.example(models[0])]
         if result.verdict == PathVerdict.INFEASIBLE:
             result.firstDeadStep, result.firstDeadStepIsEarliest = \
                 _first_dead_step(path, applied)
@@ -497,7 +583,8 @@ class _Path:
             self._lives.append((variable, variable['frame'], life.start,
                                 life.end))
         self._path_condition = [
-            (trace.assertion(life.entry), life.start, life.end)
+            (trace.assertion(life.entry),
+             trace.entry('path_condition', life.entry), life.start, life.end)
             for life in trace.lifetimes('path_condition')] \
             if self.smtlib else []
         # Symbol IDs are unique within a report, so declaring every symbol of
@@ -543,10 +630,40 @@ class _Path:
         if node not in self._assertions:
             self._assertions[node] = z3.parse_smt2_string(
                 "\n".join(self.declarations +
-                          [line for line, start, end in self._path_condition
+                          [line
+                           for line, _, start, end in self._path_condition
                            if start <= node < end]),
                 ctx=self.ctx)
         return self._assertions[node]
+
+    def example(self, model) -> list[tuple[str, str]]:
+        """
+        What the model gives each entry of the path condition of the last
+        Path Step, which is what "This path requires" lists, as `(symbol,
+        value)`. The value is the model's value of the very term the entry
+        constrains, so an expression such as `m + n` is evaluated by the
+        solver. An entry whose term cannot be read is left out.
+        """
+        last = len(self.steps) - 1
+        node = self.steps[last]['node']
+        entries = [entry for _, entry, start, end in self._path_condition
+                   if start <= node < end]
+        assertions = self.assertions(last)
+        if len(assertions) != len(entries):
+            LOG.error("A path condition of %d entries has %d assertions.",
+                      len(entries), len(assertions))
+            return []
+
+        example = []
+        for entry, assertion in zip(entries, assertions):
+            term = _constrained_term(assertion)
+            if term is None:
+                continue
+            value = _example_value(model.eval(term, model_completion=True),
+                                   entry['range'])
+            if value is not None:
+                example.append((entry['symbol'], value))
+        return example
 
     def symbol(self, smt: str):
         """ The Z3 term of a variable's SMT symbol. """

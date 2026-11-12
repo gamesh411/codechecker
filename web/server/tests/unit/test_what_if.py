@@ -778,3 +778,149 @@ class AccessPathTest(unittest.TestCase):
         del trace['smtlib']
         self.assertEqual(what_if.constrainable_names(
             what_if.PreparedPath(json.dumps(trace)), 1), [])
+
+
+def _requires_trace(variables, requirements, declarations, steps=2):
+    """
+    A path of `steps` steps on one node each, the last holding `variables`
+    and the path condition `requirements`, each `(symbol, range, assertion)`
+    as Clang writes an entry.
+    """
+    nodes = [{'symbol_ranges': [], 'variables': variables,
+              'path_condition': [{'symbol': symbol, 'range': text}
+                                 for symbol, text, _ in requirements],
+              'smt_declarations': declarations,
+              'smt_assertions': [line for _, _, line in requirements]}
+             for _ in range(steps)]
+    return json.dumps(constraint_trace.encode(
+        nodes, [{'kind': 'event', 'index': index, 'order': index + 1,
+                 'exploded_node': index} for index in range(steps)]))
+
+
+def _declare(name, width):
+    return f'(declare-fun {name} () (_ BitVec {width}))'
+
+
+SIGNED_NEGATIVE = ('reg_$1<int s>', '{ [-2147483648, -1] }',
+                   '(assert (and (bvsge reg_$1 #x80000000) '
+                   '(bvsle reg_$1 #xffffffff)))')
+UNSIGNED_HIGH = ('reg_$2<unsigned int u>', '{ [4294967295, 4294967295] }',
+                 '(assert (= reg_$2 #xffffffff))')
+SUM_WRAPS = ('(reg_$3<unsigned int m>) + (reg_$4<unsigned int n>)',
+             '{ [0, 0] }', '(assert (= (bvadd reg_$3 reg_$4) #x00000000))')
+N_NOT_ZERO = ('reg_$4<unsigned int n>', '{ [1, 4294967295] }',
+              '(assert (and (bvuge reg_$4 #x00000001) '
+              '(bvule reg_$4 #xffffffff)))')
+NOT_BELOW = ('(reg_$3<unsigned int m>) >= (reg_$4<unsigned int n>)',
+             '{ [0, 0] }',
+             '(assert (= (ite (bvuge reg_$3 reg_$4) #x00000001 #x00000000) '
+             '#x00000000))')
+POINTER_SET = ('reg_$5<int * p>', '{ [1, 18446744073709551615] }',
+               '(assert (and (bvuge reg_$5 #x0000000000000001) '
+               '(bvule reg_$5 #xffffffffffffffff)))')
+
+EXAMPLE = _requires_trace(
+    [_symbol('s', 'reg_$1'), _symbol('m', 'reg_$3', False)],
+    [SIGNED_NEGATIVE, UNSIGNED_HIGH, SUM_WRAPS, N_NOT_ZERO, NOT_BELOW,
+     POINTER_SET],
+    [_declare('reg_$1', 32), _declare('reg_$2', 32), _declare('reg_$3', 32),
+     _declare('reg_$4', 32), _declare('reg_$5', 64)])
+
+
+def check_with_example(trace, *constraints):
+    return what_if.check_what_if(
+        what_if.PreparedPath(trace),
+        [WhatIfConstraint(*constraint) for constraint in constraints], True)
+
+
+class ExampleTest(unittest.TestCase):
+
+    def test_none_unless_asked(self):
+        result = check(EXAMPLE)
+        self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+        self.assertIsNone(result.example)
+        self.assertIsNone(result.exampleReason)
+
+    def test_one_value_for_each_requirement(self):
+        result = check_with_example(EXAMPLE)
+        self.assertEqual(result.verdict, PathVerdict.FEASIBLE)
+        self.assertIsNone(result.exampleReason)
+        values = {value.symbol: value.value for value in result.example}
+        self.assertEqual(list(values), [SIGNED_NEGATIVE[0], UNSIGNED_HIGH[0],
+                                        SUM_WRAPS[0], N_NOT_ZERO[0],
+                                        NOT_BELOW[0], POINTER_SET[0]])
+
+        # In the signedness of the analyzer's range: -1 and 4294967295 are
+        # one bit pattern.
+        self.assertLess(int(values[SIGNED_NEGATIVE[0]]), 0)
+        self.assertEqual(values[UNSIGNED_HIGH[0]], '4294967295')
+        self.assertGreater(int(values[POINTER_SET[0]]), 0)
+
+        # An expression has the solver's value of it; a comparison 0 or 1.
+        self.assertEqual(values[SUM_WRAPS[0]], '0')
+        self.assertEqual(values[NOT_BELOW[0]], '0')
+        self.assertGreater(int(values[N_NOT_ZERO[0]]), 0)
+
+    def test_example_satisfies_the_what_if_constraints(self):
+        self.assertEqual(
+            {value.symbol: value.value for value in check_with_example(
+                EXAMPLE, (2, 's == -7')).example}[SIGNED_NEGATIVE[0]],
+            '-7')
+        result = check_with_example(EXAMPLE, (1, 'm == 5', True))
+        values = {value.symbol: value.value for value in result.example}
+        # m + n wraps to 0, so n is what is left to 2^32.
+        self.assertEqual(values[N_NOT_ZERO[0]], str(2 ** 32 - 5))
+
+    def test_infeasible_path_has_no_example(self):
+        result = check_with_example(EXAMPLE, (2, 's == 3'))
+        self.assertEqual(result.verdict, PathVerdict.INFEASIBLE)
+        self.assertIsNone(result.example)
+        self.assertEqual(result.exampleReason,
+                         what_if.NOT_FEASIBLE_EXAMPLE_REASON)
+
+    def test_timeout_gives_no_example_and_the_same_verdict(self):
+        class TimingOutSolver(z3.Solver):
+            def check(self, *_):
+                return z3.unknown
+
+            def reason_unknown(self):
+                return 'timeout'
+
+        with mock.patch.object(what_if.z3, 'Solver', TimingOutSolver):
+            asked = check_with_example(EXAMPLE)
+            plain = check(EXAMPLE)
+
+        self.assertEqual((asked.verdict, asked.reason),
+                         (plain.verdict, plain.reason))
+        self.assertEqual(asked.verdict, PathVerdict.UNKNOWN)
+        self.assertIsNone(asked.example)
+        self.assertEqual(
+            asked.exampleReason,
+            'There is no example, because there is no verdict. The solver '
+            f'gave up on this path after {what_if.WHAT_IF_SOLVER_TIMEOUT_MS} '
+            'ms.')
+
+    def test_asking_costs_no_solver_call(self):
+        _RecordingSolver.timeouts = []
+        with mock.patch.object(what_if.z3, 'Solver', _RecordingSolver):
+            check_with_example(EXAMPLE)
+        self.assertEqual(len(_RecordingSolver.timeouts), 2)
+
+    def test_no_solver_input_says_why(self):
+        """ What a Clang without Z3 records. """
+        trace = constraint_trace.encode(
+            [{'symbol_ranges': [], 'variables': [],
+              'path_condition': [{'symbol': UNSIGNED_HIGH[0],
+                                  'range': UNSIGNED_HIGH[1]}]}],
+            [{'kind': 'event', 'index': 0, 'order': 1, 'exploded_node': 0}])
+        result = check_with_example(json.dumps(trace))
+        self.assertIsNone(result.example)
+        self.assertEqual(result.exampleReason,
+                         'There is no example, because there is no verdict. '
+                         + what_if.NO_SMTLIB_REASON)
+
+    def test_unreadable_constraint_says_why(self):
+        result = check_with_example(EXAMPLE, (2, 's =='))
+        self.assertIsNone(result.example)
+        self.assertEqual(result.exampleReason, 'There is no example, because '
+                         'a What-If Constraint cannot be read.')

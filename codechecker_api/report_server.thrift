@@ -199,6 +199,14 @@ struct WhatIfSyntaxError {
   3: i64    offset,          // Character offset in its expression where reading failed.
 }
 
+// One value of an example of a Bug Path: what one model of the path gives a
+// symbol or symbolic expression of its path condition. A model is of what the
+// analyzer recorded, not proof that a real execution follows the path.
+struct WhatIfExampleValue {
+  1: string symbol, // As the path condition of the last Path Step in ReportDetails.constraintTrace names it.
+  2: string value,  // In decimal, read with the signedness of the analyzer's range of the symbol.
+}
+
 struct WhatIfResult {
   1: PathVerdict                verdict,               // Of the Bug Path with all What-If Constraints together.
   2: optional string            reason,                // Why verdict is UNKNOWN.
@@ -208,6 +216,8 @@ struct WhatIfResult {
   6: optional i64               reasonConstraintIndex, // The constraint that reason is about, when it is about one.
   7: optional i64               firstDeadStep,         // When verdict is INFEASIBLE: the `order` of the earliest step whose path condition contradicts the What-If Constraints. Can come before their pathStep.
   8: optional bool              firstDeadStepIsEarliest, // Set with firstDeadStep. False when the solver gave up or ran out of time during the search, so an earlier step may also be dead.
+  9: optional list<WhatIfExampleValue> example,       // Only when asked for and verdict is FEASIBLE: one model of the Bug Path with the What-If Constraints, one value for each entry of the path condition of its last Path Step. One example of many, and never stored.
+  10: optional string           exampleReason,         // When an example was asked for and there is none: why.
 }
 
 typedef string AnalyzerType
@@ -779,10 +789,13 @@ service codeCheckerDBAccess {
 
   // Checks whether the report's Bug Path stays feasible when the given
   // What-If Constraints are added, and whether it is feasible without them.
+  // With withExample, a Feasible result also gives one example of the path.
+  // An older client does not send it, which reads as false.
   // Nothing is written to the database.
   // PERMISSION: PRODUCT_VIEW
   WhatIfResult checkWhatIf(1: i64               reportId,
-                           2: WhatIfConstraints constraints)
+                           2: WhatIfConstraints constraints,
+                           3: bool              withExample)
                            throws (1: shared.RequestFailed requestError),
 
   // get file information, if fileContent is true the content of the source

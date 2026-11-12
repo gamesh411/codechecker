@@ -2646,11 +2646,12 @@ class ThriftRequestHandler:
 
     @exc_to_thrift_reqfail
     @timeit
-    def checkWhatIf(self, reportId, constraints):
+    def checkWhatIf(self, reportId, constraints, withExample=None):
         """
         Parameters:
          - reportId
          - constraints
+         - withExample
         """
         self.__require_view()
         # Only reads: What-If Constraints are never stored.
@@ -2667,7 +2668,7 @@ class ThriftRequestHandler:
                     (item.msg for item in path_data.path_data
                      if item.type == "constraint_trace"), None))
 
-        return check_what_if(path, constraints)
+        return check_what_if(path, constraints, bool(withExample))
 
     def _setReviewStatus(self, session, report_hash, status,
                          message, date=None):

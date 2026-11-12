@@ -269,7 +269,7 @@ class PermissionManagement(unittest.TestCase):
         try:
             client = self.__viewer_client_as(viewer, "pvu")
             with self.assertRaises(RequestFailed) as viewer_error:
-                client.checkWhatIf(-1, [])
+                client.checkWhatIf(-1, [], False)
             self.assertEqual(viewer_error.exception.errorCode,
                              ErrorCode.DATABASE)
             self.assertIn("not found", viewer_error.exception.message)
@@ -279,6 +279,6 @@ class PermissionManagement(unittest.TestCase):
 
         client = self.__viewer_client_as(viewer, "pvu")
         with self.assertRaises(RequestFailed) as outsider_error:
-            client.checkWhatIf(-1, [])
+            client.checkWhatIf(-1, [], False)
         self.assertEqual(outsider_error.exception.errorCode,
                          ErrorCode.UNAUTHORIZED)
