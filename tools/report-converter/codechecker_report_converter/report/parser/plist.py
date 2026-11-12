@@ -217,7 +217,8 @@ class Parser(BaseParser):
 
             files = get_file_index_map(
                 plist, source_dir_path, self._file_cache)
-            graphs = plist.get(constraint_trace.PLIST_GRAPHS, [])
+            graphs = constraint_trace.read_graphs(
+                plist.get(constraint_trace.PLIST_GRAPHS, []))
 
             for diag in plist.get('diagnostics', []):
                 report = self.__create_report(
@@ -807,7 +808,8 @@ class Parser(BaseParser):
                 files = get_file_index_map(
                     plist, analyzer_result_dir_path, file_cache)
 
-                graphs = plist.get(constraint_trace.PLIST_GRAPHS, [])
+                graphs = constraint_trace.read_graphs(
+                    plist.get(constraint_trace.PLIST_GRAPHS, []))
                 for diag in plist['diagnostics']:
                     report = self.__create_report(
                         analyzer_result_file_path, diag, files, metadata,

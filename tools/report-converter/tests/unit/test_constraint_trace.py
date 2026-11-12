@@ -142,10 +142,15 @@ class ConstraintTraceTest(unittest.TestCase):
         self.assertEqual([ref['graph'] for ref in refs], [0, 0, 0, 1])
         self.assertEqual(refs[1], {'graph': 0, 'path_blocks': [0, 1],
                                    'path_edges': [1, 0]})
-        self.assertEqual(table.graphs, [graph('f'), graph('g')])
+        # The blocks are JSON text in the file.
+        self.assertEqual(
+            constraint_trace.read_graphs(table.graphs),
+            [graph('f'), graph('g')])
+        self.assertIsInstance(table.graphs[0]['blocks'], str)
 
         resolved = constraint_trace.resolve_cfgs(
-            {'version': 2, 'cfgs': refs}, table.graphs)
+            {'version': 2, 'cfgs': refs},
+            constraint_trace.read_graphs(table.graphs))
         self.assertEqual(resolved['cfgs'], cfgs)
         self.assertIs(resolved['cfgs'][0]['blocks'],
                       resolved['cfgs'][1]['blocks'])
@@ -155,7 +160,10 @@ class ConstraintTraceTest(unittest.TestCase):
                  'path_blocks': [], 'path_edges': []}
         trace = {'version': 2, 'cfgs': [whole]}
         self.assertEqual(constraint_trace.resolve_cfgs(trace, []), trace)
-        for graphs in ([], [{'function': 'f'}]):
+        body = {'function': 'f', 'entry': 0, 'exit': 0}
+        for graphs in ([], [{'function': 'f'}], [{**body, 'blocks': '[[0,'}],
+                       [{**body, 'blocks': '{}'}]):
             with self.assertRaises(constraint_trace.MalformedTrace):
                 constraint_trace.resolve_cfgs(
-                    {'version': 2, 'cfgs': [{'graph': 0}]}, graphs)
+                    {'version': 2, 'cfgs': [{'graph': 0}]},
+                    constraint_trace.read_graphs(graphs))

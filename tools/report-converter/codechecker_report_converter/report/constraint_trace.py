@@ -220,12 +220,31 @@ class ConstraintTrace:
         return [_expand_cfg(cfg) for cfg in self.trace.get('cfgs', [])]
 
 
+def read_graphs(graphs: list) -> list:
+    """ The plist's `PLIST_GRAPHS` with their blocks as lists, for
+    `resolve_cfgs`. CodeChecker writes the blocks as JSON text, which takes a
+    third of the bytes that plist arrays of their elements take; Clang
+    writes the arrays. A body whose blocks do not read is None, and so is a
+    trace that names it. """
+    read = []
+    for graph in graphs:
+        blocks = graph.get('blocks') if isinstance(graph, dict) else None
+        if isinstance(blocks, str):
+            try:
+                blocks = json.loads(blocks)
+            except ValueError:
+                blocks = None
+        read.append({**graph, 'blocks': blocks}
+                    if isinstance(blocks, list) else None)
+    return read
+
+
 def resolve_cfgs(trace: dict, graphs: list) -> dict:
     """ The trace with each control flow graph whole: the body it names in
-    the plist's `graphs`, beside the part of it the path took. Bodies are
-    shared between the traces of a file rather than copied. A graph that is
-    whole already, as Clang wrote them before bodies were kept per file, is
-    kept. """
+    the plist's `graphs`, as `read_graphs` gives them, beside the part of it
+    the path took. Bodies are shared between the traces of a file rather
+    than copied. A graph that is whole already, as Clang wrote them before
+    bodies were kept per file, is kept. """
     if not trace.get('cfgs'):
         return trace
     cfgs = []
@@ -237,6 +256,8 @@ def resolve_cfgs(trace: dict, graphs: list) -> dict:
         if not isinstance(index, int) or not 0 <= index < len(graphs):
             raise MalformedTrace(
                 f"control flow graph {index} outside a table of {len(graphs)}")
+        if graphs[index] is None:
+            raise MalformedTrace(f"control flow graph {index} does not read")
         try:
             body = {key: graphs[index][key] for key in _GRAPH_BODY}
         except (KeyError, TypeError) as ex:
@@ -249,7 +270,7 @@ def resolve_cfgs(trace: dict, graphs: list) -> dict:
 
 class GraphTable:
     """ The control flow graph bodies of one plist file being written, each
-    once, for `PLIST_GRAPHS`. """
+    once, for `PLIST_GRAPHS`, with their blocks as JSON text. """
 
     def __init__(self):
         self.graphs: list[dict] = []
@@ -266,11 +287,14 @@ class GraphTable:
                     body['exit'])
         known = self._by_object.get(identity)
         if known is None:
+            blocks = json.dumps(body['blocks'], ensure_ascii=False,
+                                separators=(',', ':'))
             content = hashlib.sha256(json.dumps(
-                [body[key] for key in _GRAPH_BODY]).encode()).digest()
+                [body['function'], body['entry'], body['exit'], blocks])
+                .encode()).digest()
             index = self._by_content.setdefault(content, len(self.graphs))
             if index == len(self.graphs):
-                self.graphs.append(body)
+                self.graphs.append({**body, 'blocks': blocks})
             known = (body['blocks'], index)
             self._by_object[identity] = known
         return {'graph': known[1], **{key: value for key, value in cfg.items()

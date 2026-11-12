@@ -398,7 +398,9 @@ class PlistParserTestCase(unittest.TestCase):
             parser.write(data, plist_path)
             parsed = report_file.get_reports(plist_path)
 
-        self.assertEqual(data[constraint_trace.PLIST_GRAPHS], [body])
+        self.assertEqual(
+            constraint_trace.read_graphs(data[constraint_trace.PLIST_GRAPHS]),
+            [body])
         self.assertEqual(
             [diag['constraint_trace']['cfgs'] for diag in data['diagnostics']],
             [[{'graph': 0, 'path_blocks': [1], 'path_edges': []}],
