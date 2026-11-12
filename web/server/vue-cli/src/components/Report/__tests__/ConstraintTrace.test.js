@@ -400,8 +400,9 @@ describe("symbol table", () => {
   test("a call result reads as the callee's result at its line", () => {
     const trace = new ConstraintTrace(SYMBOLS);
     expect(symbolLabel(trace.symbol(CALL), 0)).toEqual({
-      text: "result of get()", code: "get()", location: LOCATION(11, 7),
-      frame: 0, function: null
+      text: "result of get()", parts: [ "result of ", { code: "get()" } ],
+      hint: "The analyzer did not see inside this call.",
+      location: LOCATION(11, 7), frame: 0, function: null
     });
   });
 
@@ -419,12 +420,25 @@ describe("symbol table", () => {
     expect(symbolLabel(indirect, 0).text).toBe("result of (*fp)(1)");
   });
 
-  test("an unclassified or unknown reason reads as not recorded", () => {
+  test("an unclassified or unknown reason names only its statement", () => {
     const entry = new ConstraintTrace(SYMBOLS).symbol(MODELLED);
-    expect(symbolLabel(entry, 0)).toMatchObject(
-      { text: "origin not recorded", code: null, location: LOCATION(12, 12) });
+    expect(symbolLabel(entry, 0)).toMatchObject({
+      text: "value from malloc(4)",
+      parts: [ "value from ", { code: "malloc(4)" } ],
+      hint: "The analyzer did not record what kind of value this is.",
+      location: LOCATION(12, 12)
+    });
     expect(symbolLabel({ ...entry, origin: { ...entry.origin,
-      reason: "something_new" } }, 0).text).toBe("origin not recorded");
+      reason: "something_new" } }, 0).text).toBe("value from malloc(4)");
+  });
+
+  test("a value without a statement reads as not recorded", () => {
+    const entry = new ConstraintTrace(SYMBOLS).symbol(MODELLED);
+    const bare = { ...entry, origin: { reason: "other", function: "main" } };
+    expect(symbolLabel(bare, 0)).toMatchObject({
+      text: "origin not recorded", parts: [ "origin not recorded" ],
+      location: null
+    });
   });
 
   test("symbols without an origin have no label", () => {
@@ -445,5 +459,132 @@ describe("symbol table", () => {
     expect(trace.nearestStep({ ...LOCATION(1), file: "/src/c.c" }, 0))
       .toBeNull();
     expect(trace.nearestStep(undefined, 0)).toBeNull();
+  });
+});
+
+const REPLACED = "conj_$4{int, LC1, S50, #1}";
+const FIELD = "derived_$5{conj_$4{int, LC1, S50, #1},Tok.Kind}";
+const WIDENED = "conj_$6{int, LC1, S60, #3}";
+const GLOBALS = "conj_$7{int, LC1, S70, #1}";
+const GLOBAL = "derived_$8{conj_$7{int, LC1, S70, #1},counter}";
+const RESULT_FIELD = "derived_$9{conj_$2{int, LC1, S90, #1},r.len}";
+const LONG_CALL = "Lex(Tok, /*Recover=*/true, getLangOpts().CPlusPlus)";
+const REPLACING_STRINGS = [
+  REPLACED, "Lex(Tok)", "Lex", "f", "Tok", FIELD, "Tok.Kind", WIDENED, "i",
+  "x", GLOBALS, "refresh()", "refresh", GLOBAL, "counter", RESULT_FIELD,
+  "r.len", CALL, "get()", "get", LONG_CALL
+];
+const REPLACING = {
+  version: 2,
+  strings: REPLACING_STRINGS,
+  steps: [ { kind: "event", index: 0, order: 1, exploded_node: 0 } ],
+  exploded_nodes: [ { location: LOCATION(9), frame: 0 } ],
+  stack_frames: [ { function: "f" } ],
+  symbols: [
+    { symbol: 0, kind: "conjured", origin: {
+      reason: "invalidation", statement: 1, callee: 2, region: 4,
+      function: 3, frame: 0, location: LOCATION(57)
+    } },
+    { symbol: 5, kind: "derived", parent: 0, region: 6 },
+    { symbol: 7, kind: "conjured", origin: {
+      reason: "loop_widening", statement: 8, region: 9, function: 3,
+      frame: 0, location: LOCATION(6, 19), loop: LOCATION(6, 3)
+    } },
+    { symbol: 10, kind: "conjured", origin: {
+      reason: "invalidation", statement: 11, callee: 12, globals: true,
+      function: 3, frame: 0, location: LOCATION(20)
+    } },
+    { symbol: 13, kind: "derived", parent: 10, region: 14 },
+    { symbol: 15, kind: "derived", parent: 17, region: 16 },
+    { symbol: 17, kind: "conjured", origin: {
+      reason: "call_result", statement: 18, callee: 19, function: 3,
+      frame: 0, location: LOCATION(30)
+    } }
+  ]
+};
+
+describe("labels of replaced values", () => {
+  const trace = new ConstraintTrace(REPLACING);
+  const label = (dump, frame = 0) =>
+    symbolLabel(trace.symbol(dump), frame, d => trace.symbol(d));
+
+  test("the table reads a derived symbol's parent and region", () => {
+    expect(trace.symbol(FIELD)).toEqual(
+      { kind: "derived", parent: REPLACED, region: "Tok.Kind" });
+    expect(trace.symbol(REPLACED).origin.region).toBe("Tok");
+  });
+
+  test("memory a call replaced names the memory and the call", () => {
+    expect(label(REPLACED)).toEqual({
+      text: "Tok after Lex(Tok) may have changed it",
+      parts: [ { code: "Tok" }, " after ", { code: "Lex(Tok)" },
+        " may have changed it" ],
+      hint: "The analyzer did not see inside Lex(Tok), so it treats the " +
+        "memory the call can reach as changed.",
+      location: LOCATION(57), frame: 0, function: null
+    });
+  });
+
+  test("a field of replaced memory reads as its access path", () => {
+    expect(label(FIELD)).toMatchObject({
+      text: "Tok.Kind after Lex(Tok) may have changed it",
+      location: LOCATION(57), frame: 0, function: null
+    });
+    expect(label(FIELD, 1).function).toBe("f");
+  });
+
+  test("globals a call replaced read as a global", () => {
+    expect(label(GLOBALS)).toMatchObject({
+      text: "a global after refresh() may have changed it",
+      hint: "The analyzer did not see inside refresh(), so it treats " +
+        "every global as changed."
+    });
+    expect(label(GLOBAL).text)
+      .toBe("counter after refresh() may have changed it");
+  });
+
+  test("a widened loop's value names the loop's line", () => {
+    expect(label(WIDENED)).toMatchObject({
+      text: "x after the loop may have changed it",
+      hint: "The analyzer stopped following this loop after a few passes, " +
+        "so it treats the function's variables and globals as changed by it.",
+      location: LOCATION(6, 3), frame: 0
+    });
+  });
+
+  test("a field of a call result reads as part of that result", () => {
+    expect(label(RESULT_FIELD)).toMatchObject({
+      text: "r.len of the result of get()", location: LOCATION(30)
+    });
+  });
+
+  test("without a region, the memory and the parts are said plainly", () => {
+    const origin = { ...trace.symbol(REPLACED).origin, region: undefined };
+    const parent = { ...trace.symbol(REPLACED), origin };
+    expect(symbolLabel(parent, 0).text)
+      .toBe("a value after Lex(Tok) may have changed it");
+    expect(symbolLabel({ kind: "derived", parent: REPLACED }, 0,
+      d => trace.symbol(d)).text)
+      .toBe("part of Tok after Lex(Tok) may have changed it");
+  });
+
+  test("a part of a value without a label is its access path or nothing",
+    () => {
+      const lookup = () => ({ kind: "region_value" });
+      expect(symbolLabel({ kind: "derived", parent: "reg_$0<struct S s>",
+        region: "s.x" }, 0, lookup)).toMatchObject({
+        text: "s.x", parts: [ { code: "s.x" } ], location: null
+      });
+      expect(symbolLabel({ kind: "derived", parent: "reg_$0<struct S s>" },
+        0, lookup)).toBeNull();
+      expect(symbolLabel(trace.symbol(FIELD), 0)).toMatchObject(
+        { text: "Tok.Kind" });
+    });
+
+  test("a long call is shortened, with the whole call in the hint", () => {
+    const origin = { ...trace.symbol(REPLACED).origin, statement: LONG_CALL };
+    const shown = symbolLabel({ kind: "conjured", origin }, 0);
+    expect(shown.text).toBe("Tok after Lex(…) may have changed it");
+    expect(shown.hint).toContain(LONG_CALL);
   });
 });

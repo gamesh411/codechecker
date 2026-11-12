@@ -677,7 +677,8 @@ function symbolLabels(node) {
   const _labels = new Map();
   return symbol => {
     if (!_labels.has(symbol)) {
-      const _label = symbolLabel(_trace.symbol(symbol), _node?.frame);
+      const _label = symbolLabel(_trace.symbol(symbol), _node?.frame,
+        dump => _trace.symbol(dump));
       if (_label) {
         _label.order = _trace.nearestStep(_label.location, _label.frame);
         _label.otherFile = !!_label.location &&

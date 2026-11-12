@@ -352,29 +352,28 @@ function DumpText({ text, fullPaths }) {
 DumpText.props = [ "text", "fullPaths" ];
 
 // A symbol as its label when the trace has one, and as its dump otherwise.
-// The row keeps the dump in its title. The label's line selects the Path Step
-// nearest to the statement the value came from.
+// The row keeps the dump in its title, and the label's own title adds what
+// the label means. The label's line selects the Path Step nearest to the
+// statement or loop the value came from.
 function SymbolText({ symbol }) {
   const _label = props.step.labelOf?.(symbol);
   if (!_label) return h(DumpText, { text: symbol });
 
-  const _parts = _label.code
-    ? [ _label.text.slice(0, -_label.code.length),
-      h("code", { class: "panel-label-code" }, h(DumpText, {
-        text: _label.code
-      })) ]
-    : [ _label.text ];
+  const _parts = _label.parts.map(part => typeof part === "string"
+    ? part
+    : h("code", { class: "panel-label-code" }, h(DumpText, {
+      text: part.code
+    })));
   const _where = _label.location && (_label.otherFile
     ? `${shortenPaths(_label.location.file)}:${_label.location.line}`
     : `line ${_label.location.line}`);
   if (_where) {
-    _parts.push(" ", _label.order === null
+    _parts.push(", ", _label.order === null
       ? h("span", { class: "panel-label-line" }, _where)
       : h("button", {
         type: "button",
         class: "panel-label-line panel-label-link",
-        title: "Select the Path Step nearest to the statement that made " +
-          "this value",
+        title: "Select the Path Step nearest to where this value came from",
         onClick: () => emit("select-step", _label.order)
       }, _where));
   }
@@ -383,7 +382,10 @@ function SymbolText({ symbol }) {
     _parts.push(" in\u00a0", h("code", { class: "panel-label-code" },
       h(DumpText, { text: _label.function })));
   }
-  return h("span", { class: "panel-label" }, _parts);
+  return h("span", {
+    class: "panel-label",
+    title: _label.hint ? `${_label.hint}\n${symbol}` : symbol
+  }, _parts);
 }
 SymbolText.props = [ "symbol" ];
 

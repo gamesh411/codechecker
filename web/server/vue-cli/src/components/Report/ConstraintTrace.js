@@ -22,8 +22,10 @@ const LISTS = [
 // What two steps on one line are compared by, to show them as one choice.
 const SHOWN_LISTS = [ "symbol_ranges", "variables", "path_condition" ];
 
-// The keys of a symbol's origin that name a string.
-const ORIGIN_STRINGS = [ "statement", "callee", "function" ];
+// The keys of a symbol's origin, and of the symbol itself, that name a
+// string.
+const ORIGIN_STRINGS = [ "statement", "callee", "function", "region" ];
+const SYMBOL_STRINGS = [ "parent", "region" ];
 
 // Whole raw lists kept on the way, so that reading any node replays at most
 // this many deltas.
@@ -100,13 +102,18 @@ export class ConstraintTrace {
   // The symbol table as a Map from symbol dump to its entry: `kind`, `smt`
   // and `smt_signed` when the symbol has an SMT-LIB term, and for a conjured
   // symbol `origin`, with `reason` and `function` and, when Clang knows them,
-  // `statement`, `location`, `callee` and `frame` (into `stack_frames`).
+  // `statement`, `location`, `callee` and `frame` (into `stack_frames`), and
+  // for memory a call or a loop replaced, `region` or `globals`, and `loop`.
+  // A derived symbol has its `parent`'s dump and its `region`'s access path.
   get symbols() {
     if (this._symbols) return this._symbols;
 
     const _s = this.strings;
     this._symbols = new Map((this.trace.symbols ?? []).map(entry => {
       const _symbol = { kind: entry.kind };
+      SYMBOL_STRINGS.forEach(key => {
+        if (entry[key] !== undefined) _symbol[key] = _s[entry[key]];
+      });
       if (entry.smt !== undefined) {
         _symbol.smt = _s[entry.smt];
         _symbol.smt_signed = !!entry.smt_signed;
@@ -406,30 +413,115 @@ export class ConstraintTrace {
   }
 }
 
-// What a reader is shown for a symbol in place of its dump, or null to show
-// the dump: `text`, the part of it that is source code as `code` (or null),
-// the origin's `location` and `frame` (null and undefined when it has none),
-// and the `function` the value was made in when that is not `stepFrame`, the
-// frame of the Path Step shown, or else null. Only reasons Clang recorded are
-// told; any other conjured symbol is said to have no recorded origin.
-export function symbolLabel(entry, stepFrame) {
-  const _origin = entry?.origin;
-  if (!_origin) return null;
+// Calls longer than this are shortened in a label, which says which call it
+// is, and the source is one click away.
+const LABEL_CALL_LENGTH = 32;
 
-  let _text = "origin not recorded";
-  let _code = null;
-  if (_origin.reason === "call_result") {
-    _code = _origin.callee ? `${_origin.callee}()` : _origin.statement ?? null;
-    if (_code) _text = `result of ${_code}`;
+// A call as a label shows it: its statement, or when that is long its
+// callee, and the whole statement for the hint when it was shortened.
+function labelCall(origin) {
+  const _statement = origin.statement ?? null;
+  if (!_statement || _statement.length <= LABEL_CALL_LENGTH)
+    return { code: _statement, full: _statement };
+  const _short = origin.callee
+    ? `${origin.callee}(\u2026)`
+    : `${_statement.slice(0, LABEL_CALL_LENGTH - 1)}\u2026`;
+  return { code: _short, full: _statement };
+}
+
+// The words of a label about the conjured symbol `origin` describes: `parts`,
+// strings and `{ code }` source text, and the `hint` that explains them.
+// `memory` is what the value stands for when a reader knows better than the
+// origin, such as a field of the memory a call replaced.
+function originWords(origin, memory) {
+  const _reason = origin.reason;
+  if (_reason === "call_result") {
+    const _code =
+      origin.callee ? `${origin.callee}()` : origin.statement ?? null;
+    if (!_code) return null;
+    return {
+      parts: memory
+        ? [ ...memory, " of the result of ", { code: _code } ]
+        : [ "result of ", { code: _code } ],
+      hint: "The analyzer did not see inside this call."
+    };
   }
-  const _otherFrame =
-    _origin.frame === undefined || _origin.frame !== stepFrame;
+  if (_reason === "invalidation" || _reason === "loop_widening") {
+    const _replaced = memory
+      ?? (origin.region ? [ { code: origin.region } ]
+        : [ origin.globals ? "a global" : "a value" ]);
+    if (_reason === "loop_widening") {
+      return {
+        parts: [ ..._replaced, " after the loop may have changed it" ],
+        hint: "The analyzer stopped following this loop after a few " +
+          "passes, so it treats the function's variables and globals as " +
+          "changed by it."
+      };
+    }
+    const _call = labelCall(origin);
+    if (!_call.code) return null;
+    return {
+      parts: [ ..._replaced, " after ", { code: _call.code },
+        " may have changed it" ],
+      hint: `The analyzer did not see inside ${_call.full}, so it treats ` +
+        (origin.globals ? "every global" : "the memory the call can reach") +
+        " as changed."
+    };
+  }
+  // Clang writes "other" when it cannot tell, and a reader must read a
+  // reason it does not know the same way.
+  const _call = labelCall(origin);
+  if (!_call.code) return null;
   return {
-    text: _text,
-    code: _code,
-    location: _origin.location ?? null,
-    frame: _origin.frame,
-    function: _otherFrame ? _origin.function ?? null : null
+    parts: memory
+      ? [ ...memory, " of the value from ", { code: _call.code } ]
+      : [ "value from ", { code: _call.code } ],
+    hint: "The analyzer did not record what kind of value this is." +
+      (_call.full !== _call.code ? ` It came from ${_call.full}.` : "")
+  };
+}
+
+// What a reader is shown for a symbol in place of its dump, or null to show
+// the dump: `text`, the label as plain text, and `parts`, the same as strings
+// and `{ code }` source text; `hint`, which explains it, or null; the
+// `location` and `frame` of the statement or loop it came from (null and
+// undefined when it has none), and the `function` the value was made in when
+// that is not `stepFrame`, the frame of the Path Step shown, or else null.
+// A derived symbol is labelled from its parent's entry, which `symbolOf`
+// gives by dump. Only reasons Clang recorded are told.
+export function symbolLabel(entry, stepFrame, symbolOf = () => undefined) {
+  if (!entry) return null;
+
+  let _origin = entry.origin;
+  let _memory = null;
+  if (entry.kind === "derived") {
+    _origin = symbolOf(entry.parent)?.origin;
+    const _parent = _origin?.region
+      ? [ "part of ", { code: _origin.region } ] : null;
+    _memory = entry.region ? [ { code: entry.region } ] : _parent;
+  }
+  let _words = _origin ? originWords(_origin, _memory) : null;
+  if (!_words && entry.kind === "derived") {
+    if (!entry.region) return null;
+    _words = { parts: [ { code: entry.region } ],
+      hint: "Part of a value whose origin the analyzer did not record." };
+  }
+  if (!_words && !_origin) return null;
+
+  const { parts, hint } = _words ?? {
+    parts: [ "origin not recorded" ],
+    hint: "The analyzer did not record what kind of value this is."
+  };
+  const _otherFrame =
+    _origin?.frame === undefined || _origin.frame !== stepFrame;
+  return {
+    text: parts.map(part => part.code ?? part).join(""),
+    parts,
+    hint,
+    location: (_origin?.reason === "loop_widening" && _origin.loop
+      ? _origin.loop : _origin?.location) ?? null,
+    frame: _origin?.frame,
+    function: _origin && _otherFrame ? _origin.function ?? null : null
   };
 }
 
