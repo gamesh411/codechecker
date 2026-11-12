@@ -4,6 +4,7 @@
     class="cfg-view"
     title="Control flow graph"
     short-title="CFG"
+    :prefer-short-title="cfgs.length > 1"
     @close="emit('close')"
   >
     <template #header>
@@ -637,6 +638,7 @@ watch(() => [ props.cfgIndex, selectedRowKey.value, showSubexpressions.value ],
     flex: 1 1 0;
     margin-right: 8px;
     padding: 1px 4px;
+    font-size: 13px;
     border: 1px solid #c4c8ce;
     border-radius: 3px;
     background-color: #fff;

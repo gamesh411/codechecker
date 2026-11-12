@@ -11,7 +11,7 @@
         class="text-subtitle-2 text-no-wrap"
         :title="title"
       >
-        {{ compactHeader ? shortTitle : title }}
+        {{ compactHeader || preferShortTitle ? shortTitle : title }}
       </span>
       <slot name="header" />
       <!-- A header of the view's own decides how to use the free room. -->
@@ -50,7 +50,9 @@ import { useDisplay } from "vuetify";
 defineProps({
   title: { type: String, required: true },
   // Shown below 1280px, where the header's other content needs the room.
-  shortTitle: { type: String, required: true }
+  shortTitle: { type: String, required: true },
+  // For a header whose own content needs the room at any width.
+  preferShortTitle: { type: Boolean, default: false }
 });
 
 const emit = defineEmits([ "close" ]);
