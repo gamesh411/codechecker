@@ -20,7 +20,9 @@ A trace may also have a table of the atomic symbols its snapshots mention,
 `symbols`, keyed by the symbol's dump in `strings`, with the symbol's kind,
 its SMT-LIB term and, for a conjured symbol, the origin Clang recorded.
 `ConstraintTrace.symbols` reads it, and a trace from a Clang before the table
-reads as having no symbols.
+reads as having no symbols. A trace may also have the types of the symbolic
+expressions its snapshots constrain, `expressions`, which
+`ConstraintTrace.expressions` reads.
 
 A trace's control flow graphs are self-contained once read, but a plist keeps
 each graph's body once per file, in `PLIST_GRAPHS`, and a trace names it by
@@ -47,7 +49,7 @@ _GRAPH_BODY = ('function', 'entry', 'exit', 'blocks')
 # The keys of a symbol's origin, and of the symbol itself, that name a
 # string.
 _ORIGIN_STRINGS = ('statement', 'callee', 'function', 'region')
-_SYMBOL_STRINGS = ('parent', 'region', 'type')
+_SYMBOL_STRINGS = ('parent', 'region', 'type', 'name')
 
 # Whole snapshots kept on the way, so that reading any node replays at most
 # this many deltas.
@@ -104,6 +106,7 @@ class ConstraintTrace:
         self.smtlib = bool(trace.get('smtlib'))
         self._checkpoints: dict[int, dict[str, list]] = {}
         self._symbols: dict[str, dict] | None = None
+        self._expressions: dict[str, dict] | None = None
 
     def _apply_node(self, lists: dict[str, list], index: int) -> None:
         node = self.nodes[index]
@@ -155,6 +158,21 @@ class ConstraintTrace:
             if not self._symbol_reads(entry, frames):
                 raise MalformedTrace(
                     f"symbol table entry {entry} does not read")
+        expressions = self.trace.get('expressions', [])
+        if not isinstance(expressions, list):
+            raise MalformedTrace("expression types are not a list")
+        for entry in expressions:
+            if not self._expression_reads(entry):
+                raise MalformedTrace(
+                    f"expression type entry {entry} does not read")
+
+    def _expression_reads(self, entry: dict) -> bool:
+        def string(value) -> bool:
+            return isinstance(value, int) and 0 <= value < len(self.strings)
+
+        return string(entry['symbol']) and \
+            ('type' not in entry or string(entry['type'])) and \
+            isinstance(entry.get('pointer', True), bool)
 
     def _symbol_reads(self, entry: dict, frames: int) -> bool:
         """ Whether the entry names its strings and frame. A location's file
@@ -195,9 +213,10 @@ class ConstraintTrace:
         and, when Clang knows them, `statement`, `location`, `callee` and
         `frame` (an index into `stack_frames`), and for memory a call or a
         loop replaced, `region` or `globals`, and `loop`. A derived symbol
-        has its `parent`'s dump and its `region`'s access path. A symbol
-        has its `type`, the canonical type's name, and `pointer` when the
-        analyzer treats it as an address. """
+        has its `parent`'s dump and its `region`'s access path, and a region
+        value the `name` of its region's access path when Clang can describe
+        it. A symbol has its `type`, the canonical type's name, and `pointer`
+        when the analyzer treats it as an address. """
         if self._symbols is not None:
             return self._symbols
         strings = self.strings
@@ -217,6 +236,24 @@ class ConstraintTrace:
                     for key, value in entry['origin'].items()}
             table[strings[entry['symbol']]] = symbol
         self._symbols = table
+        return table
+
+    def expressions(self) -> dict[str, dict]:
+        """ The symbolic expressions the snapshots constrain or variables
+        hold, by dump: their `type` and `pointer` as a symbol has them. An
+        expression has no entry in `symbols`; its atoms do. """
+        if self._expressions is not None:
+            return self._expressions
+        strings = self.strings
+        table = {}
+        for entry in self.trace.get('expressions', []):
+            expression = {}
+            if 'type' in entry:
+                expression['type'] = strings[entry['type']]
+            if entry.get('pointer'):
+                expression['pointer'] = True
+            table[strings[entry['symbol']]] = expression
+        self._expressions = table
         return table
 
     def _raw(self, node: int) -> dict[str, list]:
@@ -440,7 +477,8 @@ def _diff(previous: list, following: list) -> dict:
 
 
 def encode(nodes: list[dict], steps: list[dict],
-           symbols: dict[str, dict] | None = None) -> dict:
+           symbols: dict[str, dict] | None = None,
+           expressions: dict[str, dict] | None = None) -> dict:
     """
     A version 2 trace from whole snapshots, for tools and tests that make
     traces. Each node is a dict of the snapshot keys a version 1 step had
@@ -448,7 +486,8 @@ def encode(nodes: list[dict], steps: list[dict],
     `smt_declarations` and `smt_assertions`) plus any node keys to keep, such
     as `kind` or `cfg_position`. Steps are kept as they are and name their
     node by `exploded_node`. `symbols` is a symbol table as
-    `ConstraintTrace.symbols` reads one, written in the order of its dumps.
+    `ConstraintTrace.symbols` reads one, written in the order of its dumps,
+    and `expressions` the same for `ConstraintTrace.expressions`.
     """
     strings: list[str] = []
     index: dict[str, int] = {}
@@ -508,6 +547,16 @@ def encode(nodes: list[dict], steps: list[dict],
                     for key, value in symbol['origin'].items()}
             table.append(entry)
         trace['symbols'] = table
+    if expressions:
+        typed = []
+        for dump in sorted(expressions):
+            entry = {'symbol': intern(dump)}
+            if 'type' in expressions[dump]:
+                entry['type'] = intern(expressions[dump]['type'])
+            if expressions[dump].get('pointer'):
+                entry['pointer'] = True
+            typed.append(entry)
+        trace['expressions'] = typed
     if smtlib:
         trace['smtlib'] = True
     return trace

@@ -176,7 +176,7 @@ WIDENED = 'conj_$6{int, LC1, S60, #3}'
 GLOBALS = 'conj_$7{int, LC1, S70, #1}'
 SYMBOLS = {
     'reg_$0<int a0>': {'kind': 'region_value', 'smt': 'reg_$0',
-                       'smt_signed': True, 'type': 'int'},
+                       'smt_signed': True, 'type': 'int', 'name': 'a0'},
     CALL_RESULT: {
         'kind': 'conjured', 'smt': 'conj_$2', 'smt_signed': True,
         'origin': {'reason': 'call_result', 'statement': 'get()',
@@ -209,6 +209,11 @@ SYMBOLS = {
         'kind': 'derived', 'parent': GLOBALS}}
 
 
+EXPRESSIONS = {
+    f'({CALL_RESULT}) + 1': {'type': 'int'},
+    '(reg_$0<int a0>) + 4': {'type': 'int *', 'pointer': True}}
+
+
 class SymbolTableTest(unittest.TestCase):
 
     def setUp(self):
@@ -223,7 +228,8 @@ class SymbolTableTest(unittest.TestCase):
                 _range('derived_$8{conj_$7{int, LC1, S70, #1},counter}',
                        '{ [5, 5] }')]}
         self.trace = {
-            **constraint_trace.encode([self.snapshot], [], deepcopy(SYMBOLS)),
+            **constraint_trace.encode([self.snapshot], [], deepcopy(SYMBOLS),
+                                      deepcopy(EXPRESSIONS)),
             'stack_frames': [{'function': 'f'}]}
 
     def test_table_reads_back_by_dump(self):
@@ -241,6 +247,31 @@ class SymbolTableTest(unittest.TestCase):
         trace.check()
         self.assertNotIn('symbols', trace.trace)
         self.assertEqual(trace.symbols(), {})
+        self.assertEqual(trace.expressions(), {})
+
+    def test_expression_types_read_back_by_dump(self):
+        trace = constraint_trace.ConstraintTrace(self.trace)
+        trace.check()
+        self.assertEqual(trace.expressions(), EXPRESSIONS)
+        self.assertIs(trace.expressions(), trace.expressions())
+        # An expression is not an atom, so it has no entry among the symbols.
+        self.assertFalse(set(trace.expressions()) & set(trace.symbols()))
+
+    def test_bad_expression_types_are_rejected(self):
+        def broken(change):
+            trace = deepcopy(self.trace)
+            change(trace['expressions'])
+            return trace
+
+        for trace in (
+                broken(lambda e: e[0].update(symbol=10 ** 6)),
+                broken(lambda e: e[0].pop('symbol')),
+                broken(lambda e: e[0].update(type=-1)),
+                broken(lambda e: e[0].update(pointer='yes')),
+                broken(lambda e: e.append(7)),
+                {**self.trace, 'expressions': {}}):
+            with self.assertRaises(constraint_trace.MalformedTrace):
+                constraint_trace.ConstraintTrace(trace).check()
 
     def test_bad_tables_are_rejected(self):
         def broken(change):
@@ -266,6 +297,7 @@ class SymbolTableTest(unittest.TestCase):
                 broken(lambda s: origin(s).update(globals=1)),
                 broken(lambda s: s[0].update(type=10 ** 6)),
                 broken(lambda s: s[0].update(pointer=1)),
+                broken(lambda s: s[0].update(name='a0')),
                 broken(lambda s: derived(s).update(parent=10 ** 6)),
                 broken(lambda s: derived(s).update(region='Tok.Kind')),
                 broken(lambda s: s.append(7)),
