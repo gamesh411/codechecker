@@ -251,8 +251,10 @@ import WhatIfSection from "./WhatIfSection";
 const props = defineProps({
   // Besides the lists: `changes` (what the step added or narrowed), `silent`
   // (an assumption the Bug Path has no event for) and `labelOf`, which gives
-  // a symbol's label as symbolLabel does, plus `order`, the Path Step nearest
-  // to its origin, and `otherFile`, whether that is in another file.
+  // a symbol's label as symbolLabel or expressionLabel does, plus `order`,
+  // the Path Step nearest to its origin, `otherFile`, whether that is in
+  // another file, and `sameCall`, the other results of the same call as
+  // { call, order }; and `typeOf`, a symbol's type and pointer-ness.
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
   // From useWhatIf, owned by the report view.
