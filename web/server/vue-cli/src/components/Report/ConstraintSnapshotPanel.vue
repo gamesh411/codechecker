@@ -365,10 +365,11 @@ function sameCallTag(others) {
 }
 
 // A symbol as its label when the trace has one, and as its dump otherwise.
-// The row keeps the dump in its title, and the label's own title adds what
-// the label means. The label's line selects the Path Step nearest to the
-// statement or loop the value came from. A label that only repeats
-// `unless`, such as a parameter's name beside the parameter, shows the dump.
+// The label's own title gives the whole label, which a clamped line may cut,
+// what it means and the dump, which the row's title also keeps. The label's
+// line selects the Path Step nearest to the statement or loop the value came
+// from. A label that only repeats `unless`, such as a parameter's name beside
+// the parameter, shows the dump.
 function SymbolText({ symbol, unless }) {
   const _label = props.step.labelOf?.(symbol);
   if (!_label || unless !== undefined && _label.text === unless) {
@@ -399,7 +400,7 @@ function SymbolText({ symbol, unless }) {
   }
   return h("span", {
     class: "panel-label",
-    title: _label.hint ? `${_label.hint}\n${symbol}` : symbol
+    title: [ _label.text, _label.hint, symbol ].filter(Boolean).join("\n")
   }, _parts);
 }
 SymbolText.props = [ "symbol", "unless" ];
