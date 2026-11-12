@@ -78,6 +78,39 @@ function entryHash(field, entry) {
   return _hash >>> 0;
 }
 
+// What a control step is called, from the number of the last event before it
+// (0 for none): the Bug Path draws it as an arrow between lines, and a reader
+// follows it as the edge the analyzer took.
+export function controlStepLabel(afterEvent) {
+  return afterEvent ? `Edge after Step ${afterEvent}` : "Edge before Step 1";
+}
+
+// The groups of "This path requires", in the order they are shown: what the
+// function was given comes first.
+export const REQUIREMENT_GROUPS = [
+  { key: "entry", title: "Entry inputs",
+    hint: "What the function was called with: its parameters, globals and " +
+      "the fields of this, and what they point to." },
+  { key: "call", title: "Call results",
+    hint: "What calls the analyzer did not see inside returned." },
+  { key: "replaced", title: "Replaced values",
+    hint: "Memory that a call or a loop may have changed." },
+  { key: "other", title: "Other",
+    hint: "Values the analyzer did not say the origin of." }
+];
+
+// The atoms of a symbolic expression read by parseSymbolExpression, as dumps,
+// or null for one that was not read.
+function expressionAtoms(node) {
+  if (!node) return null;
+  if (node.atom !== undefined) return [ node.atom ];
+  if (node.integer !== undefined) return [];
+  if (node.operand) return expressionAtoms(node.operand);
+  const _left = expressionAtoms(node.left);
+  const _right = expressionAtoms(node.right);
+  return _left && _right && [ ..._left, ..._right ];
+}
+
 export class ConstraintTrace {
   // Throws for a trace of another version or without the tables it needs.
   constructor(trace) {
@@ -103,6 +136,7 @@ export class ConstraintTrace {
     this._ordered = null;
     this._changes = new Map();
     this._silentChanges = null;
+    this._requirements = null;
     this._symbols = null;
     this._expressions = null;
     this._calls = null;
@@ -445,6 +479,135 @@ export class ConstraintTrace {
     });
     this._silentChanges = _silent;
     return _silent;
+  }
+
+  // What the Bug Path requires, from the path condition of its last Path
+  // Step: { grouped, groups }, where each group is { key, title, hint, rows }.
+  // A row is { key, symbol, range, name, dropped, changedAt }, with `name` the
+  // variable that held the symbol, `dropped` when the analyzer no longer knows
+  // the symbol's range at the last step, and `changedAt` the first Path Step
+  // that shows the entry as it is at the end: { order, function, silent,
+  // exact }. That is where the analyzer last assumed it, with `silent` when
+  // the step is an assumption the Bug Path has no event for, and `exact`
+  // unless the analyzer did it at a node of its own, between the step before
+  // and this one. The groups are the origins the symbol table tells, in
+  // REQUIREMENT_GROUPS order, and only those with rows. A trace without the
+  // table is one group with no key, so `grouped` is false. Rows are named
+  // ones first, then by name or symbol.
+  requirements() {
+    if (this._requirements) return this._requirements;
+
+    const _steps = this.orderedSteps();
+    const _last = _steps[_steps.length - 1];
+    if (!_last) {
+      this._requirements = { grouped: false, groups: [] };
+      return this._requirements;
+    }
+
+    // The last node that inserted or replaced each entry of the path
+    // condition, up to the node of the last step.
+    const _changeNode = new Map();
+    for (let _node = 0; _node <= _last.exploded_node; ++_node) {
+      const _delta = this.nodes[_node].path_condition;
+      [ ...(_delta?.replace ?? []), ...(_delta?.insert ?? []) ]
+        .forEach(operation =>
+          _changeNode.set(this.strings[operation[1]], _node));
+    }
+    // The furthest node among the steps up to each, which only grows, so the
+    // first step that shows a node's change is found by search.
+    const _reach = [];
+    _steps.reduce((furthest, step) => {
+      _reach.push(Math.max(furthest, step.exploded_node));
+      return _reach[_reach.length - 1];
+    }, -1);
+    const _silent = new Set(this.silentChanges().map(change => change.order));
+    const _changedAt = symbol => {
+      let _low = 0;
+      let _high = _steps.length - 1;
+      const _node = _changeNode.get(symbol) ?? 0;
+      while (_low < _high) {
+        const _middle = (_low + _high) >> 1;
+        if (_reach[_middle] >= _node) _high = _middle;
+        else _low = _middle + 1;
+      }
+      const _step = _steps[_low];
+      const _frame = this.nodes[_step.exploded_node].frame;
+      return {
+        order: _step.order,
+        function: this.frames[_frame]?.function ?? null,
+        silent: _silent.has(_step.order),
+        exact: _step.exploded_node === _node
+      };
+    };
+
+    const _names = this.symbolNames(_last.order);
+    const _grouped = this.symbols.size > 0;
+    const _known = new Set(this.snapshot(_last.exploded_node).symbol_ranges
+      .map(entry => entry.symbol));
+    const _groups = new Map(REQUIREMENT_GROUPS.map(group =>
+      [ group.key, { ...group, rows: [] } ]));
+    this.snapshot(_last.exploded_node).path_condition.forEach(entry => {
+      const _key = _grouped ? this.requirementGroup(entry.symbol) : "other";
+      _groups.get(_key).rows.push({
+        key: `symbol ${entry.symbol}`,
+        symbol: entry.symbol,
+        range: entry.range,
+        name: _names.get(entry.symbol),
+        dropped: !_known.has(entry.symbol),
+        changedAt: _changedAt(entry.symbol)
+      });
+    });
+    const _rows = [ ..._groups.values() ].filter(group => group.rows.length);
+    _rows.forEach(group => group.rows.sort((a, b) =>
+      (a.name === undefined) - (b.name === undefined) ||
+      compareNames(a.name ?? a.symbol, b.name ?? b.symbol)));
+    this._requirements = {
+      grouped: _grouped,
+      groups: _grouped ? _rows : _rows.map(group => ({ ...group, key: null }))
+    };
+    return this._requirements;
+  }
+
+  // Where a symbol of the path condition comes from, a key of
+  // REQUIREMENT_GROUPS. An atom is told by its entry in the symbol table:
+  // memory the function started with is an entry input, the result of a call
+  // a call result, memory a call or a loop changed a replaced value, and a
+  // derived symbol goes by its parent. An expression goes by its atoms when
+  // they agree, and is `other` otherwise.
+  requirementGroup(dump, depth = 0) {
+    const _entry = this.symbols.get(dump);
+    if (!_entry) {
+      const _tree = parseSymbolExpression(dump);
+      // An atom the table does not have says nothing of where it is from.
+      if (!_tree || _tree.atom === dump || depth >= 8) return "other";
+      const _atoms = expressionAtoms(_tree);
+      const _keys = new Set(_atoms?.map(atom =>
+        this.requirementGroup(atom, depth + 1)));
+      return _keys.size === 1 ? [ ..._keys ][0] : "other";
+    }
+
+    switch (_entry.kind) {
+    case "region_value":
+      // Clang makes a region value only for memory the function started
+      // with, and gives it a name when the memory is a parameter, a global
+      // or `this` or what they point to. Memory reached through a call's
+      // result has the call's symbol in its dump instead.
+      return _entry.name !== undefined || !/\b(conj|derived)_\$/.test(dump)
+        ? "entry" : "other";
+    case "conjured":
+      switch (_entry.origin?.reason) {
+      case "call_result": return "call";
+      case "invalidation":
+      case "loop_widening": return "replaced";
+      default: return "other";
+      }
+    case "derived":
+      // A symbol cannot be its own ancestor, but a trace is not trusted.
+      return _entry.parent !== undefined && depth < 8
+        ? this.requirementGroup(_entry.parent, depth + 1) : "other";
+    default:
+      return "other";
+    }
   }
 
   // The stack frame at an index of `stack_frames`, as { function, parent,

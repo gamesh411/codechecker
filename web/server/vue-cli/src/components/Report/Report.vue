@@ -307,6 +307,7 @@
                     <constraint-snapshot-panel
                       v-fill-height
                       :step="selectedConstraintStep"
+                      :requires="pathRequires"
                       :report-id="report.reportId"
                       :what-if="whatIf"
                       :resolve-step="displayedStep"
@@ -430,6 +431,7 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import {
   ConstraintTrace,
   compareNames,
+  controlStepLabel,
   describeVariable,
   expressionLabel,
   shortenStatement,
@@ -692,6 +694,18 @@ const selectedConstraintStep = computed(() => {
       constraintTrace.value.whatIfNames(_traceStep?.order ?? -1, throughout),
     changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
     silent: false
+  };
+});
+// What the whole Bug Path requires, which does not depend on the selected
+// step: the trace's list, with labels as the last step shows symbols.
+const pathRequires = computed(() => {
+  if (!showConstraints.value || !hasConstraintTrace.value) return null;
+
+  const _trace = constraintTrace.value;
+  const _last = _trace.orderedSteps().at(-1);
+  return {
+    ..._trace.requirements(),
+    labelOf: symbolLabels(_last.exploded_node, _trace.symbolNames(_last.order))
   };
 });
 // The Path Step nearest to the call that entered the frame at `frame`, among
@@ -1559,8 +1573,7 @@ function collectPathSteps(events, executionPath) {
     if (step.kind === "event") {
       _lastEvent = step.eventIndex;
     } else {
-      step.label = _lastEvent ? `Arrow after step ${_lastEvent}` :
-        "Arrow before step 1";
+      step.label = controlStepLabel(_lastEvent);
     }
   });
 

@@ -94,10 +94,38 @@
 
     <v-divider />
 
+    <div
+      v-if="requires"
+      class="panel-views px-3 py-1"
+      role="group"
+      aria-label="What the panel shows"
+    >
+      <button
+        v-for="choice in VIEWS"
+        :key="choice.key"
+        type="button"
+        class="panel-view text-caption"
+        :class="{ 'panel-view-active': view === choice.key }"
+        :aria-pressed="view === choice.key ? 'true' : 'false'"
+        :title="choice.hint"
+        @click="showView(choice.key)"
+      >
+        {{ choice.label }}
+        <span v-if="choice.key === 'requires'" class="panel-view-count">
+          {{ requiresCount }}
+        </span>
+      </button>
+    </div>
+
+    <v-divider v-if="requires" />
+
     <div class="panel-scroll-area">
       <div ref="body" class="panel-body">
         <div class="panel-body-content">
-          <section class="panel-section panel-known px-3 py-2">
+          <section
+            v-if="view === 'step'"
+            class="panel-section panel-known px-3 py-2"
+          >
             <h4 class="panel-section-title text-overline">
               Known here
             </h4>
@@ -240,7 +268,105 @@
             </p>
           </section>
 
-          <section class="panel-section panel-accumulated px-3 py-2">
+          <section
+            v-if="view === 'requires'"
+            class="panel-section panel-requires px-3 py-2"
+          >
+            <h4 class="panel-section-title text-overline">
+              This path requires
+            </h4>
+            <p class="panel-section-hint text-caption text-medium-emphasis">
+              Everything the Bug Path assumes, from its first step to its
+              last, grouped by where the value comes from.
+            </p>
+
+            <div
+              v-for="group in requires.groups"
+              :key="group.key ?? 'all'"
+              class="panel-group"
+            >
+              <h5
+                v-if="group.key"
+                class="panel-group-title text-caption"
+                :title="group.hint"
+              >
+                {{ group.title }}
+                <span class="text-medium-emphasis">
+                  {{ group.rows.length }}
+                </span>
+              </h5>
+              <div
+                v-for="row in group.rows"
+                :key="row.key"
+                class="panel-row panel-requires-row"
+                :class="{ 'panel-row-raw': !row.name }"
+              >
+                <div
+                  class="panel-name"
+                  :class="{ 'panel-raw-symbol': !row.name }"
+                  :title="row.symbol"
+                >
+                  <dump-text v-if="row.name" :text="row.name" />
+                  <symbol-text
+                    v-else
+                    :symbol="row.symbol"
+                    :labels="requires.labelOf"
+                  />
+                </div>
+                <div class="panel-value">
+                  <range-text :range="row.range" :symbol="row.symbol" />
+                  <span
+                    v-if="row.dropped"
+                    class="panel-dropped text-caption"
+                    :title="DROPPED_HINT"
+                  >
+                    dropped
+                  </span>
+                  <div v-if="row.name" class="panel-meta">
+                    <span
+                      class="panel-symbol"
+                      :title="row.symbol"
+                    >
+                      <symbol-text
+                        :symbol="row.symbol"
+                        :unless="row.name"
+                        :labels="requires.labelOf"
+                      />
+                    </span>
+                  </div>
+                </div>
+                <div class="panel-where text-caption text-medium-emphasis">
+                  {{ changedWords(row.changedAt) }}
+                  <button
+                    type="button"
+                    class="panel-label-link"
+                    :title="row.changedAt.silent
+                      ? SILENT_HINT : 'Select this Path Step'"
+                    @click="emit('select-step', row.changedAt.order)"
+                    v-text="stepLabel(row.changedAt.order)"
+                  />
+                  <template v-if="row.changedAt.function">
+                    {{ " in " }}
+                    <code class="panel-label-code"><dump-text
+                      :text="functionName(row.changedAt.function)"
+                    /></code>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <p
+              v-if="!requires.groups.length"
+              class="panel-empty ma-0 text-body-2 text-medium-emphasis"
+            >
+              This path has no constraints on it.
+            </p>
+          </section>
+
+          <section
+            v-if="view === 'step'"
+            class="panel-section panel-accumulated px-3 py-2"
+          >
             <h4 class="panel-section-title text-overline">
               Accumulated path condition
             </h4>
@@ -332,6 +458,9 @@ const props = defineProps({
   // { call, order }; and `typeOf`, a symbol's type and pointer-ness.
   step: { type: Object, required: true },
   reportId: { type: Object, required: true },
+  // What the whole Bug Path requires, from `requirements` of the trace and
+  // `labelOf` as the step's: null without a trace.
+  requires: { type: Object, default: null },
   // From useWhatIf, owned by the report view.
   whatIf: { type: Object, required: true },
   // The Path Step the reader sees for an `order`: { label, order }.
@@ -445,8 +574,8 @@ function sameCallTag(others) {
 // line selects the Path Step nearest to the statement or loop the value came
 // from. A label that only repeats `unless`, such as a parameter's name beside
 // the parameter, or `top::n` beside top's `n`, shows the dump.
-function SymbolText({ symbol, unless }) {
-  const _label = props.step.labelOf?.(symbol);
+function SymbolText({ symbol, unless, labels }) {
+  const _label = (labels ?? props.step.labelOf)?.(symbol);
   if (!_label || unless !== undefined && (_label.text === unless ||
       unless.endsWith(`::${_label.text}`))) {
     return h(DumpText, { text: symbol });
@@ -479,9 +608,43 @@ function SymbolText({ symbol, unless }) {
     title: [ _label.text, _label.hint, symbol ].filter(Boolean).join("\n")
   }, _parts);
 }
-SymbolText.props = [ "symbol", "unless" ];
+SymbolText.props = [ "symbol", "unless", "labels" ];
 
 const rows = computed(() => snapshotRows(props.step));
+
+// Which half of the panel shows: this step's, or the whole path's, which is
+// the same at every step and so stays chosen as the reader moves between
+// steps. The two are never on screen together, so that the path condition of
+// the path's last step is not listed twice.
+const VIEWS = [
+  { key: "step", label: "This step",
+    hint: "What the analyzer knew at the selected Path Step" },
+  { key: "requires", label: "Whole path",
+    hint: "This path requires: everything the whole Bug Path assumes, " +
+      "whichever step is selected" }
+];
+const view = ref("step");
+
+function showView(key) {
+  view.value = key;
+  // Each half starts at its top, as the other's scroll position means
+  // nothing here.
+  if (body.value) body.value.scrollTop = 0;
+}
+const requiresCount = computed(() => props.requires?.groups.reduce(
+  (count, group) => count + group.rows.length, 0));
+
+// Where a requirement was last assumed: at the Path Step, or just before the
+// first one that shows it, when the analyzer did it between two steps.
+function changedWords(changedAt) {
+  if (changedAt.silent) return "assumed with no event at ";
+  return changedAt.exact ? "last set at " : "last set before ";
+}
+
+// A Path Step as the reader sees it, as a link names it.
+function stepLabel(order) {
+  return props.resolveStep(order)?.label ?? `Step ${order}`;
+}
 
 // Callers a reader opened or closed, by frame, which outlives the step: the
 // next step in the same call shows them the same way.
@@ -666,6 +829,62 @@ function toggleFrame(section) {
   .panel-frame-empty {
     padding: 3px 0 3px 20px;
     line-height: 1.35;
+  }
+
+  // The two halves of the panel, as a pair of toggles under the step.
+  .panel-views {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background-color: #f7f7f7;
+  }
+
+  // Side by side when they fit, and one full row each when they do not.
+  .panel-view {
+    flex: 1 1 auto;
+    padding: 2px 10px;
+    border: 1px solid #c6ccd4;
+    border-radius: 4px;
+    color: rgba(0, 0, 0, 0.7);
+    background-color: #ffffff;
+    line-height: 1.5;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #eef1f5;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #1f5fae;
+      outline-offset: 1px;
+    }
+  }
+
+  // Not by colour alone: the chosen one is bold and filled.
+  .panel-view-active {
+    border-color: #1f5fae;
+    color: #1f4e8c;
+    background-color: #e0ebfa;
+    font-weight: 600;
+
+    &:hover {
+      background-color: #e0ebfa;
+    }
+  }
+
+  .panel-view-count {
+    margin-left: 4px;
+    font-weight: 400;
+  }
+
+  // Where the analyzer assumed the row takes a line of its own under it, so
+  // that a value for the row can sit beside its range.
+  .panel-requires-row > .panel-where {
+    flex: 1 0 100%;
+    min-width: 0;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .panel-accumulated {

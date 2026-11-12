@@ -1,7 +1,7 @@
 import {
-  ConstraintTrace, compareNames, describeVariable, expressionLabel,
-  labelPlace, parseSymbolExpression, readConstraintTrace, readableRange,
-  shortenPaths, shortenStatement, symbolLabel, symbolType
+  ConstraintTrace, compareNames, controlStepLabel, describeVariable,
+  expressionLabel, labelPlace, parseSymbolExpression, readConstraintTrace,
+  readableRange, shortenPaths, shortenStatement, symbolLabel, symbolType
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -1081,5 +1081,190 @@ describe("variables of calling frames", () => {
           : node)
     });
     expect(trace.symbolNames(2).get("reg_$0<int n>")).toBe("n");
+  });
+});
+
+// What a path requires: an entry input, narrowed by a step in `g`, the
+// result of a call assumed on an arrow with no event, memory a call replaced
+// and a part of it, an expression of the entry input, memory of an entry
+// input the analyzer cannot name, memory behind a call's result, and a value
+// of an unknown reason.
+describe("what a path requires", () => {
+  const ENTRY = "reg_$0<int n>";
+  const CALL_RESULT = "conj_$1{int, LC1, S9, #1}";
+  const REPLACED = "conj_$2{int, LC1, S9, #2}";
+  const PART = "derived_$3{conj_$2{int, LC1, S9, #2}, Element{x,0 S64b,int}}";
+  const SUM = "(reg_$0<int n>) + 1";
+  const UNNAMED = "reg_$4<int Element{SymRegion{reg_$7<int * p>},1 S64b,int}>";
+  const BEHIND_CALL =
+    "reg_$5<int Field{SymRegion{conj_$1{int, LC1, S9, #1}}}>";
+  const UNKNOWN = "conj_$6{int, LC1, S9, #3}";
+  const MIXED = "(reg_$0<int n>) + (conj_$1{int, LC1, S9, #1})";
+
+  const requirementsTrace = (symbols = true) => {
+    const strings = [];
+    const s = text => {
+      const _at = strings.indexOf(text);
+      return _at < 0 ? strings.push(text) - 1 : _at;
+    };
+    const origin = reason => ({
+      reason, function: s("f"), statement: s("get()"), frame: 0
+    });
+    return {
+      version: 2,
+      strings,
+      steps: [
+        { kind: "event", index: 0, order: 1, exploded_node: 0 },
+        { kind: "control", index: 0, order: 2, exploded_node: 1 },
+        { kind: "event", index: 1, order: 3, exploded_node: 2 },
+        { kind: "event", index: 2, order: 4, exploded_node: 3 }
+      ],
+      exploded_nodes: [
+        { frame: 0,
+          symbol_ranges: { insert: [ [ 0, s(ENTRY), s("{ [0, 9] }") ] ] },
+          variables: { insert: [ [ 0, s("n"), s(ENTRY), s("symbol") ] ] },
+          path_condition: { insert: [ [ 0, s(ENTRY), s("{ [0, 9] }") ] ] } },
+        { frame: 0,
+          path_condition: {
+            insert: [ [ 1, s(CALL_RESULT), s("{ [3, 3] }") ] ]
+          } },
+        { frame: 1,
+          path_condition: {
+            replace: [ [ 0, s(ENTRY), s("{ [1, 9] }") ] ],
+            insert: [ [ 2, s(REPLACED), s("{ [0, 0] }") ] ]
+          } },
+        { frame: 1,
+          path_condition: { insert: [
+            [ 3, s(PART), s("{ [1, 1] }") ], [ 4, s(SUM), s("{ [2, 9] }") ],
+            [ 5, s(UNNAMED), s("{ [5, 5] }") ],
+            [ 6, s(BEHIND_CALL), s("{ [6, 6] }") ],
+            [ 7, s(UNKNOWN), s("{ [7, 7] }") ],
+            [ 8, s(MIXED), s("{ [8, 8] }") ] ] } }
+      ],
+      stack_frames: [ { function: "f" }, { function: "g", parent: 0 } ],
+      ...(symbols ? { symbols: [
+        { symbol: s(ENTRY), kind: "region_value", name: s("n") },
+        { symbol: s(UNNAMED), kind: "region_value" },
+        { symbol: s(BEHIND_CALL), kind: "region_value" },
+        { symbol: s(CALL_RESULT), kind: "conjured",
+          origin: origin("call_result") },
+        { symbol: s(REPLACED), kind: "conjured",
+          origin: origin("invalidation") },
+        { symbol: s(UNKNOWN), kind: "conjured", origin: origin("other") },
+        { symbol: s(PART), kind: "derived", parent: s(REPLACED) }
+      ] } : {})
+    };
+  };
+
+  const shown = requirements => requirements.groups.map(group => [
+    group.key, group.rows.map(row => [
+      row.symbol, row.name, row.changedAt.order, row.changedAt.function,
+      row.changedAt.silent, row.changedAt.exact
+    ])
+  ]);
+
+  test("rows are grouped by origin, entry inputs first", () => {
+    const requirements = new ConstraintTrace(requirementsTrace())
+      .requirements();
+    expect(requirements.grouped).toBe(true);
+    expect(shown(requirements)).toEqual([
+      [ "entry", [
+        // Narrowed by the step in g, the last to change it.
+        [ ENTRY, "n", 3, "g", false, true ],
+        // The expression's atoms agree, and the unnamed memory is the entry's.
+        [ SUM, undefined, 4, "g", false, true ],
+        [ UNNAMED, undefined, 4, "g", false, true ]
+      ] ],
+      [ "call", [ [ CALL_RESULT, undefined, 2, "f", true, true ] ] ],
+      [ "replaced", [
+        [ REPLACED, undefined, 3, "g", false, true ],
+        [ PART, undefined, 4, "g", false, true ]
+      ] ],
+      // Memory behind a call's result, an unknown reason and an expression
+      // of atoms of two origins.
+      [ "other", [
+        [ MIXED, undefined, 4, "g", false, true ],
+        [ UNKNOWN, undefined, 4, "g", false, true ],
+        [ BEHIND_CALL, undefined, 4, "g", false, true ]
+      ] ]
+    ]);
+  });
+
+  test("a symbol the analyzer no longer knows is dropped", () => {
+    const rows = new ConstraintTrace(requirementsTrace()).requirements()
+      .groups.flatMap(group => group.rows);
+    expect(rows.filter(row => !row.dropped).map(row => row.symbol))
+      .toEqual([ ENTRY ]);
+  });
+
+  test("a row's step is the first to show it as it ends", () => {
+    const trace = new ConstraintTrace(requirementsTrace());
+    const [ entry ] = trace.requirements().groups[0].rows;
+    // The path condition at the node of step 1 had the older range, so the
+    // link goes to the step in g, and a silent step is told as such.
+    expect(entry.changedAt).toEqual(
+      { order: 3, function: "g", silent: false, exact: true });
+    expect(trace.silentChanges().map(change => change.order)).toEqual([ 2 ]);
+  });
+
+  test("an assumption between two steps is shown at the next one", () => {
+    // A node of its own, with no step, assumes a symbol the table lacks.
+    const base = requirementsTrace();
+    const nodes = [ ...base.exploded_nodes ];
+    nodes.splice(3, 0, { frame: 1, path_condition: {
+      insert: [ [ 3, base.strings.length, base.strings.length + 1 ] ] } });
+    const trace = new ConstraintTrace({
+      ...base,
+      strings: [ ...base.strings, "reg_$9<int q>", "{ [4, 4] }" ],
+      exploded_nodes: nodes,
+      steps: base.steps.map(step => step.order === 4
+        ? { ...step, exploded_node: 4 } : step)
+    });
+    const q = trace.requirements().groups.flatMap(group => group.rows)
+      .find(row => row.symbol === "reg_$9<int q>");
+    expect(q.changedAt).toEqual(
+      { order: 4, function: "g", silent: false, exact: false });
+    expect(trace.requirements().groups.at(-1).key).toBe("other");
+  });
+
+  test("the first step's entries changed at the first step", () => {
+    const trace = new ConstraintTrace({
+      ...requirementsTrace(),
+      exploded_nodes: requirementsTrace().exploded_nodes.slice(0, 1),
+      steps: [ requirementsTrace().steps[0] ]
+    });
+    expect(trace.requirements().groups[0].rows[0].changedAt)
+      .toEqual({ order: 1, function: "f", silent: false, exact: true });
+  });
+
+  test("a trace without the symbol table is one list", () => {
+    const requirements = new ConstraintTrace(requirementsTrace(false))
+      .requirements();
+    expect(requirements.grouped).toBe(false);
+    expect(requirements.groups).toHaveLength(1);
+    expect(requirements.groups[0].key).toBe(null);
+    expect(requirements.groups[0].rows.map(row => row.symbol)).toEqual(
+      [ ENTRY, ...[ SUM, UNNAMED, BEHIND_CALL, MIXED, UNKNOWN, PART,
+        REPLACED, CALL_RESULT ].sort(compareNames) ]);
+  });
+
+  test("a path with no path condition requires nothing", () => {
+    const empty = requirementsTrace();
+    empty.exploded_nodes = [ { frame: 0 } ];
+    empty.steps = [ empty.steps[0] ];
+    const requirements = new ConstraintTrace(empty).requirements();
+    expect(requirements.groups).toEqual([]);
+  });
+
+  test("the list is built once", () => {
+    const trace = new ConstraintTrace(requirementsTrace());
+    expect(trace.requirements()).toBe(trace.requirements());
+  });
+});
+
+describe("the name of a control step", () => {
+  test("is told by the event before it", () => {
+    expect(controlStepLabel(2)).toBe("Edge after Step 2");
+    expect(controlStepLabel(0)).toBe("Edge before Step 1");
   });
 });
