@@ -947,7 +947,29 @@ function selectEventStep(stepId) {
   selectedControlIndex.value = null;
   selectedStepId.value = stepId;
   highlightReportStep(stepId);
+  revealBubble(stepId);
   emit("select-step", stepId);
+}
+
+// Scrolling to a step centers its line, but one line can carry hundreds of
+// bubbles, such as the "Entered call" of every call of a function in a loop,
+// and the selected one can then be far below the view. Waits for the editor
+// to apply that scroll and render the line's bubbles.
+function revealBubble(stepId) {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (selectedStepId.value !== stepId) return;
+
+    const _bubble = editorContainer.value
+      ?.querySelector(`.report-step-msg[step-id="${stepId}"]`);
+    const _view = _bubble?.closest(".editor");
+    if (!_view) return;
+
+    const _shown = _view.getBoundingClientRect();
+    const _rect = _bubble.getBoundingClientRect();
+    if (_rect.top < _shown.top || _rect.bottom > _shown.bottom) {
+      _bubble.scrollIntoView({ block: "center" });
+    }
+  }));
 }
 
 function clearStepSelection() {
