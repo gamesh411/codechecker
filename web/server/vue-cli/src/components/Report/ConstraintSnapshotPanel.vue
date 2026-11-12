@@ -229,7 +229,7 @@ import { useDisplay } from "vuetify";
 
 import { useScrollShadows } from "@/composables/useScrollShadows";
 
-import { compareNames, shortenPaths } from "./ConstraintTrace";
+import { compareNames, readableRange, shortenPaths } from "./ConstraintTrace";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
@@ -273,12 +273,15 @@ const POINTER_WORDS = new Map([
 ]);
 
 // One span per interval, so a long range set wraps only between intervals.
-// A pointer's null and non-null ranges read as words; the title keeps the
-// analyzer's range.
+// A pointer's null and non-null ranges, and an integer range that readableRange
+// can say in words, read as words; the title keeps the analyzer's range.
 function RangeText({ range, symbol }) {
   const _word = symbol && POINTER_SYMBOL.test(symbol)
     ? POINTER_WORDS.get(range) : undefined;
   if (_word) return h("span", { title: range }, _word);
+
+  const _readable = readableRange(range, symbol);
+  if (_readable) return h("span", { title: range }, _readable);
 
   const _intervals = range.match(/\[[^\]]*\]/g);
   if (!_intervals) return range;

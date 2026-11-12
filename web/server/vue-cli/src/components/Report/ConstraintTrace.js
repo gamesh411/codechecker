@@ -269,6 +269,99 @@ export function shortenPaths(text) {
     path => path.slice(path.lastIndexOf("/") + 1));
 }
 
+// The integer type at the start of a symbol dump, as in reg_$1<int a> or
+// conj_$2{unsigned long, ...}, as { min, max }, or null when its width or
+// signedness cannot be told for certain. A typedef, an enum, a pointer, a
+// float or a plain char (signed on some targets only) is not told, and
+// neither is a symbol that is an expression, which does not start with its
+// own name.
+const SYMBOL_TYPE = /^[a-z]+_\$\d+([<{])([^,{}<>]*)/;
+const TYPE_WORDS = new Set([
+  "unsigned", "signed", "char", "short", "int", "long", "__int128",
+  "const", "volatile"
+]);
+
+function integerType(symbol) {
+  const _match = SYMBOL_TYPE.exec(symbol ?? "");
+  if (!_match) return null;
+
+  const _words = _match[2].trim().split(/\s+/);
+  const _type = [];
+  while (_words.length && TYPE_WORDS.has(_words[0])) _type.push(_words.shift());
+  // The dump of a region symbol names the region after its type. A conjured
+  // symbol has nothing after the type.
+  const _named = _match[1] === "<" && _words.length === 1 &&
+    /^[A-Za-z_]\w*$/.test(_words[0]);
+  if (!_type.length || _words.length && !_named) return null;
+
+  const _count = word => _type.filter(_word => _word === word).length;
+  const _unsigned = _count("unsigned") > 0;
+  if (_unsigned && _count("signed")) return null;
+  // A plain char has the signedness of the target.
+  if (_count("char") && !_unsigned && !_count("signed")) return null;
+
+  let _bits;
+  if (_count("__int128")) _bits = 128;
+  else if (_count("char")) _bits = 8;
+  else if (_count("short")) _bits = 16;
+  // A long is 32 bits on some targets and 64 on others. readableRange takes
+  // 64, which is certain only when a range reaches the 64-bit extreme, as a
+  // 32-bit long cannot.
+  else if (_count("long")) _bits = 64;
+  else _bits = 32;
+
+  const _half = 1n << BigInt(_bits - 1);
+  return _unsigned
+    ? { min: 0n, max: 2n * _half - 1n }
+    : { min: -_half, max: _half - 1n };
+}
+
+const RANGE_SET = /^\{\s*(?:\[-?\d+, -?\d+\]\s*)+\}$/;
+
+// A range of integers as a person would say it, or null to show the
+// analyzer's own range. `symbol` is the dump the range is for, which gives the
+// type. A single value needs no type, and the other forms are about the
+// type's extremes, so they need it.
+export function readableRange(range, symbol) {
+  if (!RANGE_SET.test(range)) return null;
+
+  const _intervals = [ ...range.matchAll(/\[(-?\d+), (-?\d+)\]/g) ]
+    .map(match => [ BigInt(match[1]), BigInt(match[2]) ]);
+  if (_intervals.some(([ low, high ]) => low > high) ||
+      _intervals.some(([ low ], i) =>
+        i && _intervals[i - 1][1] >= low)) return null;
+
+  const [ _first ] = _intervals;
+  const _last = _intervals[_intervals.length - 1];
+  if (_intervals.length === 1 && _first[0] === _first[1]) {
+    return String(_first[0]);
+  }
+
+  const _type = integerType(symbol);
+  if (!_type || _first[0] < _type.min || _last[1] > _type.max) return null;
+
+  // The values of the type that the range leaves out.
+  const _gaps = _intervals.map(([ low ], i) =>
+    low - (i ? _intervals[i - 1][1] + 1n : _type.min));
+  _gaps.push(_type.max - _last[1]);
+  const _excluded = _gaps.reduce((sum, gap) => sum + gap, 0n);
+  if (_excluded === 1n) {
+    const _gap = _gaps.indexOf(1n);
+    if (_gap === 0) return `not ${_type.min}`;
+    if (_gap === _intervals.length) return `not ${_type.max}`;
+    return `not ${_intervals[_gap - 1][1] + 1n}`;
+  }
+
+  if (_intervals.length !== 1) return null;
+  if (_first[0] === _type.min && _first[1] < _type.max) {
+    return `at most ${_first[1]}`;
+  }
+  if (_first[1] === _type.max && _first[0] > _type.min) {
+    return `at least ${_first[0]}`;
+  }
+  return null;
+}
+
 // A CFG with blocks and elements as objects, as the graph view reads them.
 function expandCfg(cfg) {
   const _edges = cfg.path_edges ?? [];

@@ -24,7 +24,11 @@
             <span class="picker-label">{{ step.label }}</span>
             <span class="picker-message">{{ step.message }}</span>
           </div>
-          <div v-if="step.values" class="picker-values">
+          <div
+            v-if="step.values"
+            class="picker-values"
+            :title="step.valuesTitle"
+          >
             {{ step.values }}
           </div>
         </v-list-item>

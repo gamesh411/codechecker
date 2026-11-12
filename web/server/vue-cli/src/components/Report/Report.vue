@@ -425,7 +425,8 @@ import ConstraintSnapshotPanel from "./ConstraintSnapshotPanel";
 import {
   ConstraintTrace,
   compareNames,
-  readConstraintTrace
+  readConstraintTrace,
+  readableRange
 } from "./ConstraintTrace";
 import ControlFlowGraphView from "./ControlFlowGraphView";
 import ExplodedGraphView from "./ExplodedGraphView";
@@ -1141,22 +1142,31 @@ function describePickerSteps(steps) {
     ])));
   const _names = [ ...new Set(_values.flatMap(values => [ ...values.keys() ])) ]
     .filter(name =>
-      new Set(_values.map(values => values.get(name))).size > 1)
+      new Set(_values.map(values => values.get(name)?.text)).size > 1)
     .sort(compareNames);
 
-  return steps.map((step, index) => ({
-    ...step,
-    values: _names
-      .filter(name => _values[index].has(name))
-      .map(name => `${name} = ${_values[index].get(name)}`)
-      .join(", ")
-  }));
+  return steps.map((step, index) => {
+    const _shown = _names.filter(name => _values[index].has(name));
+    const _line = key => _shown
+      .map(name => `${name} = ${_values[index].get(name)[key]}`).join(", ");
+    return {
+      ...step,
+      values: _line("text"),
+      // The analyzer's own ranges, for a hover.
+      valuesTitle: _line("raw")
+    };
+  });
 }
 
+// What a variable is shown as in the picker, and what the analyzer has for it.
 function describeVariable(variable, snapshot) {
-  if (variable.kind !== "symbol") return variable.value;
-  return (snapshot.symbol_ranges ?? []).find(range =>
-    range.symbol === variable.value)?.range ?? "(symbolic)";
+  if (variable.kind !== "symbol") {
+    return { text: variable.value, raw: variable.value };
+  }
+  const _range = (snapshot.symbol_ranges ?? []).find(range =>
+    range.symbol === variable.value)?.range;
+  if (!_range) return { text: "(symbolic)", raw: "(symbolic)" };
+  return { text: readableRange(_range, variable.value) ?? _range, raw: _range };
 }
 
 let lineHintTimer = null;

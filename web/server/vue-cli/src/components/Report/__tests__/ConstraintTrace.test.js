@@ -1,5 +1,6 @@
 import {
-  ConstraintTrace, compareNames, readConstraintTrace, shortenPaths
+  ConstraintTrace, compareNames, readConstraintTrace, readableRange,
+  shortenPaths
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -131,5 +132,81 @@ describe("shortenPaths", () => {
   it("leaves a division and an empty text alone", () => {
     expect(shortenPaths("a / b")).toBe("a / b");
     expect(shortenPaths(undefined)).toBe("");
+  });
+});
+
+describe("readableRange", () => {
+  const INT = "reg_$1<int a>";
+  const UINT = "reg_$2<unsigned int n>";
+
+  it("reads a range that excludes one value as not N", () => {
+    expect(readableRange("{ [-2147483648, -1] [1, 2147483647] }", INT))
+      .toBe("not 0");
+    expect(readableRange("{ [0, 4] [6, 4294967295] }", UINT)).toBe("not 5");
+    expect(readableRange("{ [1, 4294967295] }", UINT)).toBe("not 0");
+    expect(readableRange("{ [0, 65534] }", "reg_$3<unsigned short s>"))
+      .toBe("not 65535");
+  });
+
+  it("reads a single value as the value, whatever the type", () => {
+    expect(readableRange("{ [1, 1] }", INT)).toBe("1");
+    expect(readableRange("{ [-5, -5] }", "reg_$4<size_t n>")).toBe("-5");
+    expect(readableRange("{ [7, 7] }", undefined)).toBe("7");
+  });
+
+  it("reads a range up to the type's maximum as at least N", () => {
+    expect(readableRange("{ [5, 2147483647] }", INT)).toBe("at least 5");
+    expect(readableRange("{ [-3, 127] }", "reg_$5<signed char c>"))
+      .toBe("at least -3");
+    expect(readableRange("{ [10, 65535] }", "reg_$6<unsigned short s>"))
+      .toBe("at least 10");
+    expect(readableRange("{ [2, 18446744073709551615] }",
+      "reg_$7<unsigned long long n>")).toBe("at least 2");
+    expect(readableRange("{ [2, 9223372036854775807] }",
+      "conj_$8{long, LC1, S1, #1}")).toBe("at least 2");
+  });
+
+  it("reads a range from the type's minimum as at most N", () => {
+    expect(readableRange("{ [-2147483648, 9] }", INT)).toBe("at most 9");
+    expect(readableRange("{ [-32768, -1] }", "reg_$9<short s>"))
+      .toBe("at most -1");
+    expect(readableRange("{ [0, 100] }", "reg_$10<unsigned char c>"))
+      .toBe("at most 100");
+    expect(readableRange(
+      "{ [-170141183460469231731687303715884105728, 0] }",
+      "reg_$11<__int128 w>")).toBe("at most 0");
+  });
+
+  it("reads the type from a const-qualified or conjured dump", () => {
+    expect(readableRange("{ [5, 2147483647] }", "reg_$1<const int a>"))
+      .toBe("at least 5");
+    expect(readableRange("{ [5, 2147483647] }", "conj_$2{int, LC1, S2, #1}"))
+      .toBe("at least 5");
+  });
+
+  it("leaves a range alone when the type cannot be told", () => {
+    const _range = "{ [5, 2147483647] }";
+    // A typedef, an enum, a plain char, a pointer, an expression and no symbol.
+    [ "reg_$1<size_t n>", "reg_$1<enum Color c>", "reg_$1<char c>",
+      "reg_$1<int * p>", "(reg_$1<int a>) + 1", "(long) (reg_$1<int a>)",
+      "reg_$1<float f>", undefined ].forEach(symbol =>
+      expect(readableRange(_range, symbol)).toBe(null));
+  });
+
+  it("leaves a long alone unless its width is certain from the range", () => {
+    // 2^31 - 1 is the maximum of a 32-bit long as well as an int.
+    expect(readableRange("{ [5, 2147483647] }", "reg_$1<long l>"))
+      .toBe(null);
+    expect(readableRange("{ [5, 9223372036854775807] }", "reg_$1<long l>"))
+      .toBe("at least 5");
+  });
+
+  it("leaves any other range alone", () => {
+    [ "{ [3, 9] }", "{ [-2147483648, 2147483647] }",
+      "{ [-2147483648, 0] [5, 9] }", "{ [0, 0] [2, 2] [4, 2147483647] }",
+      "{ [1, 4294967295] }", "{ }", "nonsense" ].forEach(range =>
+      expect(readableRange(range, INT)).toBe(null));
+    // A range outside the type means the type was not read right.
+    expect(readableRange("{ [1, 4294967295] }", INT)).toBe(null);
   });
 });
