@@ -21,6 +21,11 @@ def _identity(value):
     return value
 
 
+def _sleep_then_return(seconds, value):
+    time.sleep(seconds)
+    return value
+
+
 def _exit_slowly():
     # Widens the window in which a worker is shutting down, the one in which
     # a SIGTERM escapes into the caller's stack.
@@ -53,3 +58,12 @@ class PoolTest(unittest.TestCase):
         for worker in workers:
             worker.join()
             self.assertEqual(worker.exitcode, 0)
+
+    def test_map_yields_each_result_once_it_is_ready(self):
+        """ Results come in order without waiting for the slowest task. """
+        with Pool(max_workers=2) as executor:
+            start = time.monotonic()
+            results = executor.map(_sleep_then_return, [0.0, 3.0], [1, 2])
+            self.assertEqual(next(results), 1)
+            self.assertLess(time.monotonic() - start, 2.0)
+            self.assertEqual(list(results), [2])

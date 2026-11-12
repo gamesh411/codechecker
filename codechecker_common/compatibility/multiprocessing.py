@@ -22,6 +22,14 @@ if sys.platform in ["darwin", "win32"]:
     from multiprocess.managers import SyncManager  # type: ignore
     from multiprocess.pool import Pool as _Pool  # type: ignore
 
+    class _Starred:
+        """ Calls the function with one tuple of arguments spread out. """
+        def __init__(self, func):
+            self.func = func
+
+        def __call__(self, args):
+            return self.func(*args)
+
     # The base's __reduce__ raises on purpose: pools cannot be pickled.
     class Pool(_Pool):  # type: ignore # pylint: disable=abstract-method
         """
@@ -32,7 +40,11 @@ if sys.platform in ["darwin", "win32"]:
             super().__init__(processes=max_workers, **kwargs)
 
         def map(self, func, *iterables, **kwargs):  # type: ignore
-            return super().starmap(func, zip(*iterables), **kwargs)
+            # Results come in order as they are ready, as from
+            # ProcessPoolExecutor.map, rather than all at once: a caller that
+            # handles one at a time, as 'store' does with parsed report
+            # files, then never holds them all.
+            return super().imap(_Starred(func), zip(*iterables), **kwargs)
 
         def __exit__(self, exc_type, exc_val, exc_tb):
             # Waits like ProcessPoolExecutor instead of terminating. A forked
