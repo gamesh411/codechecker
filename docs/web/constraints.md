@@ -95,6 +95,13 @@ It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
 Rows are named by the variable that held the symbol when there was one.
 
+A symbol the analyzer made for the result of a call reads as that result, such as "result of `read_len()` line 8", wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
+The analyzer evaluated that call without seeing inside it.
+Any other symbol the analyzer made up reads "origin not recorded" with the line of the statement it was made for, because the analyzer did not record why it made it, for example when a checker models the call, as for `malloc`.
+When the value was made in another function than the one of the selected step, the function follows, such as "in `next_len`".
+Hovering over the label shows the analyzer's own symbol, and clicking the line selects the step nearest to that statement.
+Reports analyzed before Clang recorded this show the symbols as before.
+
 The rows that changed at the selected step are highlighted, in **Known here** and in the accumulated path condition.
 A row has a coloured bar on its left and a tag beside its range: **new** for a symbol that had no entry at the step before, and **narrowed** for one whose range is narrower than at the step before.
 The step before is the closest earlier step that shows a different snapshot, so the edge into a statement and the event on it show the same changes.
