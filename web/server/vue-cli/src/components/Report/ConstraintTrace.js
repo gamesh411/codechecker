@@ -78,6 +78,25 @@ function entryHash(field, entry) {
   return _hash >>> 0;
 }
 
+// The first index below `length` that `test` holds for, when it holds for
+// every index after one it holds for, or `length`.
+function firstIndex(length, test) {
+  let _low = 0;
+  let _high = length;
+  while (_low < _high) {
+    const _middle = (_low + _high) >> 1;
+    if (test(_middle)) _high = _middle;
+    else _low = _middle + 1;
+  }
+  return _low;
+}
+
+// What a variable goes by among the variables of every frame: two frames may
+// each have an `n`.
+export function variableKey(frame, name) {
+  return `${frame} ${name}`;
+}
+
 // What a control step is called, from the number of the last event before it
 // (0 for none): the Bug Path draws it as an arrow between lines, and a reader
 // follows it as the edge the analyzer took.
@@ -137,6 +156,8 @@ export class ConstraintTrace {
     this._changes = new Map();
     this._silentChanges = null;
     this._requirements = null;
+    this._changeLog = null;
+    this._reach = null;
     this._symbols = null;
     this._expressions = null;
     this._calls = null;
@@ -433,17 +454,35 @@ export class ConstraintTrace {
     return this._ordered;
   }
 
+  // The value of every variable in the raw lists of `node`, its own frame's
+  // and its callers', as a Map from variableKey to the value's string index.
+  variableValues(lists, node) {
+    const _frame = this.nodes[node].frame;
+    return new Map([
+      ...lists.variables.map(raw => [
+        variableKey(_frame, this.strings[raw[0]]), raw[1]
+      ]),
+      ...lists.caller_variables.map(raw => [
+        variableKey(raw[0], this.strings[raw[1]]), raw[2]
+      ])
+    ]);
+  }
+
   // What the step at `order` added or narrowed, as a Map from symbol to
   // "added" or "narrowed" for each of the symbol ranges and the path
-  // condition. It is the change from the last step before it that shows a
-  // different snapshot, since steps on one snapshot (an edge and the event
-  // there) are one choice to a reader. The first snapshot has nothing before
-  // it to be compared to.
+  // condition, and in `variables` a Map from variableKey to "added" for a
+  // variable first listed here and "changed" for one with another value. It
+  // is the change from the last step before it that shows a different
+  // snapshot, since steps on one snapshot (an edge and the event there) are
+  // one choice to a reader. The first snapshot has nothing before it to be
+  // compared to.
   changedAt(order) {
     let _changes = this._changes.get(order);
     if (_changes) return _changes;
 
-    _changes = { symbol_ranges: new Map(), path_condition: new Map() };
+    _changes = {
+      symbol_ranges: new Map(), path_condition: new Map(), variables: new Map()
+    };
     const _steps = this.orderedSteps();
     const _at = _steps.findIndex(step => step.order === order);
     let _before = _at - 1;
@@ -454,8 +493,18 @@ export class ConstraintTrace {
     if (_at >= 0 && _before >= 0) {
       const _now = this.rawLists(_steps[_at].exploded_node);
       const _then = this.rawLists(_steps[_before].exploded_node);
-      Object.keys(_changes).forEach(field =>
+      [ "symbol_ranges", "path_condition" ].forEach(field =>
         this.diffRanges(_changes[field], _then[field], _now[field]));
+      const _values =
+        this.variableValues(_then, _steps[_before].exploded_node);
+      this.variableValues(_now, _steps[_at].exploded_node)
+        .forEach((value, key) => {
+          if (!_values.has(key)) {
+            _changes.variables.set(key, "added");
+          } else if (_values.get(key) !== value) {
+            _changes.variables.set(key, "changed");
+          }
+        });
     }
     this._changes.set(order, _changes);
     return _changes;
@@ -516,19 +565,96 @@ export class ConstraintTrace {
     return _silent;
   }
 
+  // The nodes that set each value, in node order: { path_condition,
+  // variables }. An entry of the path condition is set by a node that lists
+  // it with a range it did not have, by symbol. A variable is set by a node
+  // that lists it with a value it did not have, by variableKey: a frame's
+  // variables move between `variables` and `caller_variables` as calls are
+  // entered and left, and a list may be written whole again, which set
+  // nothing.
+  changeLog() {
+    if (this._changeLog) return this._changeLog;
+
+    const _log = { path_condition: new Map(), variables: new Map() };
+    const _values = { path_condition: new Map(), variables: new Map() };
+    const _set = (list, key, value, node) => {
+      if (_values[list].get(key) === value) return;
+      _values[list].set(key, value);
+      if (!_log[list].has(key)) _log[list].set(key, []);
+      _log[list].get(key).push(node);
+    };
+    const _listed = delta =>
+      [ ...(delta?.replace ?? []), ...(delta?.insert ?? []) ];
+    this.nodes.forEach((node, index) => {
+      _listed(node.path_condition).forEach(operation =>
+        _set("path_condition", this.strings[operation[1]], operation[2],
+          index));
+      _listed(node.variables).forEach(operation =>
+        _set("variables",
+          variableKey(node.frame, this.strings[operation[1]]), operation[2],
+          index));
+      _listed(node.caller_variables).forEach(operation =>
+        _set("variables",
+          variableKey(operation[1], this.strings[operation[2]]), operation[3],
+          index));
+    });
+    this._changeLog = _log;
+    return _log;
+  }
+
+  // Where the values that the step at `order` shows were last set, as a
+  // function from a list of changeLog and a key in it to { node, order,
+  // function, silent, exact }, or to null for a value the trace has no change
+  // of. `node` is the last node up to the step's that set the value, and
+  // `order` the first Path Step that shows it so, with `silent` when the
+  // value is an entry of the path condition and that step is an assumption
+  // the Bug Path has no event for, and `exact` unless the analyzer did it at
+  // a node of its own, between the step before and that one.
+  lastSet(order) {
+    const _steps = this.orderedSteps();
+    const _at = _steps.find(step => step.order === order);
+    if (!_at) return () => null;
+
+    // The furthest node among the steps up to each, which only grows, so the
+    // first step that shows a node's change is found by search.
+    if (!this._reach) {
+      this._reach = [];
+      _steps.reduce((furthest, step) => {
+        this._reach.push(Math.max(furthest, step.exploded_node));
+        return this._reach[this._reach.length - 1];
+      }, -1);
+    }
+    const _reach = this._reach;
+    const _log = this.changeLog();
+    const _silent = new Set(this.silentChanges().map(change => change.order));
+    return (list, key) => {
+      const _nodes = _log[list].get(key) ?? [];
+      const _node = _nodes[firstIndex(_nodes.length,
+        index => _nodes[index] > _at.exploded_node) - 1];
+      if (_node === undefined) return null;
+
+      const _step = _steps[firstIndex(_steps.length - 1,
+        index => _reach[index] >= _node)];
+      const _frame = this.nodes[_step.exploded_node].frame;
+      return {
+        node: _node,
+        order: _step.order,
+        function: this.frames[_frame]?.function ?? null,
+        silent: list === "path_condition" && _silent.has(_step.order),
+        exact: _step.exploded_node === _node
+      };
+    };
+  }
+
   // What the Bug Path requires, from the path condition of its last Path
   // Step: { grouped, groups }, where each group is { key, title, hint, rows }.
   // A row is { key, symbol, range, name, dropped, changedAt }, with `name` the
   // variable that held the symbol, `dropped` when the analyzer no longer knows
-  // the symbol's range at the last step, and `changedAt` the first Path Step
-  // that shows the entry as it is at the end: { order, function, silent,
-  // exact }. That is where the analyzer last assumed it, with `silent` when
-  // the step is an assumption the Bug Path has no event for, and `exact`
-  // unless the analyzer did it at a node of its own, between the step before
-  // and this one. The groups are the origins the symbol table tells, in
-  // REQUIREMENT_GROUPS order, and only those with rows. A trace without the
-  // table is one group with no key, so `grouped` is false. Rows are named
-  // ones first, then by name or symbol.
+  // the symbol's range at the last step, and `changedAt` where the analyzer
+  // last assumed the entry, from lastSet at the last step. The groups are the
+  // origins the symbol table tells, in REQUIREMENT_GROUPS order, and only
+  // those with rows. A trace without the table is one group with no key, so
+  // `grouped` is false. Rows are named ones first, then by name or symbol.
   requirements() {
     if (this._requirements) return this._requirements;
 
@@ -539,41 +665,7 @@ export class ConstraintTrace {
       return this._requirements;
     }
 
-    // The last node that inserted or replaced each entry of the path
-    // condition, up to the node of the last step.
-    const _changeNode = new Map();
-    for (let _node = 0; _node <= _last.exploded_node; ++_node) {
-      const _delta = this.nodes[_node].path_condition;
-      [ ...(_delta?.replace ?? []), ...(_delta?.insert ?? []) ]
-        .forEach(operation =>
-          _changeNode.set(this.strings[operation[1]], _node));
-    }
-    // The furthest node among the steps up to each, which only grows, so the
-    // first step that shows a node's change is found by search.
-    const _reach = [];
-    _steps.reduce((furthest, step) => {
-      _reach.push(Math.max(furthest, step.exploded_node));
-      return _reach[_reach.length - 1];
-    }, -1);
-    const _silent = new Set(this.silentChanges().map(change => change.order));
-    const _changedAt = symbol => {
-      let _low = 0;
-      let _high = _steps.length - 1;
-      const _node = _changeNode.get(symbol) ?? 0;
-      while (_low < _high) {
-        const _middle = (_low + _high) >> 1;
-        if (_reach[_middle] >= _node) _high = _middle;
-        else _low = _middle + 1;
-      }
-      const _step = _steps[_low];
-      const _frame = this.nodes[_step.exploded_node].frame;
-      return {
-        order: _step.order,
-        function: this.frames[_frame]?.function ?? null,
-        silent: _silent.has(_step.order),
-        exact: _step.exploded_node === _node
-      };
-    };
+    const _lastSet = this.lastSet(_last.order);
 
     const _names = this.symbolNames(_last.order);
     const _grouped = this.symbols.size > 0;
@@ -589,7 +681,7 @@ export class ConstraintTrace {
         range: entry.range,
         name: _names.get(entry.symbol),
         dropped: !_known.has(entry.symbol),
-        changedAt: _changedAt(entry.symbol)
+        changedAt: _lastSet("path_condition", entry.symbol)
       });
     });
     const _rows = [ ..._groups.values() ].filter(group => group.rows.length);

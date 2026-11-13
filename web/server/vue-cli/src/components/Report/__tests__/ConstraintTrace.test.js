@@ -2,7 +2,7 @@ import {
   ConstraintTrace, compareNames, controlStepLabel, describeVariable,
   exampleValue, expressionLabel, labelPlace, parseSymbolExpression,
   readConstraintTrace, readableRange, shortenPaths, shortenStatement,
-  symbolLabel, symbolType
+  symbolLabel, symbolType, variableKey
 } from "@/components/Report/ConstraintTrace";
 
 // Three nodes: `a` narrowed to 0, then `b` assumed non-zero while `a` is
@@ -1256,7 +1256,7 @@ describe("what a path requires", () => {
     // The path condition at the node of step 1 had the older range, so the
     // link goes to the step in g, and a silent step is told as such.
     expect(entry.changedAt).toEqual(
-      { order: 3, function: "g", silent: false, exact: true });
+      { node: 2, order: 3, function: "g", silent: false, exact: true });
     expect(trace.silentChanges().map(change => change.order)).toEqual([ 2 ]);
   });
 
@@ -1276,7 +1276,7 @@ describe("what a path requires", () => {
     const q = trace.requirements().groups.flatMap(group => group.rows)
       .find(row => row.symbol === "reg_$9<int q>");
     expect(q.changedAt).toEqual(
-      { order: 4, function: "g", silent: false, exact: false });
+      { node: 3, order: 4, function: "g", silent: false, exact: false });
     expect(trace.requirements().groups.at(-1).key).toBe("other");
   });
 
@@ -1287,7 +1287,8 @@ describe("what a path requires", () => {
       steps: [ requirementsTrace().steps[0] ]
     });
     expect(trace.requirements().groups[0].rows[0].changedAt)
-      .toEqual({ order: 1, function: "f", silent: false, exact: true });
+      .toEqual(
+        { node: 0, order: 1, function: "f", silent: false, exact: true });
   });
 
   test("a trace without the symbol table is one list", () => {
@@ -1312,6 +1313,118 @@ describe("what a path requires", () => {
   test("the list is built once", () => {
     const trace = new ConstraintTrace(requirementsTrace());
     expect(trace.requirements()).toBe(trace.requirements());
+  });
+});
+
+// A call from `top` into `inner` and back: `n` is given, `shift` gets a
+// number after the call, and `n` is narrowed inside it and again after it.
+const SET_STRINGS = [
+  "n", "reg_$1<int n>", "symbol", "{ [0, 9] }", "{ [1, 9] }", "{ [5, 9] }",
+  "x", "7", "integer", "shift", "32", "8"
+];
+const SET = {
+  version: 2,
+  strings: SET_STRINGS,
+  steps: [
+    { kind: "event", index: 0, order: 1, exploded_node: 0 },
+    { kind: "event", index: 1, order: 2, exploded_node: 1 },
+    { kind: "event", index: 2, order: 3, exploded_node: 2 },
+    { kind: "control", index: 0, order: 4, exploded_node: 4 },
+    { kind: "event", index: 3, order: 5, exploded_node: 5 }
+  ],
+  exploded_nodes: [
+    { frame: 0,
+      variables: { insert: [ [ 0, 0, 1, 2 ] ] },
+      path_condition: { insert: [ [ 0, 1, 3 ] ] } },
+    // Entering the call moves `n` to the callers' list.
+    { frame: 1,
+      variables: { remove: [ 0 ], insert: [ [ 0, 6, 7, 8 ] ] },
+      caller_variables: { insert: [ [ 0, 0, 0, 1, 2 ] ] },
+      path_condition: { replace: [ [ 0, 1, 4 ] ] } },
+    // Leaving it moves `n` back, and `shift` is first listed.
+    { frame: 0,
+      variables: {
+        remove: [ 0 ], insert: [ [ 0, 0, 1, 2 ], [ 1, 9, 10, 8 ] ]
+      },
+      caller_variables: { remove: [ 0 ] } },
+    // A node with no step narrows `n`, and the list is written whole.
+    { frame: 0,
+      path_condition: { remove: [ 0 ], insert: [ [ 0, 1, 5 ] ] } },
+    { frame: 0,
+      path_condition: { remove: [ 0 ], insert: [ [ 0, 1, 5 ] ] } },
+    { frame: 0, variables: { replace: [ [ 1, 9, 11, 8 ] ] } }
+  ],
+  stack_frames: [ { function: "top" }, { function: "inner", parent: 0 } ]
+};
+
+describe("where a value was last set", () => {
+  const N = "reg_$1<int n>";
+
+  test("an entry of the path condition, as far as the step's node", () => {
+    const trace = new ConstraintTrace(SET);
+    expect(trace.lastSet(1)("path_condition", N)).toEqual(
+      { node: 0, order: 1, function: "top", silent: false, exact: true });
+    expect(trace.lastSet(3)("path_condition", N)).toEqual(
+      { node: 1, order: 2, function: "inner", silent: false, exact: true });
+  });
+
+  test("a node with no step sets it before the next step", () => {
+    const trace = new ConstraintTrace(SET);
+    // Node 4 lists the range node 3 gave, which sets nothing.
+    expect(trace.lastSet(5)("path_condition", N)).toEqual(
+      { node: 3, order: 4, function: "top", silent: true, exact: false });
+  });
+
+  test("a variable is set where it is first listed or gets a value", () => {
+    const trace = new ConstraintTrace(SET);
+    expect(trace.lastSet(3)("variables", variableKey(0, "shift")))
+      .toMatchObject({ node: 2, order: 3, exact: true });
+    expect(trace.lastSet(5)("variables", variableKey(0, "shift")))
+      .toMatchObject({ node: 5, order: 5 });
+    expect(trace.lastSet(2)("variables", variableKey(1, "x")))
+      .toMatchObject({ node: 1, order: 2, function: "inner" });
+  });
+
+  test("a variable set at a silent step was not assumed there", () => {
+    const trace = new ConstraintTrace({
+      ...SET,
+      exploded_nodes: SET.exploded_nodes.map((node, index) => index === 4
+        ? { ...node, variables: { insert: [ [ 2, 6, 7, 8 ] ] } } : node)
+    });
+    expect(trace.silentChanges().map(change => change.order)).toEqual([ 4 ]);
+    expect(trace.lastSet(5)("variables", variableKey(0, "x"))).toEqual(
+      { node: 4, order: 4, function: "top", silent: false, exact: true });
+  });
+
+  test("a call entered and left does not set the caller's variables", () => {
+    const trace = new ConstraintTrace(SET);
+    [ 1, 2, 3, 5 ].forEach(order =>
+      expect(trace.lastSet(order)("variables", variableKey(0, "n")))
+        .toMatchObject({ node: 0, order: 1 }));
+  });
+
+  test("a value not set yet, or never, has no place", () => {
+    const trace = new ConstraintTrace(SET);
+    expect(trace.lastSet(1)("variables", variableKey(0, "shift"))).toBeNull();
+    expect(trace.lastSet(5)("path_condition", "reg_$9<int q>")).toBeNull();
+    expect(trace.lastSet(99)("path_condition", N)).toBeNull();
+  });
+});
+
+describe("variables a step changed", () => {
+  const changed = (trace, order) =>
+    Object.fromEntries(trace.changedAt(order).variables);
+
+  test("a variable first listed is added, and not its frame's others", () => {
+    const trace = new ConstraintTrace(SET);
+    expect(changed(trace, 2)).toEqual({ [variableKey(1, "x")]: "added" });
+    expect(changed(trace, 3)).toEqual({ [variableKey(0, "shift")]: "added" });
+  });
+
+  test("a variable with another value is changed", () => {
+    const trace = new ConstraintTrace(SET);
+    expect(changed(trace, 5)).toEqual({ [variableKey(0, "shift")]: "changed" });
+    expect(changed(trace, 4)).toEqual({});
   });
 });
 

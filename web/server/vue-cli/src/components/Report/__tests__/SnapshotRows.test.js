@@ -1,4 +1,7 @@
-import { snapshotRows } from "@/components/Report/SnapshotRows";
+import { variableKey } from "@/components/Report/ConstraintTrace";
+import {
+  orderedRequirements, snapshotRows
+} from "@/components/Report/SnapshotRows";
 
 // Two results of one call: the analyzer made two symbols, and a label cannot
 // tell them apart.
@@ -83,7 +86,8 @@ describe("rows of the snapshot panel", () => {
   test("a step's changes reach its rows", () => {
     const changes = {
       symbol_ranges: new Map([ [ FIRST, "narrowed" ] ]),
-      path_condition: new Map([ [ SECOND, "added" ] ])
+      path_condition: new Map([ [ SECOND, "added" ] ]),
+      variables: new Map()
     };
     const rows = snapshotRows(stepWith({
       changes,
@@ -114,7 +118,8 @@ describe("rows of the snapshot panel", () => {
       ],
       changes: {
         symbol_ranges: new Map([ [ SECOND, "added" ] ]),
-        path_condition: new Map()
+        path_condition: new Map(),
+        variables: new Map()
       }
     }));
     expect(rows.current).toMatchObject(
@@ -173,5 +178,115 @@ describe("rows of the snapshot panel", () => {
     }));
     expect([ variables[0].range, variables[0].dropped ])
       .toEqual([ "{ [0, 0] }", false ]);
+  });
+
+  test("a variable's own change comes before its range's", () => {
+    const { variables } = snapshotRows(stepWith({
+      frame: 0,
+      variables: [
+        { name: "shift", value: "32", kind: "integer" },
+        { name: "a", value: FIRST, kind: "symbol" },
+        { name: "b", value: SECOND, kind: "symbol" }
+      ],
+      symbolRanges: [
+        { symbol: FIRST, range: "{ [0, 0] }" },
+        { symbol: SECOND, range: "{ [1, 1] }" }
+      ],
+      changes: {
+        symbol_ranges: new Map([ [ FIRST, "narrowed" ], [ SECOND, "added" ] ]),
+        path_condition: new Map(),
+        variables: new Map([
+          [ variableKey(0, "shift"), "added" ],
+          [ variableKey(0, "b"), "changed" ]
+        ])
+      }
+    }));
+    expect(variables.map(row => [ row.name, row.change ])).toEqual(
+      [ [ "a", "narrowed" ], [ "b", "changed" ], [ "shift", "added" ] ]);
+  });
+});
+
+describe("where the rows were last set", () => {
+  const at = node => ({ node, order: node + 1 });
+  // `a` got FIRST at node 1, which was narrowed at node 4; `shift` got its
+  // number at node 3; SECOND was assumed at node 2, and nothing tells of `k`.
+  const SET = {
+    variables: new Map([
+      [ variableKey(0, "a"), at(1) ], [ variableKey(0, "shift"), at(3) ],
+      [ variableKey(1, "a"), at(0) ]
+    ]),
+    path_condition: new Map([ [ FIRST, at(4) ], [ SECOND, at(2) ] ])
+  };
+  const step = stepWith({
+    frame: 0,
+    frames: [ { function: "top" }, { function: "inner", parent: 0 } ],
+    variables: [
+      { name: "a", value: FIRST, kind: "symbol" },
+      { name: "k", value: "1", kind: "integer" },
+      { name: "shift", value: "32", kind: "integer" }
+    ],
+    symbolRanges: [
+      { symbol: FIRST, range: "{ [0, 0] }" },
+      { symbol: SECOND, range: "{ [1, 1] }" }
+    ],
+    pathCondition: [
+      { symbol: FIRST, range: "{ [0, 0] }" },
+      { symbol: SECOND, range: "{ [1, 1] }" }
+    ],
+    lastSet: (list, key) => SET[list].get(key) ?? null
+  });
+
+  test("a variable by its value or what is assumed of it, the later", () => {
+    const { variables, others, accumulated } = snapshotRows(step);
+    expect(variables.map(row => [ row.name, row.changedAt?.node ])).toEqual(
+      [ [ "a", 4 ], [ "k", undefined ], [ "shift", 3 ] ]);
+    expect(others.map(row => row.changedAt.node)).toEqual([ 2 ]);
+    expect(accumulated.map(row => row.changedAt.node)).toEqual([ 4, 2 ]);
+  });
+
+  test("a frame's variable is not another frame's of the same name", () => {
+    const { callers } = snapshotRows({
+      ...step,
+      frame: 1,
+      variables: [],
+      callerVariables: [ { frame: 0, name: "a", value: "3", kind: "integer" } ]
+    });
+    expect(callers[0].rows[0].changedAt.node).toBe(1);
+  });
+
+  test("a step that tells no place has rows without one", () => {
+    const { variables, accumulated } =
+      snapshotRows({ ...step, lastSet: undefined });
+    expect(variables.map(row => row.changedAt)).toEqual([ null, null, null ]);
+    expect(accumulated.map(row => row.changedAt)).toEqual([ null, null ]);
+  });
+
+  test("the most recently set come first when asked, the rest by name", () => {
+    const { variables, accumulated } = snapshotRows(step, "recent");
+    expect(variables.map(row => row.name)).toEqual([ "a", "shift", "k" ]);
+    expect(accumulated.map(row => row.symbol)).toEqual([ FIRST, SECOND ]);
+
+    const late = { ...step, lastSet: (list, key) =>
+      key === SECOND ? at(9) : SET[list].get(key) ?? null };
+    expect(snapshotRows(late, "recent").accumulated.map(row => row.symbol))
+      .toEqual([ SECOND, FIRST ]);
+    expect(snapshotRows(late).accumulated.map(row => row.symbol))
+      .toEqual([ FIRST, SECOND ]);
+  });
+
+  test("the requires list is ordered group by group", () => {
+    const groups = [
+      { key: "entry", rows: [
+        { key: "x", changedAt: at(1) }, { key: "y", changedAt: at(5) },
+        { key: "z", changedAt: at(5) }
+      ] },
+      { key: "call", rows: [ { key: "r", changedAt: at(9) } ] }
+    ];
+    const keys = order => orderedRequirements(groups, order).map(group =>
+      [ group.key, group.rows.map(row => row.key) ]);
+    expect(keys("recent")).toEqual(
+      [ [ "entry", [ "y", "z", "x" ] ], [ "call", [ "r" ] ] ]);
+    expect(keys("name")).toEqual(
+      [ [ "entry", [ "x", "y", "z" ] ], [ "call", [ "r" ] ] ]);
   });
 });

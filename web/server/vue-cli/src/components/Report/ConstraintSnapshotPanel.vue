@@ -115,6 +115,20 @@
           {{ requiresCount }}
         </span>
       </button>
+      <button
+        type="button"
+        class="panel-view panel-order text-caption"
+        :class="{ 'panel-view-active': order === 'recent' }"
+        :aria-pressed="order === 'recent' ? 'true' : 'false'"
+        :title="order === 'recent'
+          ? 'The most recently set values come first. Click to order by name.'
+          : 'Values are in order of name. Click to show the most recently ' +
+            'set first.'"
+        @click="order = order === 'recent' ? 'name' : 'recent'"
+      >
+        <v-icon size="small" icon="mdi-sort-clock-descending-outline" />
+        Recent first
+      </button>
     </div>
 
     <v-divider v-if="requires" />
@@ -235,6 +249,7 @@
                         <symbol-text :symbol="row.symbol" :unless="row.name" />
                       </div>
                     </div>
+                    <last-set :at="row.changedAt" :relative="true" />
                   </div>
                 </template>
               </div>
@@ -257,6 +272,7 @@
                   <range-text :range="range.range" :symbol="range.symbol" />
                   <change-tag :change="range.change" />
                 </div>
+                <last-set :at="range.changedAt" :relative="true" />
               </div>
             </div>
 
@@ -331,7 +347,7 @@
             </div>
 
             <div
-              v-for="group in requires.groups"
+              v-for="group in requiresGroups"
               :key="group.key ?? 'all'"
               class="panel-group"
             >
@@ -392,23 +408,7 @@
                     </span>
                   </div>
                 </div>
-                <div class="panel-where text-caption text-medium-emphasis">
-                  {{ changedWords(row.changedAt) }}
-                  <button
-                    type="button"
-                    class="panel-label-link"
-                    :title="row.changedAt.silent
-                      ? SILENT_HINT : 'Select this Path Step'"
-                    @click="emit('select-step', row.changedAt.order)"
-                    v-text="stepLabel(row.changedAt.order)"
-                  />
-                  <template v-if="row.changedAt.function">
-                    {{ " in " }}
-                    <code class="panel-label-code"><dump-text
-                      :text="functionName(row.changedAt.function)"
-                    /></code>
-                  </template>
-                </div>
+                <last-set :at="row.changedAt" />
               </div>
             </div>
 
@@ -468,6 +468,7 @@
                   </span>
                 </div>
               </div>
+              <last-set :at="row.changedAt" :relative="true" />
             </div>
 
             <p
@@ -503,12 +504,15 @@ import { useScrollShadows } from "@/composables/useScrollShadows";
 import {
   exampleValue, functionName, labelPlace, readableRange, shortenPaths
 } from "./ConstraintTrace";
-import { EXPANDED_CALLERS, snapshotRows } from "./SnapshotRows";
+import {
+  EXPANDED_CALLERS, orderedRequirements, snapshotRows
+} from "./SnapshotRows";
 import WhatIfSection from "./WhatIfSection";
 
 const props = defineProps({
-  // Besides the lists: `changes` (what the step added or narrowed), `silent`
-  // (an assumption the Bug Path has no event for) and `labelOf`, which gives
+  // Besides the lists: `changes` (what the step added or narrowed), `lastSet`
+  // (where a value the step shows was last set, as the trace's), `silent` (an
+  // assumption the Bug Path has no event for) and `labelOf`, which gives
   // a symbol's label as symbolLabel or expressionLabel does, plus `order`,
   // the Path Step nearest to its origin, `otherFile`, whether that is in
   // another file, and `sameCall`, the other results of the same call as
@@ -545,12 +549,15 @@ const SILENT_HINT = "The analyzer assumed something here that the Bug Path " +
   "does not describe";
 const CHANGE_HINTS = {
   added: "First known at this step",
-  narrowed: "Narrower at this step than at the step before"
+  narrowed: "Narrower at this step than at the step before",
+  changed: "Another value at this step than at the step before"
 };
-const CHANGE_LABELS = { added: "new", narrowed: "narrowed" };
+const CHANGE_LABELS = {
+  added: "new", narrowed: "narrowed", changed: "changed"
+};
 
 function changeClass(change) {
-  return change ? [ "panel-row-changed", `panel-row-${change}` ] : [];
+  return change ? [ "panel-row-changed", `panel-row-change-${change}` ] : [];
 }
 
 function ChangeTag({ change }) {
@@ -686,7 +693,13 @@ function SymbolText({ symbol, unless, labels }) {
 }
 SymbolText.props = [ "symbol", "unless", "labels" ];
 
-const rows = computed(() => snapshotRows(props.step));
+// The order of the rows in every list of both halves: by name, or the most
+// recently set first. It stays chosen as the reader moves between steps.
+const order = ref("name");
+
+const rows = computed(() => snapshotRows(props.step, order.value));
+const requiresGroups = computed(() =>
+  orderedRequirements(props.requires?.groups ?? [], order.value));
 
 // Which half of the panel shows: this step's, or the whole path's, which is
 // the same at every step and so stays chosen as the reader moves between
@@ -710,17 +723,33 @@ function showView(key) {
 const requiresCount = computed(() => props.requires?.groups.reduce(
   (count, group) => count + group.rows.length, 0));
 
-// Where a requirement was last assumed: at the Path Step, or just before the
-// first one that shows it, when the analyzer did it between two steps.
-function changedWords(changedAt) {
-  if (changedAt.silent) return "assumed with no event at ";
-  return changedAt.exact ? "last set at " : "last set before ";
-}
+// Where a value was last set, under its row: at the Path Step, or just before
+// the first one that shows it, when the analyzer did it between two steps.
+// The step is a link, unless the row is `relative` to the selected step and
+// that is the step, and the function is told unless it is the selected
+// step's.
+function LastSet({ at, relative }) {
+  if (!at) return null;
 
-// A Path Step as the reader sees it, as a link names it.
-function stepLabel(order) {
-  return props.resolveStep(order)?.label ?? `Step ${order}`;
+  const _words = at.silent ? "assumed with no event at "
+    : at.exact ? "last set at " : "last set before ";
+  const _step = props.resolveStep(at.order);
+  const _here = relative && _step?.order === props.step.order;
+  const _parts = [ _words, _here ? "this step" : h("button", {
+    type: "button",
+    class: "panel-label-link",
+    title: at.silent ? SILENT_HINT : "Select this Path Step",
+    onClick: () => emit("select-step", at.order)
+  }, _step?.label ?? `Step ${at.order}`) ];
+  const _own = props.step.frames?.[props.step.frame]?.function;
+  if (at.function && !(relative && at.function === _own)) {
+    _parts.push(" in ", h("code", { class: "panel-label-code" },
+      h(DumpText, { text: functionName(at.function) })));
+  }
+  return h("div", { class: "panel-where text-caption text-medium-emphasis" },
+    _parts);
 }
+LastSet.props = [ "at", "relative" ];
 
 // The example of the path, from useWhatIf: kept by the report view, and
 // dropped there whenever the What-If list changes.
@@ -974,6 +1003,13 @@ function toggleFrame(section) {
     }
   }
 
+  // The order of the rows is not a third half: it keeps its width, at the
+  // end of the row.
+  .panel-order {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
   .panel-view-count {
     margin-left: 4px;
     font-weight: 400;
@@ -1068,7 +1104,7 @@ function toggleFrame(section) {
 
   // Where the analyzer assumed the row takes a line of its own under it, so
   // that a value for the row can sit beside its range.
-  .panel-requires-row > .panel-where {
+  .panel-row > .panel-where {
     flex: 1 0 100%;
     min-width: 0;
     line-height: 1.35;
@@ -1280,14 +1316,19 @@ function toggleFrame(section) {
     background-color: var(--change-fill);
   }
 
-  .panel-row-added {
+  .panel-row-change-added {
     --change-bar: #3d9a52;
     --change-fill: rgba(61, 154, 82, 0.1);
   }
 
-  .panel-row-narrowed {
+  .panel-row-change-narrowed {
     --change-bar: #3a74c4;
     --change-fill: rgba(58, 116, 196, 0.1);
+  }
+
+  .panel-row-change-changed {
+    --change-bar: #1f8a8a;
+    --change-fill: rgba(31, 138, 138, 0.1);
   }
 
   .panel-change {
@@ -1308,6 +1349,11 @@ function toggleFrame(section) {
   .panel-change-narrowed {
     color: #1f4e8c;
     background-color: #e0ebfa;
+  }
+
+  .panel-change-changed {
+    color: #0f5555;
+    background-color: #d9f0f0;
   }
 
   .panel-empty {

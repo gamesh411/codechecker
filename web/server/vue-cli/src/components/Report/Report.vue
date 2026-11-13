@@ -656,6 +656,7 @@ const selectedConstraintStep = computed(() => {
       whatIfNames: throughout =>
         constraintTrace.value.whatIfNames(_control.order, throughout),
       changes: constraintTrace.value.changedAt(_control.order),
+      lastSet: constraintTrace.value.lastSet(_control.order),
       silent: silentOrders.value.has(_control.order)
     };
   }
@@ -693,6 +694,7 @@ const selectedConstraintStep = computed(() => {
     whatIfNames: throughout =>
       constraintTrace.value.whatIfNames(_traceStep?.order ?? -1, throughout),
     changes: constraintTrace.value.changedAt(_traceStep?.order ?? -1),
+    lastSet: constraintTrace.value.lastSet(_traceStep?.order ?? -1),
     silent: false
   };
 });
