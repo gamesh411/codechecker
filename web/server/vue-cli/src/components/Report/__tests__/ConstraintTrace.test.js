@@ -1321,3 +1321,152 @@ describe("the name of a control step", () => {
     expect(controlStepLabel(0)).toBe("Edge before Step 1");
   });
 });
+
+// A trace from strings and nodes written as text, for the tests below: each
+// node's lists are given whole, and turned into deltas from the node before.
+function traceOf({ steps, nodes, symbols = [], frames }) {
+  const strings = [];
+  const s = text => {
+    const _at = strings.indexOf(text);
+    return _at < 0 ? strings.push(text) - 1 : _at;
+  };
+  const _whole = { variables: [], caller_variables: [], path_condition: [] };
+  const exploded_nodes = nodes.map(node => {
+    const _node = { frame: node.frame };
+    Object.keys(_whole).forEach(field => {
+      const _now = (node[field] ?? []).map(entry => entry.map(
+        (value, at) => field === "caller_variables" && at === 0
+          ? value : s(value)));
+      _node[field] = {
+        remove: _whole[field].map((_, index) => index),
+        insert: _now.map((entry, index) => [ index, ...entry ])
+      };
+      _whole[field] = _now;
+    });
+    return _node;
+  });
+  return new ConstraintTrace({
+    version: 2,
+    strings,
+    steps: steps.map((node, index) =>
+      ({ kind: "event", index, order: index + 1, exploded_node: node })),
+    exploded_nodes,
+    stack_frames: frames ?? [ { function: "f" } ],
+    symbols: symbols.map(({ symbol, origin, ...rest }) => ({
+      symbol: s(symbol),
+      ...Object.fromEntries(Object.entries(rest).map(([ key, value ]) =>
+        [ key, typeof value === "string" && key !== "kind" ? s(value) : value
+        ])),
+      ...(origin ? { origin: Object.fromEntries(Object.entries(origin)
+        .map(([ key, value ]) => [ key,
+          [ "statement", "callee", "function", "region" ].includes(key)
+            ? s(value) : value ])) } : {})
+    }))
+  });
+}
+
+describe("a variable names one value", () => {
+  const CALL = "conj_$1{unsigned int, LC1, S1, #1}";
+  const SIZE = "conj_$2{unsigned int, LC1, S2, #1}";
+  const QUOTIENT = "(conj_$1{unsigned int, LC1, S1, #1}) / 128U";
+
+  test("a copy does not take the name, nor keep it once reassigned", () => {
+    // unsigned NumElts = f(); unsigned SubNumElts = NumElts; ...
+    // SubNumElts = NumElts / 128;
+    const trace = traceOf({
+      steps: [ 0, 1, 2 ],
+      nodes: [
+        { frame: 0, variables: [ [ "NumElts", CALL, "symbol" ] ] },
+        { frame: 0, variables: [ [ "NumElts", CALL, "symbol" ],
+          [ "SubNumElts", CALL, "symbol" ], [ "Size", SIZE, "symbol" ] ] },
+        { frame: 0, variables: [ [ "SubNumElts", QUOTIENT, "symbol" ] ] }
+      ]
+    });
+    expect(trace.symbolNames(2).get(CALL)).toBe("NumElts");
+    expect(trace.symbolNames(3)).toEqual(new Map([
+      [ CALL, "NumElts" ], [ SIZE, "Size" ], [ QUOTIENT, "SubNumElts" ] ]));
+  });
+
+  test("of two variables that start holding a value at one step, an " +
+    "earlier one names it once the later is reassigned", () => {
+    const trace = traceOf({
+      steps: [ 0, 1 ],
+      nodes: [
+        { frame: 0, variables: [ [ "NumElts", CALL, "symbol" ],
+          [ "SubNumElts", CALL, "symbol" ] ] },
+        { frame: 0, variables: [ [ "SubNumElts", QUOTIENT, "symbol" ] ] }
+      ]
+    });
+    expect(trace.symbolNames(1).get(CALL)).toBe("SubNumElts");
+    expect(trace.symbolNames(2).get(CALL)).toBe("NumElts");
+    expect(trace.symbolNames(2).get(QUOTIENT)).toBe("SubNumElts");
+  });
+
+  test("a value whose only variable now holds another has no name", () => {
+    const trace = traceOf({
+      steps: [ 0, 1, 2 ],
+      nodes: [
+        { frame: 0, variables: [ [ "x", CALL, "symbol" ] ] },
+        { frame: 0, variables: [ [ "x", "0", "integer" ] ] },
+        { frame: 0, variables: [ [ "x", SIZE, "symbol" ] ] }
+      ]
+    });
+    expect(trace.symbolNames(1).get(CALL)).toBe("x");
+    expect(trace.symbolNames(2).has(CALL)).toBe(false);
+    expect(trace.symbolNames(3)).toEqual(new Map([ [ SIZE, "x" ] ]));
+  });
+
+  test("names of two functions' variables that are both gone say whose",
+    () => {
+      const trace = traceOf({
+        steps: [ 0, 1, 2 ],
+        nodes: [
+          { frame: 1, variables: [ [ "n", CALL, "symbol" ] ] },
+          { frame: 2, variables: [ [ "n", SIZE, "symbol" ] ] },
+          { frame: 0, variables: [] }
+        ],
+        frames: [ { function: "top" }, { function: "first", parent: 0 },
+          { function: "second", parent: 0 } ]
+      });
+      expect(trace.symbolNames(3)).toEqual(new Map([
+        [ CALL, "first::n" ], [ SIZE, "second::n" ] ]));
+    });
+});
+
+describe("the initial value of a variable", () => {
+  const SRC = "reg_$2<Type * SrcTy>";
+
+  test("goes by that variable once a copy's frame is gone", () => {
+    const trace = traceOf({
+      steps: [ 0, 1, 2 ],
+      nodes: [
+        { frame: 0, variables: [ [ "SrcTy", SRC, "symbol" ] ] },
+        { frame: 1, variables: [ [ "Val", SRC, "symbol" ] ] },
+        { frame: 2, variables: [] }
+      ],
+      symbols: [ { symbol: SRC, kind: "region_value", name: "SrcTy" } ],
+      frames: [ { function: "top" }, { function: "get", parent: 0 },
+        { function: "cost", parent: 0 } ]
+    });
+    expect(trace.symbolNames(2).get(SRC)).toBe("Val");
+    expect(trace.symbolNames(3).get(SRC)).toBe("SrcTy");
+  });
+});
+
+describe("a copy of an initial value", () => {
+  const SRC = "reg_$2<Type * SrcTy>";
+
+  test("does not name it while the variable itself is shown", () => {
+    const trace = traceOf({
+      steps: [ 0, 1 ],
+      nodes: [
+        { frame: 0, variables: [ [ "SrcTy", SRC, "symbol" ] ] },
+        { frame: 1, variables: [ [ "Val", SRC, "symbol" ] ],
+          caller_variables: [ [ 0, "SrcTy", SRC, "symbol" ] ] }
+      ],
+      symbols: [ { symbol: SRC, kind: "region_value", name: "SrcTy" } ],
+      frames: [ { function: "top" }, { function: "get", parent: 0 } ]
+    });
+    expect(trace.symbolNames(2).get(SRC)).toBe("SrcTy");
+  });
+});

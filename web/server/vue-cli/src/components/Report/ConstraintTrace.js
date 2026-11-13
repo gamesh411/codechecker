@@ -618,54 +618,102 @@ export class ConstraintTrace {
 
   // For each symbol, the name of a variable that holds it at the step at
   // `order`: one of the step's own frame, else one of the innermost caller
-  // that has one. A symbol no variable holds there keeps the name of the
-  // variable of the step's frame that last held it among the steps before, so
-  // that the path condition can name a symbol whose variable is gone by then.
-  // Of several variables of one frame holding it, the last by name wins.
+  // that has one. A symbol no variable holds there keeps the name of a
+  // variable that held it among the steps before, so that the path condition
+  // can name a symbol whose variable is gone by then, but only of a variable
+  // that held nothing else since: a variable names one value, the last it was
+  // seen to hold, so a value it held before it was assigned another, or a
+  // copy it held of a value another variable holds now, takes an earlier
+  // name of its own or none. The initial value of a variable goes by that
+  // variable, whose name is its label, rather than by one that only holds a
+  // copy of it, when the step shows both or neither.
   // A name from another frame than the step's reads `function::name`, as a
   // debugger writes it, when a variable of that name in another frame holds
-  // something else at the step, since `n` alone would then read as the wrong
-  // one.
+  // something else at the step, or another name the step gives is of that
+  // name in another frame, since `n` alone would then read as the wrong one.
   symbolNames(order) {
-    // By string index, as the raw lists have them: { name, frame }.
-    const _names = new Map();
+    // By string index, as the raw lists have them. The names each symbol
+    // had, latest last, as { name, frame }, and the value each variable,
+    // keyed by name and frame, held last.
+    const _history = new Map();
+    const _holder = new Map();
+    const _variable = (name, frame) => `${name} ${frame}`;
+    const _had = (symbol, name, frame) => {
+      if (!_history.has(symbol)) _history.set(symbol, []);
+      _history.get(symbol).push({ name, frame });
+    };
     for (const [ stepOrder, symbol, name, frame ] of this.symbolNameLog()) {
       if (stepOrder > order) break;
-      _names.set(symbol, { name, frame });
+      _had(symbol, name, frame);
+      _holder.set(_variable(name, frame), symbol);
     }
 
+    // What every variable the step shows holds, by name, and the variables
+    // that hold each symbol there, as { name, frame }.
+    const _shown = new Map();
+    const _holding = new Map();
+    const _holds = (symbol, name, frame) => {
+      if (!_holding.has(symbol)) _holding.set(symbol, []);
+      _holding.get(symbol).push({ name, frame });
+    };
     const _step = this.orderedSteps().find(step => step.order === order);
+    const _own = _step ? this.nodes[_step.exploded_node].frame : undefined;
     if (_step) {
       const _lists = this.rawLists(_step.exploded_node);
-      const _own = this.nodes[_step.exploded_node].frame;
       const _symbolKind = this.strings.indexOf("symbol");
-      // What every variable the step shows holds, by name.
-      const _shown = new Map();
       const _show = (name, value) => {
         if (!_shown.has(name)) _shown.set(name, new Set());
         _shown.get(name).add(value);
       };
       const _ownSymbols = new Set();
+      // The log has the own frame's symbols, but a variable that holds a
+      // number now holds no symbol it held before.
       _lists.variables.forEach(raw => {
         _show(raw[0], raw[1]);
-        if (raw[2] === _symbolKind) _ownSymbols.add(raw[1]);
+        _holder.set(_variable(raw[0], _own), raw[1]);
+        if (raw[2] === _symbolKind) {
+          _ownSymbols.add(raw[1]);
+          _holds(raw[1], raw[0], _own);
+        }
       });
-      _lists.caller_variables.forEach(raw => _show(raw[1], raw[2]));
-      // Outermost first, so that the innermost caller's name is the one kept.
+      // Outermost first, so that the innermost caller's name is the latest.
       for (let _i = _lists.caller_variables.length - 1; _i >= 0; --_i) {
         const [ frame, name, value, kind ] = _lists.caller_variables[_i];
-        if (kind === _symbolKind && !_ownSymbols.has(value)) {
-          _names.set(value, { name, frame });
-        }
+        _show(name, value);
+        _holder.set(_variable(name, frame), value);
+        if (kind !== _symbolKind) continue;
+        if (!_ownSymbols.has(value)) _had(value, name, frame);
+        _holds(value, name, frame);
       }
-      _names.forEach((named, symbol) => {
-        const _held = _shown.get(named.name);
-        const _clash = named.frame !== _own && _held &&
-          [ ..._held ].some(value => value !== symbol);
-        const _function = functionName(this.frames[named.frame]?.function);
-        named.qualified = _clash && _function ? _function : null;
-      });
     }
+
+    const _names = new Map();
+    _history.forEach((names, symbol) => {
+      const _owned = names.filter(({ name, frame }) =>
+        _holder.get(_variable(name, frame)) === symbol);
+      const _entry = this.symbols.get(this.strings[symbol]);
+      const _memory = _entry?.kind === "region_value" ? _entry.name : null;
+      const _holders = _holding.get(symbol) ?? [];
+      const _isShown = named => _holders.some(holder =>
+        holder.name === named.name && holder.frame === named.frame);
+      const _isOwn = ({ name }) => this.strings[name] === _memory;
+      const _named = _holders.find(_isOwn) ?? _owned.findLast(_isShown) ??
+        _owned.findLast(_isOwn) ?? _owned[_owned.length - 1];
+      if (_named) _names.set(symbol, { ..._named });
+    });
+    const _frames = new Map();
+    _names.forEach(({ name, frame }) => {
+      if (!_frames.has(name)) _frames.set(name, new Set());
+      _frames.get(name).add(frame);
+    });
+    _names.forEach((named, symbol) => {
+      const _held = _shown.get(named.name);
+      const _clash = named.frame !== _own &&
+        (_frames.get(named.name).size > 1 ||
+          _held && [ ..._held ].some(value => value !== symbol));
+      const _function = functionName(this.frames[named.frame]?.function);
+      named.qualified = _clash && _function ? _function : null;
+    });
 
     const _result = new Map();
     _names.forEach(({ name, qualified }, symbol) => {
@@ -679,7 +727,10 @@ export class ConstraintTrace {
   // The changes of the names the steps' own frames give, step by step in Bug
   // Path order, as [ order, symbol, name, frame ] with string indices, built
   // once: a step only changes them for the symbols its variables hold, and
-  // only where the name or its frame differs from what was held.
+  // only where no variable that already named the symbol in that frame still
+  // holds it. A copy does not take the name from the variable it was copied
+  // from. Variables that start holding a symbol at one step are all logged,
+  // the last by name last.
   symbolNameLog() {
     if (this._symbolNameLog) return this._symbolNameLog;
 
@@ -694,13 +745,17 @@ export class ConstraintTrace {
       const _frame = this.nodes[step.exploded_node].frame;
       const _held = new Map();
       this.rawLists(step.exploded_node).variables.forEach(raw => {
-        if (raw[2] === _symbolKind) _held.set(raw[1], raw[0]);
+        if (raw[2] !== _symbolKind) return;
+        if (!_held.has(raw[1])) _held.set(raw[1], []);
+        _held.get(raw[1]).push(raw[0]);
       });
-      _held.forEach((name, symbol) => {
+      _held.forEach((names, symbol) => {
         const _was = _current.get(symbol);
-        if (_was?.name === name && _was.frame === _frame) return;
-        _current.set(symbol, { name, frame: _frame });
-        _log.push([ step.order, symbol, name, _frame ]);
+        if (_was && _was.frame === _frame && names.includes(_was.name)) return;
+        _current.set(symbol,
+          { name: names[names.length - 1], frame: _frame });
+        names.forEach(name =>
+          _log.push([ step.order, symbol, name, _frame ]));
       });
     });
     this._symbolNameLog = _log;
