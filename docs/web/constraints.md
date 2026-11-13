@@ -81,6 +81,8 @@ Selecting a step opens the **Constraint Snapshot** panel beside the source code.
 Its title line gives the step, such as `Step 1 Assuming 'a' is not equal to 0`.
 The panel can be closed with the cross in its header.
 Two buttons under the title line choose what the panel shows: **This step**, described next, and **Whole path**, which is [This path requires](#this-path-requires).
+Beside them, **Recent first** changes the order of the rows in both: every list then starts with the rows that were set most recently, and rows set at the same place stay in order of name.
+Pressing it again orders the rows by name, and the choice stays as you move between steps.
 
 **Known here** is what the analyzer held at that step:
 
@@ -166,8 +168,14 @@ Reports analyzed before Clang recorded this show the symbols as before.
 
 The rows that changed at the selected step are highlighted, in **Known here** and in the accumulated path condition.
 A row has a coloured bar on its left and a tag beside its range: **new** for a symbol that had no entry at the step before, and **narrowed** for one whose range is narrower than at the step before.
+A variable is also **new** at the step that first lists it, such as `shift` at "'shift' initialized to 32", and **changed** when it holds another value than at the step before.
 The step before is the closest earlier step that shows a different snapshot, so the edge into a statement and the event on it show the same changes.
 Nothing is highlighted at the first step, which has no step before it.
+
+Under every row, a line says where its value was last set, counted up to the selected step: "last set at" and a link to that step, "last set at this step" for the selected one, and the function when it is another than the selected step's.
+For a variable it is the step where it got its value, or where the analyzer last assumed something of that value, whichever is later.
+The words are those of [This path requires](#this-path-requires), "last set before" and "assumed with no event at" included.
+Variables are told apart by name within a function, so of two variables of one name in two scopes, such as two loops' `i`, the second shows the place of the first while their values are equal.
 
 A step where the analyzer assumed something that the bug path has no event for is marked.
 It is a control flow step that adds to the path condition, with no event on its analyzer state, such as a branch the analyzer took without an event saying so.
