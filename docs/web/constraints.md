@@ -104,8 +104,11 @@ Two buttons under the title line choose what the panel shows: **This step**, des
 **Accumulated path condition** is everything the analyzer assumed from the start of the path up to that step, as a range for each symbol.
 It only narrows along a path.
 A symbol the analyzer no longer tracks at the selected step is still listed there, with a **dropped** tag.
-Rows are named by the variable that holds the symbol at the selected step, one of the step's own function first and of the innermost caller otherwise, and else by the variable of the step's function that last held it before.
-A name from another function is written `function::name`, as a debugger writes it, when a variable of that name in another function holds something else at that step, such as `top::n` inside a function whose own `n` is 7.
+Rows are named by the variable that holds the symbol at the selected step, one of the step's own function first and of the innermost caller otherwise, and else by a variable that held it at an earlier step.
+A variable names one value, the last it was seen to hold, so two rows share a name only when two calls of one function, such as a recursive one, each hold one.
+A value whose variable was assigned another one since, or that a variable only held as a copy, as `SubNumElts` held the result in `unsigned SubNumElts = NumElts;` before `SubNumElts = NumElts / 2;`, goes by an earlier variable that still names it, here `NumElts`, or by its label alone.
+The value a variable started with goes by that variable rather than by one that holds a copy of it, such as `SrcTy` rather than a callee's `Val`.
+A name from another function is written `function::name`, as a debugger writes it, when a variable of that name in another function holds something else at that step, or two rows would otherwise read the same name, such as `top::n` inside a function whose own `n` is 7.
 The function is written without `(anonymous namespace)::`, as in the heading of its group, and **What if** reads the same spelling.
 
 A symbol reads as what it stands for, wherever the panel would show the symbol: under a variable, in **Other symbols** and in the accumulated path condition.
@@ -113,6 +116,7 @@ A symbol reads as what it stands for, wherever the panel would show the symbol: 
 - The value memory held before the path changed it reads as the expression for that memory, such as `grid->rows`, `*q`, `line->cells[0].width` or `this->Current`.
   Memory the analyzer reads as another type than its pointer's reads through a cast, such as `((struct imsg *)data)->hdr`.
   The name comes from what Clang knows about the memory, so memory it cannot describe, such as a field of a call's result, keeps the analyzer's symbol.
+  Memory of a call the function made, such as the `this` of an inlined method whose object the analyzer lost track of, keeps the analyzer's symbol too: `this` or a parameter's name would read as the function's own, and two calls' would read as one value.
 - The size of memory the analyzer does not know reads as, for example, "size of `*gd->linedata`".
 
 A symbol the analyzer made up reads as where it came from:
@@ -124,6 +128,8 @@ A symbol the analyzer made up reads as where it came from:
 - Memory a loop may have changed reads, for example, "`hits` after the loop may have changed it, line 6", with the loop's line.
   The analyzer made it when it stopped following the loop after a few passes, which it does only when analyzing with `-analyzer-config widen-loops=true`.
 - A field of a call's result reads, for example, "`r.len` of the result of `get()`".
+- A field of memory that has no name, such as a temporary or what a call's result points to, keeps the end of its access path, such as "`.Block` of a value after `Point(B)` may have changed it" or "`->next` of the result of `head()`".
+- A construction the source does not spell, such as converting an argument to a class, reads as the class and its arguments, such as `Point(B)`, not as the argument alone.
 - Any other symbol reads as the statement it was made for, such as "value from `malloc(16)`, line 11", because the analyzer did not record what kind of value it is, for example when a checker models the call.
   A symbol without such a statement reads "origin not recorded".
 
@@ -139,6 +145,10 @@ Each of two symbols on the bug path whose origin is a call with the same text ca
 The tooltip says that the analyzer does not assume the two calls return the same value.
 With more than two, the tag names the nearest other one, adds how many more there are, and the tooltip lists every step.
 A statement that Clang had to cut is not compared.
+
+Values whose labels read exactly the same, from the same place in the same function, such as the results of one call inside a loop or in a function called several times, are counted instead, such as "result of `__min_element()`, min_element.h:47, 2nd of 5".
+The count is the order in which the analyzer made them, and the tooltip says that it does not assume they are equal.
+The tag of other results of the same call text then leaves these out.
 
 The same labels show wherever a view names a symbol.
 The line picker shows each variable that differs between visits of a line as a range in words, and its tooltip adds the label of the value.
@@ -189,7 +199,7 @@ The list reads the trace's symbol table to group the rows, entry inputs first:
   A compound value made only of entry inputs, such as `m + n`, is listed here too.
 * **Call results** are values that calls the analyzer did not see inside returned.
 * **Replaced values** are memory that a call or a loop may have changed, and the parts of it.
-* **Other** is everything else: a value whose origin the analyzer did not say, memory behind a call's result, and an expression that mixes origins.
+* **Other** is everything else: a value whose origin the analyzer did not say, memory behind a call's result, memory of a call the function made, and an expression that mixes origins.
 
 A group with no rows is left out, and a report whose trace has no symbol table shows one list with no groups.
 A row is named and labelled as in the accumulated path condition, and has the **dropped** tag when the analyzer no longer knows the symbol's range at the last step.
@@ -358,7 +368,7 @@ A baseline box appears only when the baseline is not Feasible, since then your a
 * A name is what the panel shows, so a value the panel cannot name, such as a field of a temporary or the size of memory, cannot be constrained either.
 * A function whose name has template arguments, or a lambda, cannot be written before `::`, so its variables can only be named alone.
   The list leaves such names out.
-* Memory is told apart by its name only: two `this->Current` of two functions' `this` read as one name.
+* Memory is told apart by its name only, so only the analyzed function's memory and globals are named: the `this` and parameters of a call it made have no name to write.
   When a function calls itself, its two frames have the same name, and the Unknown verdict says where each was called.
 * The check reasons about what the analyzer recorded.
   Z3 and the analyzer's solver can disagree about nonlinear arithmetic or bit tricks.
