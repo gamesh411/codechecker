@@ -32,7 +32,7 @@ const SHOWN_LISTS = [
 // The keys of a symbol's origin, and of the symbol itself, that name a
 // string.
 const ORIGIN_STRINGS = [ "statement", "callee", "function", "region" ];
-const SYMBOL_STRINGS = [ "parent", "region", "type", "name" ];
+const SYMBOL_STRINGS = [ "parent", "region", "member", "type", "name" ];
 
 // Whole raw lists kept on the way, so that reading any node replays at most
 // this many deltas.
@@ -151,8 +151,10 @@ export class ConstraintTrace {
   // `statement`, `location`, `callee` and `frame` (into `stack_frames`), and
   // for memory a call or a loop replaced, `region` or `globals`, and `loop`.
   // A derived symbol has its `parent`'s dump and its `region`'s access path,
-  // an extent the `region` whose size it is, and a region value the `name` of
-  // its region's access path, each when Clang can describe it. A symbol has
+  // or else `member`, the end of that path after memory Clang cannot
+  // describe, an extent the `region` whose size it is, and a region value the
+  // `name` of its region's access path, each when Clang can describe it, or
+  // `in_call` when the memory is a call's own, which has no name. A symbol has
   // its `type`, the canonical type's name, and `pointer` when the analyzer
   // treats it as an address; a trace from a Clang before those has neither.
   get symbols() {
@@ -165,6 +167,7 @@ export class ConstraintTrace {
         if (entry[key] !== undefined) _symbol[key] = _s[entry[key]];
       });
       if (entry.pointer) _symbol.pointer = true;
+      if (entry.in_call) _symbol.in_call = true;
       if (entry.smt !== undefined) {
         _symbol.smt = _s[entry.smt];
         _symbol.smt_signed = !!entry.smt_signed;
@@ -591,7 +594,9 @@ export class ConstraintTrace {
       // Clang makes a region value only for memory the function started
       // with, and gives it a name when the memory is a parameter, a global
       // or `this` or what they point to. Memory reached through a call's
-      // result has the call's symbol in its dump instead.
+      // result has the call's symbol in its dump instead, and memory of a
+      // call the function made, such as the callee's `this`, says so.
+      if (_entry.in_call) return "other";
       return _entry.name !== undefined || !/\b(conj|derived)_\$/.test(dump)
         ? "entry" : "other";
     case "conjured":
@@ -1033,6 +1038,23 @@ function originWords(origin, memory) {
   };
 }
 
+// The words for a part of memory that has no name of its own, from the end
+// of its access path, such as `.Block`: a part of the value a call returned or
+// a checker made reads as that part of it, and a part of memory a call or a
+// loop replaced as that part of a value. The path starts at memory without a
+// name, so when the replaced memory has one, that memory is only a part of
+// it.
+function memberWords(member, origin) {
+  const _reason = origin?.reason;
+  if (_reason !== "invalidation" && _reason !== "loop_widening") {
+    return [ { code: member } ];
+  }
+  if (origin.region) {
+    return [ { code: member }, " of part of ", { code: origin.region } ];
+  }
+  return [ { code: member }, origin.globals ? " of a global" : " of a value" ];
+}
+
 // What a reader is shown for a symbol in place of its dump, or null to show
 // the dump: `text`, the label as plain text, and `parts`, the same as strings
 // and `{ code }` source text; `hint`, which explains it, or null; the
@@ -1076,13 +1098,17 @@ export function symbolLabel(entry, stepFrame, symbolOf = () => undefined) {
     _origin = symbolOf(entry.parent)?.origin;
     const _parent = _origin?.region
       ? [ "part of ", { code: _origin.region } ] : null;
-    _memory = entry.region ? [ { code: entry.region } ] : _parent;
+    _memory = entry.region ? [ { code: entry.region } ]
+      : entry.member ? memberWords(entry.member, _origin) : _parent;
   }
   let _words = _origin ? originWords(_origin, _memory) : null;
   if (!_words && entry.kind === "derived") {
-    if (!entry.region) return null;
-    _words = { parts: [ { code: entry.region } ],
-      hint: "Part of a value whose origin the analyzer did not record." };
+    if (!entry.region && !entry.member) return null;
+    _words = {
+      parts: entry.region ? [ { code: entry.region } ]
+        : [ { code: entry.member }, " of a value" ],
+      hint: "Part of a value whose origin the analyzer did not record."
+    };
   }
   if (!_words && !_origin) return null;
 

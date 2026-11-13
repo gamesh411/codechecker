@@ -1433,6 +1433,84 @@ describe("a variable names one value", () => {
     });
 });
 
+describe("memory of a call", () => {
+  const THIS = "reg_$7<const struct Use * this>";
+  const VAL = "reg_$9<int * Element{SymRegion{reg_$7<const struct Use * " +
+    "this>},0 S64b,struct Use}.Val>";
+  const OWN = "reg_$1<struct User * this>";
+  const trace = traceOf({
+    steps: [ 0 ],
+    nodes: [ { frame: 0, path_condition: [
+      [ THIS, "{ [1, 18446744073709551615] }" ],
+      [ VAL, "{ [0, 0] }" ], [ OWN, "{ [1, 18446744073709551615] }" ] ] } ],
+    symbols: [
+      { symbol: THIS, kind: "region_value", in_call: true, pointer: true },
+      { symbol: VAL, kind: "region_value", in_call: true, pointer: true },
+      { symbol: OWN, kind: "region_value", name: "this", pointer: true }
+    ]
+  });
+
+  test("has no label and is not an entry input", () => {
+    expect(trace.symbol(THIS)).toEqual(
+      { kind: "region_value", in_call: true, pointer: true });
+    expect(symbolLabel(trace.symbol(VAL), 0)).toBeNull();
+    expect(trace.requirementGroup(THIS)).toBe("other");
+    expect(trace.requirementGroup(VAL)).toBe("other");
+    expect(trace.requirementGroup(OWN)).toBe("entry");
+    expect(trace.requirements().groups.map(group =>
+      [ group.key, group.rows.map(row => row.symbol) ])).toEqual([
+      [ "entry", [ OWN ] ], [ "other", [ THIS, VAL ] ] ]);
+  });
+});
+
+describe("a part of memory without a name", () => {
+  const MADE = "conj_$3{int, LC1, S2516, #1}";
+  const BLOCK = "derived_$7{conj_$3{int, LC1, S2516, #1}," +
+    "temp_object{const Point, S2516}.Block}";
+  const RESULT = "conj_$4{struct Node *, LC1, S9, #1}";
+  const NEXT = "derived_$8{conj_$4{struct Node *, LC1, S9, #1}," +
+    "Element{SymRegion{conj_$4{struct Node *, LC1, S9, #1}},0 S64b," +
+    "struct Node}.next}";
+  const ARRAY = "conj_$5{int, LC1, S10, #1}";
+  const CELL = "derived_$9{conj_$5{int, LC1, S10, #1},Element{a,x}.f}";
+  const trace = traceOf({
+    steps: [ 0 ],
+    nodes: [ { frame: 0 } ],
+    symbols: [
+      { symbol: MADE, kind: "conjured", origin: { reason: "invalidation",
+        statement: "Point(B)", callee: "Point", function: "f", frame: 0,
+        location: LOCATION(8) } },
+      { symbol: BLOCK, kind: "derived", parent: MADE, member: ".Block" },
+      { symbol: RESULT, kind: "conjured", origin: { reason: "call_result",
+        statement: "head()", callee: "head", function: "f", frame: 0,
+        location: LOCATION(9) } },
+      { symbol: NEXT, kind: "derived", parent: RESULT, member: "->next" },
+      { symbol: ARRAY, kind: "conjured", origin: { reason: "invalidation",
+        statement: "fill(a)", callee: "fill", function: "f", frame: 0,
+        region: "a", location: LOCATION(10) } },
+      { symbol: CELL, kind: "derived", parent: ARRAY, member: ".f" }
+    ]
+  });
+  const label = dump => symbolLabel(trace.symbol(dump), 0,
+    d => trace.symbol(d));
+
+  test("keeps the end of its access path in its label", () => {
+    expect(trace.symbol(BLOCK).member).toBe(".Block");
+    expect(label(BLOCK).text)
+      .toBe(".Block of a value after Point(B) may have changed it");
+    expect(label(BLOCK).parts[0]).toEqual({ code: ".Block" });
+    expect(label(NEXT).text).toBe("->next of the result of head()");
+    expect(label(CELL).text)
+      .toBe(".f of part of a after fill(a) may have changed it");
+  });
+
+  test("without an origin, is that part of a value", () => {
+    expect(symbolLabel({ kind: "derived", parent: "reg_$0<int x>",
+      member: ".Block" }, 0, () => ({ kind: "region_value" })).text)
+      .toBe(".Block of a value");
+  });
+});
+
 describe("the initial value of a variable", () => {
   const SRC = "reg_$2<Type * SrcTy>";
 
