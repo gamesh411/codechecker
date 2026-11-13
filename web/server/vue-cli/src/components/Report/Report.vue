@@ -1629,6 +1629,8 @@ function createHighlightWidget(markerId, from, to) {
 function createLineWidget(element, props) {
   const charWidth = 7.2;
   const marginLeft = charWidth * (element.startCol || 0) + "px";
+  const gutterWidth =
+    (editor.value.dom.querySelector(".cm-gutters")?.offsetWidth ?? 0) + "px";
 
   const line = editor.value.state.doc.line(element.startLine.toNumber());
   return {
@@ -1638,6 +1640,7 @@ function createLineWidget(element, props) {
       id: element.$id,
       value: element.$message,
       marginLeft: marginLeft,
+      gutterWidth: gutterWidth,
       report: report.value
     }
   };

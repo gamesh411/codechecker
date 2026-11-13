@@ -6,7 +6,11 @@
     :color="color"
     :step-id="id"
     :type="type"
-    :style="{ 'margin-left': marginLeft, color: textColor }"
+    :style="{
+      '--step-indent': marginLeft || '0px',
+      '--step-gutter': gutterWidth,
+      color: textColor
+    }"
     rounded="xs"
     @click="selectStep"
   >
@@ -32,7 +36,7 @@
         </div>
         <div
           v-if="!hideDocUrl && type === 'error'"
-          class="text-caption"
+          class="text-caption text-wrap"
         >
           <p v-if="docUrl" class="mb-0 text-caption">
             For more information see the
@@ -86,6 +90,8 @@ const props = defineProps({
   id: { type: [ String, Number ], required: true },
   value: { type: String, required: true },
   marginLeft: { type: String, default: "" },
+  // The width of the source view's gutter, which the bubble's room excludes.
+  gutterWidth: { type: String, default: "0px" },
   type: { type: String, default: null },
   index: { type: [ Number, String ], default: null },
   bus: { type: Object, default: null },
@@ -164,10 +170,19 @@ async function copyToClipboard() {
 
 <style lang="scss">
 .report-step-msg {
+  // The width the source view shows right of its gutter: a bubble that runs
+  // past it is cut by whatever is beside the source, such as the constraint
+  // panel. The source view is the container.
+  --step-room: calc(100cqw - var(--step-gutter, 0px) - 12px);
+  // Indented to its event's column, but never so far that the text, beside
+  // the step's number and buttons, has less than about 260px.
+  --step-margin: max(0px,
+    min(var(--step-indent, 0px), calc(var(--step-room) - 400px)));
   padding-top: 10px !important;
   padding-bottom: 10px !important;
   margin-bottom: 2px;
-  max-width: 640px;
+  margin-left: var(--step-margin);
+  max-width: min(640px, calc(var(--step-room) - var(--step-margin)));
   white-space: inherit;
   height: auto !important;
   border-radius: 12px !important;
