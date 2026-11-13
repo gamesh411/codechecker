@@ -743,11 +743,17 @@ function symbolLabels(node, symbolNames) {
         _label.order = _trace.nearestStep(_label.location, _label.frame);
         _label.otherFile = !!_label.location &&
           _label.location.file !== _node?.location?.file;
-        _label.sameCall = _trace.sameCall(symbol).map(other => ({
-          call: shortenStatement(other.origin.statement, other.origin.callee),
-          order: _trace.nearestStep(other.origin.location, other.origin.frame)
-        })).sort((a, b) =>
-          (a.order === null) - (b.order === null) || a.order - b.order);
+        // Results that read the same as this one are told apart by the
+        // order they were made in, not by the tag.
+        _label.twin = _trace.twins(symbol);
+        const _twins = new Set(_label.twin?.symbols ?? []);
+        _label.sameCall = _trace.sameCall(symbol)
+          .filter(other => !_twins.has(other.symbol))
+          .map(other => ({
+            call: shortenStatement(other.origin.statement, other.origin.callee),
+            order: _trace.nearestStep(other.origin.location, other.origin.frame)
+          })).sort((a, b) =>
+            (a.order === null) - (b.order === null) || a.order - b.order);
       }
       _labels.set(symbol, _label);
     }

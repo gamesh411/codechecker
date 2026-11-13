@@ -625,6 +625,24 @@ function sameCallTag(others) {
     _children);
 }
 
+// 1st, 2nd, 3rd, 4th, ..., 11th, 12th, 13th, ..., 21st.
+function ordinal(n) {
+  const _teen = n % 100 >= 11 && n % 100 <= 13;
+  const _suffix = _teen ? "th" : [ "th", "st", "nd", "rd" ][n % 10] ?? "th";
+  return `${n}${_suffix}`;
+}
+
+// Which of several values whose labels read the same this one is, in the
+// order the analyzer made them, such as "2nd of 5".
+function twinTag(twin) {
+  return h("span", {
+    class: "panel-twin",
+    title: `The analyzer made ${twin.count} values that read the same here, ` +
+      `and this is the ${ordinal(twin.index)} it made. It does not assume ` +
+      "that they are equal."
+  }, `${ordinal(twin.index)} of ${twin.count}`);
+}
+
 // A symbol as its label when the trace has one, and as its dump otherwise.
 // The label's own title gives the whole label, which a clamped line may cut,
 // what it means and the dump, which the row's title also keeps. The label's
@@ -654,6 +672,7 @@ function SymbolText({ symbol, unless, labels }) {
         onClick: () => emit("select-step", _label.order)
       }, _where));
   }
+  if (_label.twin) _parts.push(", ", twinTag(_label.twin));
   if (_label.sameCall?.length) _parts.push(" ", sameCallTag(_label.sameCall));
   if (_label.function) {
     // "in" stays with the name, which may still break inside.
@@ -1216,6 +1235,12 @@ function toggleFrame(section) {
     max-width: 100%;
     // A long call or step name wraps inside the tag rather than past the row.
     overflow-wrap: break-word;
+    cursor: help;
+  }
+
+  // Part of the label's place, as the line before it is.
+  .panel-twin {
+    white-space: nowrap;
     cursor: help;
   }
 

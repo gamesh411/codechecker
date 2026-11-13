@@ -140,6 +140,7 @@ export class ConstraintTrace {
     this._symbols = null;
     this._expressions = null;
     this._calls = null;
+    this._twins = null;
     this._memory = null;
     this._whatIfNames = new Map();
     this._whatIfNamesAt = new Map();
@@ -233,6 +234,37 @@ export class ConstraintTrace {
     if (_own?.reason !== "call_result") return [];
     return (this._calls.get(_own.statement) ?? []).filter(call =>
       call.symbol !== dump);
+  }
+
+  // The symbols whose labels read the same as this one's, the same words for
+  // a value made at the same place in the same function, such as the results
+  // of one call in a loop, as { index, count, symbols }: this one is the
+  // index-th of `count` that the analyzer made, counting from 1, and
+  // `symbols` are all of them by dump. Null when no other reads the same. A
+  // region value is named by its memory, never by a place, so it has none.
+  twins(dump) {
+    if (!this._twins) {
+      const _groups = new Map();
+      const _symbolOf = symbol => this.symbols.get(symbol);
+      this.symbols.forEach((entry, symbol) => {
+        if (entry.kind !== "conjured" && entry.kind !== "derived") return;
+        const _label = symbolLabel(entry, undefined, _symbolOf);
+        if (!_label) return;
+        const _at = _label.location;
+        const _key = [ _label.text, _at?.file, _at?.line, _at?.col,
+          _label.function ].join("\u0000");
+        if (!_groups.has(_key)) _groups.set(_key, []);
+        _groups.get(_key).push(symbol);
+      });
+      this._twins = new Map();
+      _groups.forEach(symbols => {
+        if (symbols.length < 2) return;
+        symbols.sort((a, b) => madeOrder(a) - madeOrder(b));
+        symbols.forEach((symbol, index) => this._twins.set(symbol,
+          { index: index + 1, count: symbols.length, symbols }));
+      });
+    }
+    return this._twins.get(dump) ?? null;
   }
 
   // The `order` of the Path Step nearest to a source location: of the steps
@@ -924,6 +956,13 @@ const WHAT_IF_NAME = new RegExp(`^\\**${IDENTIFIER}(?:::${IDENTIFIER})*` +
   `(?:${MEMBERS}|\\[(?:\\d+|${IDENTIFIER}${MEMBERS}*)\\])*$`);
 
 const DECLARED = /^\(declare-fun\s+(\S+)/;
+
+// The analyzer numbers symbols in the order it makes them, which is the one
+// thing that tells apart values whose labels read the same. Only the number
+// is read from the dump, never a name.
+function madeOrder(dump) {
+  return Number(/^[a-z]+_\$(\d+)/.exec(dump)?.[1] ?? Infinity);
+}
 
 function valueKey(value) {
   return `${value.kind}:${value.value}`;

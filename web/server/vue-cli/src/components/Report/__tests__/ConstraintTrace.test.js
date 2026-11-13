@@ -1511,6 +1511,31 @@ describe("a part of memory without a name", () => {
   });
 });
 
+describe("values whose labels read the same", () => {
+  const RESULTS = [ 93, 763, 800 ].map(n =>
+    `conj_$${n}{const int *, LC${n}, S7, #1}`);
+  const ELSEWHERE = "conj_$900{const int *, LC9, S7, #1}";
+  const trace = traceOf({
+    steps: [ 0 ],
+    nodes: [ { frame: 0 } ],
+    symbols: [ ...RESULTS.slice().reverse(), ELSEWHERE ].map(symbol => ({
+      symbol, kind: "conjured", origin: { reason: "call_result",
+        statement: "__min_element(first, last, comp)",
+        callee: "__min_element", function: "std::__min_element",
+        location: symbol === ELSEWHERE ? LOCATION(50) : LOCATION(47) }
+    }))
+  });
+
+  test("are counted in the order the analyzer made them", () => {
+    expect(trace.twins(RESULTS[0])).toEqual(
+      { index: 1, count: 3, symbols: RESULTS });
+    expect(trace.twins(RESULTS[2]).index).toBe(3);
+    expect(trace.twins(ELSEWHERE)).toBeNull();
+    expect(trace.sameCall(RESULTS[0]).map(call => call.symbol)).toContain(
+      ELSEWHERE);
+  });
+});
+
 describe("the initial value of a variable", () => {
   const SRC = "reg_$2<Type * SrcTy>";
 
